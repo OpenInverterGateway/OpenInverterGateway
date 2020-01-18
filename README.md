@@ -16,7 +16,31 @@ The PCB is also populated with 8 MB of serial flash, and a NXP 8563T real time c
 
 Some keywords:
 
-ES8266, ESP-07S, Growatt, Arduino, MQTT, Modbus
+ES8266, ESP-07S, Growatt, Arduino, MQTT, Modbus, Rest
 
 Thanks to Jethro Kairys for his work on the Modbus interface
 https://github.com/jkairys/growatt-esp8266
+
+# 2020-01-18 Update
+
+The raw data can now be downloaded in JSON format (application/json) by calling http://<ip>/status
+
+example:
+
+{
+  "Status": "Normal",
+  "DcVoltage": 114.1,
+  "AcFreq": 50.000,
+  "AcVoltage": 239.5,
+  "AcPower": 20.6,
+  "EnergyToday": 0.2,
+  "EnergyTotal": 48.3,
+  "OperatingTime": 2821777,
+  "Temperature": 12.1,
+  "Cnt": 333
+}
+
+Firmwareupdate can be uploaded over the Webserver (http://<ip>/firmware)
+  
+A status website with live graph can be found under http://<ip>
+
