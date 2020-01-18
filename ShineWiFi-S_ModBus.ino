@@ -1,21 +1,40 @@
 /*
+Datei -> Voreinstellungen -> Zusaetzliche Boardverwalter-URLs -> "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
+Werkzeuge -> Board -> Boardverwalter -> ESP8266
+
+Used Libs
+----------
+
+Download MQTT Client from
+https://github.com/knolleary/pubsubclient
+Install --> Sketch -> Bibliothek einbinden -> .Zib Bibliotherk hinzufuegen
+
+Download ModbusMaster by Doc Walker
+
+https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
+
 Board: Generic ESP8266 Module
 Flash Mode: DIO
+Cristal Freq:: 26 MHz
 Flash Freq: 40 MHz
 Upload Using: Serial
 CPU Freq: 80 MHz
-Flash Size: 512k (64k SPIFFS)
+Flash Size: 4 MB (FS:none OTA~1019KB)
 UploadSpeed: 115200
 
 Thanks to Jethro Kairys
 https://github.com/jkairys/growatt-esp8266
 
 
-2019-10-16
+
+2020-01-18
 */
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include "Growatt.h"
+#include <ESP8266HTTPUpdateServer.h>
+
+#include "index.h"
 
 
 #include <stdio.h>
@@ -25,31 +44,42 @@ https://github.com/jkairys/growatt-esp8266
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
+#define BUTTON 0  // GPIO0
 
 // Data of the Wifi access point
-const char* ssid        = "YOUR_SSID";
-const char* password    = "YOUR_PASSWORD";
+const char* ssid        = "<your_ssid>";
+const char* password    = "<your_wifi_password>";
 #define HOSTNAME          "Growatt"
 
-// IP of the MQTT-Server
-const char* mqtt_server = "192.168.0.38";
+const char* update_path = "/firmware";
+const char* update_username = "<user_for_update>";
+const char* update_password = "<password_for_update>";
+
+
+const char* mqtt_server = "<mqtt_server_ip";
 
 
 WiFiClient   espClient;
 PubSubClient MqttClient(espClient);
 Growatt      Inverter;
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
 // -------------------------------------------------------
 void WiFi_Reconnect()
 {
+  uint16_t cnt = 0;
+
   if( WiFi.status() != WL_CONNECTED )
   {
     digitalWrite(LED_GN, 0);
     
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
+
     while (WiFi.status() != WL_CONNECTED)
     {
       delay(200);
@@ -58,6 +88,7 @@ void WiFi_Reconnect()
     }
 
     Serial.println("");
+    WiFi.printDiag(Serial);
     Serial.print("local IP:");
     Serial.println(WiFi.localIP());
     Serial.print("Hostname: ");
@@ -68,6 +99,7 @@ void WiFi_Reconnect()
     digitalWrite(LED_RT, 0);
   }
 }
+
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
@@ -80,7 +112,7 @@ void MqttReconnect()
     Serial.print("Attempting MQTT connection...");
     
     // Attempt to connect with last will
-    if (MqttClient.connect("Growatt", "LS111/Solar/Growatt1kWp/Status", 1, 1, "Disconnected")) {
+    if (MqttClient.connect("Growatt", "LS111/Solar/Growatt1kWp", 1, 1, "{\"Status\": \"Disconnected\" }")) {
       Serial.println("connected");
     } 
     else
@@ -104,73 +136,35 @@ void setup()
   pinMode(LED_RT, OUTPUT);
   pinMode(LED_BL, OUTPUT);
 
-  Serial.begin(9600);
+  httpServer.on("/status", SendJsonSite);
+  httpServer.on("/", MainPage);
+
+  Serial.begin(9600); // Baudrate of Growatt
 
   WiFi.hostname(HOSTNAME);
   WiFi_Reconnect();
   Inverter.begin(Serial);
+
+  httpUpdater.setup(&httpServer, update_path, update_username, update_password);
+  httpServer.begin();
 }
 
-// -------------------------------------------------------
-// Send the current inverter status by mqtt
-// -------------------------------------------------------
-void PublishStatus(eGrowattStatus status)
+char MqttPayload[512] = "{\"Status\": \"Disconnected\" }";
+#if MQTT_MAX_PACKET_SIZE < 512 
+#error change MQTT_MAX_PACKET_SIZE to 512
+#endif
+uint16_t u16PacketCnt = 0;
+
+void SendJsonSite(void)
 {
-  char buffer[16];
-  
-  String str = "unknown";
-  switch(status){
-    case GwStatusWaiting:
-      str = "waiting";
-      break;
-    case GwStatusNormal:
-      str = "normal";
-      break;
-    case GwStatusFault: 
-      str = "fault";
-      break;
-  }
-  str.toCharArray(buffer, 16);
-  MqttClient.publish("LS111/Solar/Growatt1kWp/Status", buffer, true);
-  
+  httpServer.send(200, "application/json", MqttPayload);
 }
 
-// -------------------------------------------------------
-// Send a float value by mqtt
-// Para: topic
-// Para: value to send
-// Para: number of decimal places
-// -------------------------------------------------------
-void PublishFloat(char * topic, float f, uint8_t precision)
+void MainPage(void)
 {
-  String value_str = String(f, precision);
-  char value_char[32] = "";
-  value_str.toCharArray(value_char, 40);
-
-  String topic_str = "LS111/Solar/Growatt1kWp/" + String(topic);
-  char topic_char[128] = "";
-  topic_str.toCharArray(topic_char, 128);
-  
-  MqttClient.publish(topic_char, value_char, true);
+  httpServer.send(200, "text/html", MAIN_page);
 }
 
-// -------------------------------------------------------
-// Send an integer value by mqtt
-// Para: topic
-// Para: value to send
-// -------------------------------------------------------
-void PublishInteger(char * topic, uint32_t i)
-{
-  String value_str = String(i);
-  char value_char[32] = "";
-  value_str.toCharArray(value_char, 40);
-
-  String topic_str = "LS111/Solar/Growatt1kWp/" + String(topic);
-  char topic_char[128] = "";
-  topic_str.toCharArray(topic_char, 128);
-  
-  MqttClient.publish(topic_char, value_char, true);
-}
 
 
 // -------------------------------------------------------
@@ -181,12 +175,14 @@ long Timer10s = 0;
 
 void loop()
 {
-  
+
   long now = millis();
   
   WiFi_Reconnect();
   MqttReconnect();
-
+  
+  httpServer.handleClient();
+  
   MqttClient.loop();
 
   // Toggle green LED with 1 Hz (alive)
@@ -201,31 +197,59 @@ void loop()
     Timer1s = now;
   }
 
-  // Read Inverter every 10 s
+
+    // Read Inverter every 10 s
   // ------------------------------------------------------------
   if (now - Timer10s > 10000)
   {
     if( Inverter.UpdateData() ) // get new data from inverter
     {
-
-      PublishStatus(                  Inverter.GetStatus());
-      PublishFloat("DcVoltage",       Inverter.GetDcVoltage(),           1);
-      PublishFloat("AcFreq",          Inverter.GetAcFrequency(),         2);
-      PublishFloat("AcVoltage",       Inverter.GetAcVoltage(),           1);
-      PublishFloat("AcPower",         Inverter.GetAcPower(),             1);
-      PublishFloat("EnergyToday",     Inverter.GetEnergyToday(),         1);
-      PublishFloat("EnergyTotal",     Inverter.GetEnergyTotal(),         1);
-      PublishInteger("OperatingTime", Inverter.GetOperatingTime());
-      PublishFloat("Temperature",     Inverter.GetInverterTemperature(), 1);
-
+      u16PacketCnt++;
+      CreateJson(MqttPayload);
+      
+      MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+  
       digitalWrite(LED_BL, 0); // clear blue led if everything is ok
     }
     else
     {
+      sprintf(MqttPayload, "{\"Status\": \"Disconnected\" }");
+      MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
       digitalWrite(LED_BL, 1); // set blue led in case of error
     }
-    
+
     Timer10s = now;
   }
 
+}
+
+void CreateJson(char *Buffer)
+{
+  
+  Buffer[0] = 0; // Terminate first byte
+  
+
+  sprintf(Buffer, "{\r\n");
+  switch( Inverter.GetStatus() )
+  {
+    case GwStatusWaiting:
+      sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
+      break;
+    case GwStatusNormal: 
+      sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
+      break;
+    case GwStatusFault:
+      sprintf(Buffer, "%s  \"Status\": \"Fault\",\r\n", Buffer);
+      break;
+  }
+  sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetDcVoltage());
+  sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",        Buffer, Inverter.GetAcFrequency());
+  sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",     Buffer, Inverter.GetAcVoltage());
+  sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",       Buffer, Inverter.GetAcPower());
+  sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",   Buffer, Inverter.GetEnergyToday());
+  sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",   Buffer, Inverter.GetEnergyTotal());
+  sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",   Buffer, Inverter.GetOperatingTime());
+  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",   Buffer, Inverter.GetInverterTemperature());
+  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",              Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s}\r\n", Buffer);
 }
