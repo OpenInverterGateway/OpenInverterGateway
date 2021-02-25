@@ -1,5 +1,11 @@
 const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE HTML><html>
+<!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software. -->
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -20,12 +26,14 @@ const char MAIN_page[] PROGMEM = R"=====(
 <body>
   <h2>Growatt 1 kWp</h2>
   <div id="chart-power" class="container"></div>
+
   
   <p id="AcPower"></p>
   <p id="EnergyToday"></p>
   <p id="EnergyTotal"></p>
   <p id="DcVoltage"></p>
-  
+  <a href="./firmware">Firware update</a><br>
+  <a href="./status">Json</a>
 </body>
 <script>
 var chartT = new Highcharts.Chart({
@@ -77,7 +85,10 @@ setInterval(function ( ) {
   xhttp.send();
 }, 5000 ) ;
 
+
 </script>
+
+
 
 </html>
 

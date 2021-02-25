@@ -11,8 +11,6 @@ Install --> Sketch -> Bibliothek einbinden -> .Zib Bibliotherk hinzufuegen
 
 Download ModbusMaster by Doc Walker
 
-https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPUpdateServer
-
 Board: Generic ESP8266 Module
 Flash Mode: DIO
 Cristal Freq:: 26 MHz
@@ -25,9 +23,12 @@ UploadSpeed: 115200
 Thanks to Jethro Kairys
 https://github.com/jkairys/growatt-esp8266
 
+File -> "Show verbose output during:" "compilation".
+This will show the path to the binary during compilation 
+e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 
 
-2020-01-18
+2019-10-16
 */
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
@@ -44,7 +45,7 @@ https://github.com/jkairys/growatt-esp8266
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
-#define BUTTON 0  // GPIO0
+#define BUTTON 0 // GPIO0
 
 // Data of the Wifi access point
 const char* ssid        = "<your_ssid>";
@@ -109,6 +110,9 @@ void MqttReconnect()
   // Loop until we're reconnected
   while (!MqttClient.connected()) 
   {
+    if( WiFi.status() != WL_CONNECTED )
+      break;
+    
     Serial.print("Attempting MQTT connection...");
     
     // Attempt to connect with last will
@@ -165,7 +169,7 @@ void MainPage(void)
   httpServer.send(200, "text/html", MAIN_page);
 }
 
-
+//#define SIMULATE 1
 
 // -------------------------------------------------------
 // Main loop
@@ -202,20 +206,28 @@ void loop()
   // ------------------------------------------------------------
   if (now - Timer10s > 10000)
   {
-    if( Inverter.UpdateData() ) // get new data from inverter
+    if( MqttClient.connected() && (WiFi.status() == WL_CONNECTED) )
     {
-      u16PacketCnt++;
-      CreateJson(MqttPayload);
-      
-      MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+      #ifndef SIMULATE
+      if( Inverter.UpdateData() ) // get new data from inverter
+      #else
+      if(1)
+      #endif
+      {
+        u16PacketCnt++;
+        CreateJson(MqttPayload);
   
-      digitalWrite(LED_BL, 0); // clear blue led if everything is ok
-    }
-    else
-    {
-      sprintf(MqttPayload, "{\"Status\": \"Disconnected\" }");
-      MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
-      digitalWrite(LED_BL, 1); // set blue led in case of error
+        
+        MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+    
+        digitalWrite(LED_BL, 0); // clear blue led if everything is ok
+      }
+      else
+      {
+        sprintf(MqttPayload, "{\"Status\": \"Disconnected\" }");
+        MqttClient.publish("LS111/Solar/Growatt1kWp", MqttPayload, true);
+        digitalWrite(LED_BL, 1); // set blue led in case of error
+      }
     }
 
     Timer10s = now;
@@ -228,7 +240,7 @@ void CreateJson(char *Buffer)
   
   Buffer[0] = 0; // Terminate first byte
   
-
+#ifndef SIMULATE
   sprintf(Buffer, "{\r\n");
   switch( Inverter.GetStatus() )
   {
@@ -249,7 +261,23 @@ void CreateJson(char *Buffer)
   sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",   Buffer, Inverter.GetEnergyToday());
   sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",   Buffer, Inverter.GetEnergyTotal());
   sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",   Buffer, Inverter.GetOperatingTime());
-  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",   Buffer, Inverter.GetInverterTemperature());
+  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",    Buffer, Inverter.GetInverterTemperature());
   sprintf(Buffer, "%s  \"Cnt\": %u\r\n",              Buffer, u16PacketCnt);
   sprintf(Buffer, "%s}\r\n", Buffer);
+#else
+  #warning simulating
+  sprintf(Buffer, "{\r\n");
+  sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",    Buffer);
+  sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",       Buffer);
+  sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",         Buffer);
+  sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",      Buffer);
+  sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",         Buffer);
+  sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",      Buffer);
+  sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",     Buffer);
+  sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n", Buffer);
+  sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
+  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s}", Buffer);
+      
+  #endif 
 }
