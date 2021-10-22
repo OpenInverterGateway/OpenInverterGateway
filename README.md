@@ -1,7 +1,7 @@
-# Growatt_ShineWiFi-S
-Firmware replacement for Growatt ShineWiFi-S
+# Growatt_ShineWiFi
+Firmware replacement for Growatt ShineWiFi-S (serial) and ShineWiFi-X (USB)
 
-This arduino sketch will replace the original firmware of the Growatt ShineWiFi-S stick.
+This arduino sketch will replace the original firmware of the Growatt ShineWiFi stick.
 The data received from the inverter will be transmitted by MQTT to a server of your choice.
 
 The manufacturer has been so kindly to bring out every necessary connection for reprograming. (s. /IMG/ShineWiFi-S/ShineWiFi-S_PCB_PinOut.png)
@@ -23,10 +23,11 @@ https://github.com/jkairys/growatt-esp8266
 
 ## Tested devices
 * ShineWiFi-S with Growatt 1000S
+* ShineWiFi-X
 
 ## 2020-01-18 Update
 
-+ For IoT applications the raw data can now read in JSON format (application/json) by calling `http://<ip>/status`
+* For IoT applications the raw data can now read in JSON format (application/json) by calling `http://<ip>/status`
 
 example:
 
@@ -40,6 +41,7 @@ example:
       "EnergyTotal": 48.3,
       "OperatingTime": 2821777,
       "Temperature": 12.1,
+      "AccumulatedEnergy": 320,
       "Cnt": 333
     }
 
@@ -48,3 +50,14 @@ example:
   
 * A status website with live graph can be found under `http://<ip>`
 
+## 2020-10-22 Update
+* Added support for ShineWiFi-X (USB). The software will automatically detect on which kind of stick it is running.
+
+* Registers of the inverter can be read or written with an web interface (`http://<ip>/postCommunicationModbus`)
+
+* The total energy is only stored in increments of 0.1 kWh in the inverter. For a smal inverter, this is a large step, especially during winter. 
+If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset to 0.1 kWh next morning. For this reason the "AccumulatedEnergy" field has been implemented. It returns the energy in Wh. It will be zero after every powercycle, but can be set to the value of the previous day over a http request (`http://<ip>/setAccumulatedEnergy`)
+
+* MQTT can be turned off
+
+* The stick can ping an known IP. If there is no answer, the stick will try to reset the WiFi connection. (Disabled by default)

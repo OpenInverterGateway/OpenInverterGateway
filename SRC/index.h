@@ -24,7 +24,7 @@ copies or substantial portions of the Software. -->
   </style>
 </head>
 <body>
-  <h2>Growatt 1 kWp</h2>
+  <h2>Growatt Inverter</h2>
   <div id="chart-power" class="container"></div>
 
   
@@ -32,7 +32,7 @@ copies or substantial portions of the Software. -->
   <p id="EnergyToday"></p>
   <p id="EnergyTotal"></p>
   <p id="DcVoltage"></p>
-  <a href="./firmware">Firware update</a><br>
+  <a href="./firmware">Firmware update</a><br>
   <a href="./status">Json</a>
 </body>
 <script>
