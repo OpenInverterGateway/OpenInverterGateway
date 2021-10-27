@@ -48,6 +48,10 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // For ShineWiFi-S everything seems to work perfect even though this flag is set
 #define ENABLE_DEBUG_OUTPUT 1
 
+// Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
+#define ENABLE_WEB_DEBUG 0
+
+
 // Setting this flag to 1 will simulate the inverter
 // This could be helpful if it is night and the inverter is not working or
 // during development where the stick is not connected to the inverter
@@ -63,13 +67,23 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #define UPDATE_PASSWORD   "<UPDATE_PASSWORD>"
 
 #if MQTT_SUPPORTED == 1 
-#define MQTT_SERVER       "<MQTT_SERVER_IP"
+#define MQTT_SERVER       "<MQTT_SERVER_IP>"
 #define MQTT_TOPIC        "<MyTopic>"
 #endif
 
 #if PINGER_SUPPORTED == 1
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif
+
+#if ENABLE_WEB_DEBUG == 1
+    char acWebDebug[1024] = "";
+    uint16_t u16WebMsgNo = 0;
+    #define WEB_DEBUG_PRINT(s) {if( (strlen(acWebDebug)+strlen(s)+50) < sizeof(acWebDebug) ) sprintf(acWebDebug, "%s#%i: %s\n", acWebDebug, u16WebMsgNo++, s);}
+#else
+ #define WEB_DEBUG_PRINT(s) ;
+#endif
+
+
 
 // ---------------------------------------------------------------
 // User configuration area end
@@ -158,6 +172,8 @@ void WiFi_Reconnect()
     Serial.println(HOSTNAME);
     #endif
 
+    WEB_DEBUG_PRINT("WiFi reconnected")
+
     #if MQTT_SUPPORTED == 1 
     MqttClient.setServer(MQTT_SERVER, 1883);
     #endif
@@ -166,6 +182,25 @@ void WiFi_Reconnect()
   }
 }
 
+// Conection can fail after sunrise. The stick powers up before the inverter.
+// So the detection of the inverter will fail. If no inverter is detected, we have to retry later (s. loop() )
+// The detection without running inverter will take several seconds, because the ModBus-Lib has a timeout of 2s 
+// for each read access (and we do several of them). The WiFi can crash during this function. Perhaps we can fix 
+// this by using the callback function of the ModBus-Lib
+void InverterReconnect(void)
+{
+  // Baudrate will be set here, depending on the version of the stick
+  Inverter.begin(Serial);
+
+  #if ENABLE_WEB_DEBUG == 1
+  if( Inverter.GetWiFiStickType() == ShineWiFi_S )
+    WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
+  else if( Inverter.GetWiFiStickType() == ShineWiFi_S )
+    WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
+  else
+    WEB_DEBUG_PRINT("Error: Undef. Stick")
+  #endif
+}
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
@@ -197,6 +232,7 @@ void MqttReconnect()
       Serial.print(MqttClient.state());
       Serial.println(" try again in 5 seconds");
       #endif
+      WEB_DEBUG_PRINT("MQTT Connect failed")
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -213,6 +249,8 @@ void setup()
   pinMode(LED_RT, OUTPUT);
   pinMode(LED_BL, OUTPUT);
 
+  WEB_DEBUG_PRINT("Setup()")
+  
   WiFi.hostname(HOSTNAME);
   while (WiFi.status() != WL_CONNECTED)
     WiFi_Reconnect();
@@ -222,21 +260,12 @@ void setup()
   httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
   httpServer.on("/setAccumulatedEnergy", HTTP_POST, vSetAccumulatedEnergy);
   httpServer.on("/", MainPage);
-
-  // Baudrate will be set here, depending on the version of the stick
-  Inverter.begin(Serial);
-  
-  #if ENABLE_DEBUG_OUTPUT == 1
-  if( Inverter.GetWiFiStickType() == ShineWiFi_S )
-    Serial.print("ShineWiFi_S (Serial) found");
-  else if( Inverter.GetWiFiStickType() == ShineWiFi_S )
-    Serial.print("ShineWiFi-X (USB) found");
-  else
-    Serial.print("Undef. Stick");
+  #if ENABLE_WEB_DEBUG == 1
+  httpServer.on("/debug", SendDebug);
   #endif
 
+  InverterReconnect();
 
-  
   httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
   httpServer.begin();
 }
@@ -245,6 +274,13 @@ void SendJsonSite(void)
 {
   httpServer.send(200, "application/json", JsonString);
 }
+
+#if ENABLE_WEB_DEBUG == 1
+void SendDebug(void)
+{
+  httpServer.send(200, "text/plain", acWebDebug);
+}
+#endif
 
 void MainPage(void)
 {
@@ -337,8 +373,9 @@ void handlePostData()
 // -------------------------------------------------------
 // Main loop
 // -------------------------------------------------------
-long Timer1s = 0;
+long Timer500ms = 0;
 long Timer5s = 0;
+long Timer2m = 0;
 
 void loop()
 {
@@ -357,22 +394,31 @@ void loop()
 
   // Toggle green LED with 1 Hz (alive)
   // ------------------------------------------------------------
-  if (now - Timer1s > 500)
-  {
+  if( (now - Timer500ms) > 500 )
+  {   
     if( WiFi.status() == WL_CONNECTED )
       digitalWrite(LED_GN, !digitalRead(LED_GN));
     else
       digitalWrite(LED_GN, 0);
     
-    Timer1s = now;
+    Timer500ms = now;
+  }
+
+  // InverterReconnect() takes a long time --> wifi will crash
+  // Do it only every two minutes
+  if( (now - Timer2m) > (1000 * 60 * 2) )
+  {
+    if( Inverter.GetWiFiStickType() == Undef_stick )
+      InverterReconnect();
+    Timer2m = now;
   }
 
     // Read Inverter every 5 s
   // ------------------------------------------------------------
-  if (now - Timer5s > 5000)
+  if( (now - Timer5s) > 5000)
   {
     #if MQTT_SUPPORTED == 1
-    if (MqttClient.connected() && (WiFi.status() == WL_CONNECTED))
+    if (MqttClient.connected() && (WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()) )
     #else
     if( 1 )
     #endif
@@ -386,11 +432,10 @@ void loop()
         if( Inverter.UpdateData() ) // get new data from inverter
         #endif
         {
+          WEB_DEBUG_PRINT("UpdateData() successful")
           u16PacketCnt++;
           u8RetryCounter = NUM_OF_RETRIES;
           CreateJson(JsonString);
-
-
     
           #if MQTT_SUPPORTED == 1 
           MqttClient.publish(MQTT_TOPIC, JsonString, true);
@@ -408,12 +453,14 @@ void loop()
         }
         else
         {
+          WEB_DEBUG_PRINT("UpdateData() NOT successful")
           if(u8RetryCounter)
           {
             u8RetryCounter--;
           }
           else
           {
+            WEB_DEBUG_PRINT("Retry counter\n")
             sprintf(JsonString, "{\"Status\": \"Disconnected\" }");
             #if MQTT_SUPPORTED == 1 
             MqttClient.publish(MQTT_TOPIC, JsonString, true);

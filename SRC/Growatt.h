@@ -13,7 +13,7 @@ typedef enum
 
 typedef enum
 {
-  Undef        = 0,
+  Undef_stick  = 0,
   ShineWiFi_S  = 1, // Serial
   ShineWiFi_X  = 2  // USB
 }eDevice_t;
@@ -31,7 +31,7 @@ typedef struct
   uint32_t u32EnergyToday;     // in 0.1 kWh
   uint32_t u32EnergyTotal;     // in 0.1 kWh
   uint32_t u32OperatingTime;   // in 0.5 s
-  uint16_t u16Temperaure;      // 0.1 degree celsius
+  uint16_t u16Temperature;     // 0.1 degree celsius
   uint16_t u16PwrLimit;        // %
   uint16_t u16EnExportLimit;   // 0.1 %
   uint16_t u16ExportPwrLimit;  // 0.1 %

@@ -15,7 +15,7 @@ void Growatt::begin(Stream &serial)
   uint8_t res;
   uint32_t u32EnergyTotal;
 
-  _eDevice = Undef;
+  _eDevice = Undef_stick;
 
   Serial.begin(9600);
   Modbus.begin(1, serial);
@@ -58,7 +58,7 @@ bool Growatt::UpdateData()
       _Data.u32EnergyToday     = (Modbus.getResponseBuffer(26) << 16) + Modbus.getResponseBuffer(27);
       _Data.u32EnergyTotal     = (Modbus.getResponseBuffer(28) << 16) + Modbus.getResponseBuffer(29);
       _Data.u32OperatingTime   = (Modbus.getResponseBuffer(30) << 16) + Modbus.getResponseBuffer(31);
-      _Data.u16Temperaure      =  Modbus.getResponseBuffer(32);
+      _Data.u16Temperature     =  Modbus.getResponseBuffer(32);
   
       return true;
     }else{
@@ -101,7 +101,7 @@ bool Growatt::UpdateData()
   
     if (res == Modbus.ku8MBSuccess)
     {
-      _Data.u16Temperaure      =  Modbus.getResponseBuffer(0);
+      _Data.u16Temperature      =  Modbus.getResponseBuffer(0);
       return true;
     }else{
       return false;
@@ -208,7 +208,7 @@ uint32 Growatt::GetOperatingTime()
 // in 0.1 degree celsius
 float Growatt::GetInverterTemperature()
 {
-  return ((float)_Data.u16Temperaure)/10.0;
+  return ((float)_Data.u16Temperature)/10.0;
 }
 
 uint16_t Growatt::GetPwrLimit()
