@@ -469,6 +469,7 @@ void loop()
           }
         }
       }
+      u8RetryCounter = NUM_OF_RETRIES;
     }
 
     #if MQTT_SUPPORTED == 1
