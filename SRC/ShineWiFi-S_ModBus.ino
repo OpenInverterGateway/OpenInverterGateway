@@ -195,7 +195,7 @@ void InverterReconnect(void)
   #if ENABLE_WEB_DEBUG == 1
   if( Inverter.GetWiFiStickType() == ShineWiFi_S )
     WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
-  else if( Inverter.GetWiFiStickType() == ShineWiFi_S )
+  else if( Inverter.GetWiFiStickType() == ShineWiFi_X )
     WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
   else
     WEB_DEBUG_PRINT("Error: Undef. Stick")
