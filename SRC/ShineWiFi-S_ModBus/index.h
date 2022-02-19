@@ -39,6 +39,16 @@ copies or substantial portions of the Software. -->
 
 </body>
 <script>
+
+const d = new Date();
+let diff = d.getTimezoneOffset();
+
+Highcharts.setOptions({
+time: {
+timezoneOffset: diff
+}
+});
+
 var chartT = new Highcharts.Chart({
   chart:{ renderTo : 'chart-power' },
   title: { text: 'Power' },
