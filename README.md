@@ -62,6 +62,10 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 
 * The stick can ping an known IP. If there is no answer, the stick will try to reset the WiFi connection. (Disabled by default)
 
-## 2020-10-27 Update
+## 2021-10-27 Update
 * The automatic detection of the inverter can fail after sunrise. The stick powers up several minutes before the inverter. The detection will only take place directly after power on and will fail because the inverter is not running yet. If the stick can not identify the inverter, it will redo the detection every 2 minutes.
 * Debug messages can be read from `<ip>/debug`
+
+## 2022-02-18 Update
+* Graph will display the data with the timezone of the host pc (UTC was used before)
+* Moved the source to a folder which is named like the arduino project, because arduino IDE will otherwise not open the project
