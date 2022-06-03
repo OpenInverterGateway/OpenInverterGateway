@@ -11,6 +11,7 @@ Growatt::Growatt(void)
 }
 
 void Growatt::begin(Stream &serial)
+// Note that we do not need preTransmission and postTransmission callback functions, since the hardware is actually not using half-duplex RS-485
 {
   uint8_t res;
   uint32_t u32EnergyTotal;
@@ -139,6 +140,22 @@ bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value)
   else
     return false;
 }
+
+bool Growatt::ReadInputReg(uint16_t adr, uint16_t* result)
+{
+  uint8_t res;
+    
+  res = Modbus.readInputRegisters(adr, 1);
+  
+  if (res == Modbus.ku8MBSuccess)
+  {
+    *result = Modbus.getResponseBuffer(0);
+    return true;
+  }
+  else
+    return false;
+}
+
 
 eGrowattStatus_t Growatt::GetStatus()
 {
