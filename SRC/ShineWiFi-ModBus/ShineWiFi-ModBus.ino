@@ -84,6 +84,8 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 
 
+// Private configuration file with overrides to above configs that should be kept secret (passwords...)
+#include "PrivateConfig.h"
 
 // ---------------------------------------------------------------
 // User configuration area end
@@ -293,8 +295,10 @@ void SendPostSite(void)
                   "<form action=\"/postCommunicationModbus_p\" method=\"POST\">"
                   "<input type=\"text\" name=\"reg\" placeholder=\"RegDec\"></br>"
                   "<input type=\"text\" name=\"val\" placeholder=\"ValueDec(16Bit)\"></br>"
+                  "<input type=\"checkbox\" id=\"holding\" name=\"holding\" value=\"Holding\" checked>"
+                  "<label for=\"holding\"> Check: Holding Registers, Uncheck: Input Registers (readonly)</label></br>"
                   "<input type=\"checkbox\" id=\"rd\" name=\"rd\" value=\"Rd\" checked>"
-                  "<label for=\"rd\"> Read</label></br>"
+                  "<label for=\"rd\"> Check Read Registers, Uncheck: Write Value to Register</label></br>"
                   "<input type=\"submit\" value=\"Go\">"
                   "</form>");
 }
@@ -347,23 +351,44 @@ void handlePostData()
   }
   else
   {
-    if (httpServer.arg("rd") == "Rd")
+    if (httpServer.arg("rd") == "Holding") // Read/Write Holding Registers
     {
-      if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), & u16Tmp))
+      if (httpServer.arg("rd") == "Rd")
       {
-        sprintf(msg, "Read register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
-      } 
-      else 
+        if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), & u16Tmp))
+        {
+         sprintf(msg, "Read Holding register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+        } 
+        else 
+        {
+          sprintf(msg, "Read Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+       }
+      }
+      else
       {
-        sprintf(msg, "Read register %d impossible - not connected?", httpServer.arg("reg").toInt());
+        if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
+         sprintf(msg, "Wrote Holding Register %d to a value of %d!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+        else
+          sprintf(msg, "Did not write Holding Register %d to a value of %d - fault!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
       }
     }
-    else
+    else        // Read/Write Input Registers
     {
-      if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
-        sprintf(msg, "Wrote Register %d to a value of %d!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
-      else
-        sprintf(msg, "Did not write Register %d to a value of %d - fault!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+      if (httpServer.arg("rd") == "Rd")
+      {
+        if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), & u16Tmp))
+        {
+         sprintf(msg, "Read Input register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+        } 
+        else 
+        {
+          sprintf(msg, "Read Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+       }
+      }
+      else  
+      {
+        sprintf(msg, "Writeing Input register is not allowed");
+      }
     }
     httpServer.send(200, "text/plain", msg);
     return;
@@ -510,7 +535,9 @@ void CreateJson(char *Buffer)
       sprintf(Buffer, "%s  \"Status\": \"%d\",\r\n", Buffer, Inverter.GetStatus());
   }
   
+  sprintf(Buffer, "%s  \"DcPower\": %.1f,\r\n",         Buffer, Inverter.GetDcPower());
   sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetDcVoltage());
+  sprintf(Buffer, "%s  \"DcInputCurrent\": %.1f,\r\n",  Buffer, Inverter.GetDcInputCurrent());
   sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",          Buffer, Inverter.GetAcFrequency());
   sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetAcVoltage());
   sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",         Buffer, Inverter.GetAcPower());
@@ -525,7 +552,9 @@ void CreateJson(char *Buffer)
   #warning simulating the inverter
   sprintf(Buffer, "{\r\n");
   sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",     Buffer);
+  sprintf(Buffer, "%s  \"DcPower\": \"230\",\r\n",       Buffer);
   sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",        Buffer);
+  sprintf(Buffer, "%s  \"DcInputCurrent\": 8.5,\r\n",    Buffer);
   sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",          Buffer);
   sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",       Buffer);
   sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",          Buffer);
