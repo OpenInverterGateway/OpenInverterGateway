@@ -3,10 +3,7 @@ Firmware replacement for Growatt ShineWiFi-S (serial) and ShineWiFi-X (USB)
 
 This arduino sketch will replace the original firmware of the Growatt ShineWiFi stick.
 
-This is the fork by BeoQ, to test local improvments
-it is based on the work from Otti: https://github.com/otti/Growatt_ShineWiFi-S
-His original README is here: README_otti.md
-Otti's work was based on Jethro Kairys work on the Modbus interface
+This project is based on Jethro Kairys work on the Modbus interface
 https://github.com/jkairys/growatt-esp8266
 
 
