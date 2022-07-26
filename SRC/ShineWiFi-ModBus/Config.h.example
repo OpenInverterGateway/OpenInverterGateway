@@ -1,0 +1,39 @@
+// Setting this define to 0 will disable the MQTT functionality
+#define MQTT_SUPPORTED 1
+
+// Setting this define to 1 will ping the default gateway periodically 
+// if the ping is not successful, the wifi connection will be reestablished
+#define PINGER_SUPPORTED 0
+
+// Setting this define to 1 will enable the debug output via the serial port.
+// The serial port is the same used for the communication to the inverter.
+// Enabling this feature can cause problems with the inverter communication!
+// For ShineWiFi-S everything seems to work perfect even though this flag is set
+#define ENABLE_DEBUG_OUTPUT 1
+
+// Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
+#define ENABLE_WEB_DEBUG 0
+
+
+// Setting this flag to 1 will simulate the inverter
+// This could be helpful if it is night and the inverter is not working or
+// during development where the stick is not connected to the inverter
+#define SIMULATE_INVERTER 0
+
+// Data of the Wifi access point
+#define WIFI_SSID         "<WIFI_SSID>"
+#define WIFI_PASSWORD     "<WIFI_PASSWORD>"
+#define HOSTNAME          "Growatt"
+
+// Username and password for firmware update
+#define UPDATE_USER       "<UDATE_USER>"
+#define UPDATE_PASSWORD   "<UPDATE_PASSWORD>"
+
+#if MQTT_SUPPORTED == 1 
+#define MQTT_SERVER       "<MQTT_SERVER_IP>"
+#define MQTT_TOPIC        "<MyTopic>"
+#endif
+
+#if PINGER_SUPPORTED == 1
+#define GATEWAY_IP IPAddress(192, 168, 178, 1)
+#endif

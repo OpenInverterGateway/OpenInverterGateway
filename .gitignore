@@ -1,3 +1,5 @@
 Libs/
 *.bak
 *.obj
+
+SRC/ShineWiFi-ModBus/Config.h
