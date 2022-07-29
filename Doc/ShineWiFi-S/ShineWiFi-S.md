@@ -27,14 +27,14 @@ The PCB is equipped with the follwing major functional parts
 * WiFi Antenna wire on IPEX connector
 
 
-There is an unpopulated connector CN1
-1       3V3
-2       GND
-3       RX0
-4       TX0
-5       ?
-6       GPIO0
-7       GND
+There is an unpopulated connector CN1  
+1: 3V3  
+2: GND  
+3: RX0  
+4: TX0  
+5: ?  
+6: GPIO0  
+7: GND  
 
 
 ### Modbus Communication
@@ -43,7 +43,7 @@ Then, the ShineWiFi-S is the Mobus master, while the inverter responds to Modbus
 
 Modbus Protocol description v3.05 dated 2013 seems to be applicable.
 
-It uses Modbus command 0x03 (Read Input Registers) for all the volatile information (i.e voltages, power, ...)
+It uses Modbus command 0x03 (Read Input Registers) for all the volatile information (i.e voltages, power, ...)  
 It uses Modbus command 0x04 (Read Holding Registers) for static information (i.e. capabilities, firmware version, ...)
 
 
@@ -67,4 +67,4 @@ Aadd a 1k resistor between the output of the SW1 and GPIO0. So it is possible to
 
 
 Updating an already installed firware is very easy using OTA built into the Stick's webserver:
-Use: http://<ip>/firmware
+Use: http://&lt;ip&gt;/firmware
