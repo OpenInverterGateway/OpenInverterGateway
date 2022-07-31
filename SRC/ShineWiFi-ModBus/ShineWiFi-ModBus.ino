@@ -116,16 +116,19 @@ ESP8266HTTPUpdateServer httpUpdater;
 WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
+WiFiManagerParameter* custom_mqtt_topic = NULL;
 WiFiManagerParameter* custom_mqtt_user = NULL;
 WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
 const static char* serverfile = "mqtts";
 const static char* portfile = "mqttp";
+const static char* topicfile = "mqttt";
 const static char* userfile = "mqttu";
 const static char* secretfile = "mqttw";
 
 String mqttserver = "";
 String mqttport = "";
+String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
@@ -211,13 +214,14 @@ bool MqttReconnect()
         #if ENABLE_DEBUG_OUTPUT == 1
             Serial.print("MqttServer: "); Serial.println(mqttserver);
             Serial.print("MqttUser: "); Serial.println(mqttuser);
+            Serial.print("MqttTopic: "); Serial.println(mqtttopic);
             Serial.print("Attempting MQTT connection...");
         #endif
 
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect("GrowattWL", mqttuser.c_str(), mqttpwd.c_str(), MQTT_TOPIC, 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect("GrowattWL", mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -279,6 +283,9 @@ void saveParamCallback()
 
     mqttport = custom_mqtt_port->getValue();
     write_to_file(portfile, mqttport);
+    
+    mqtttopic = custom_mqtt_topic->getValue();
+    write_to_file(topicfile, mqtttopic);
 
     mqttuser = custom_mqtt_user->getValue();
     write_to_file(userfile, mqttuser);
@@ -303,6 +310,7 @@ void setup()
     LittleFS.begin();
     mqttserver = load_from_file(serverfile, "10.1.2.3");
     mqttport = load_from_file(portfile, "1883");
+    mqtttopic = load_from_file(topicfile, "energy/solar");
     mqttuser = load_from_file(userfile, "");
     mqttpwd = load_from_file(secretfile, "");
 
@@ -312,11 +320,13 @@ void setup()
     #if MQTT_SUPPORTED == 1
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
         custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
+        custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
         custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttuser.c_str(), 40);
         custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttpwd.c_str(), 40);
 
         wm.addParameter(custom_mqtt_server);
         wm.addParameter(custom_mqtt_port);
+        wm.addParameter(custom_mqtt_topic);
         wm.addParameter(custom_mqtt_user);
         wm.addParameter(custom_mqtt_pwd);
         wm.setSaveParamsCallback(saveParamCallback);
@@ -360,6 +370,7 @@ void setup()
         #if ENABLE_DEBUG_OUTPUT == 1     
             Serial.print(F("MqttServer: ")); Serial.println(mqttserver);
             Serial.print(F("MqttPort: ")); Serial.println(port);
+            Serial.print(F("MqttTopic: ")); Serial.println(mqtttopic);
         #endif
         MqttClient.setServer(mqttserver.c_str(), port);
     #endif
@@ -616,7 +627,7 @@ void loop()
                     CreateJson(JsonString);
 
                     #if MQTT_SUPPORTED == 1 
-                        MqttClient.publish(MQTT_TOPIC, JsonString, true);
+                        MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                     #endif      
 
                     // if we got data, calculate the accumulated energy
@@ -640,7 +651,7 @@ void loop()
                         WEB_DEBUG_PRINT("Retry counter\n")
                         sprintf(JsonString, "{\"Status\": \"Disconnected\" }");
                         #if MQTT_SUPPORTED == 1 
-                            MqttClient.publish(MQTT_TOPIC, JsonString, true);
+                            MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
                     }

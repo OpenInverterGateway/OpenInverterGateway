@@ -17,6 +17,7 @@ Implemented Features:
 * It supports convenient OTA firmware update (`http://<ip>/firmware`)
 * It supports basic access to arbitrary modbus data
 * It tries to autodected which protocol version to use
+* Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
 
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards..
@@ -136,4 +137,7 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 * Export already-implemented DcPower and DcInputCurrent values
 * Extend RW-Modbus Webpage to also read Input Registers
 * Prepare sGrowattData for additional Registers
+
+## 2022-07-31 Update
+* Wifi manager added. Thanks to @roel80
 

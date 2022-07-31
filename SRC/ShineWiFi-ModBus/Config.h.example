@@ -24,16 +24,14 @@
 #define SIMULATE_INVERTER 0
 
 // Data of the Wifi access point
+// Default IP 192.168.4.1
+// Hold down the Button for a few seconds to enter Access Point mode
 #define HOSTNAME          "Growatt"
 #define APPassword        "growsolar"
 
 // Username and password for firmware update
 #define UPDATE_USER       "admin"
 #define UPDATE_PASSWORD   "admin"
-
-#if MQTT_SUPPORTED == 1 
-#define MQTT_TOPIC        "energy/solar"
-#endif
 
 #if PINGER_SUPPORTED == 1
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)
