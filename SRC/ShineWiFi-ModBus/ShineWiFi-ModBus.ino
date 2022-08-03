@@ -469,7 +469,7 @@ void handlePostData()
     }
     else
     {
-        if (httpServer.arg("rd") == "Holding") // Read/Write Holding Registers
+        if (httpServer.arg("holding") == "Holding") // Read/Write Holding Registers
         {
             if (httpServer.arg("rd") == "Rd")
             {
@@ -505,7 +505,7 @@ void handlePostData()
             }
             else
             {
-                sprintf(msg, "Writeing Input register is not allowed");
+                sprintf(msg, "Writing Input register is not allowed");
             }
         }
         httpServer.send(200, "text/plain", msg);
