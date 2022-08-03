@@ -33,6 +33,13 @@
 #define UPDATE_USER       "admin"
 #define UPDATE_PASSWORD   "admin"
 
+// Define a condition for starting the Wifi Manager
+// On Growatt devices the Pushbutton is connected to the ADC Pin (A0) and pulled to GND when pressed
+#define AP_BUTTON_PRESSED ( analogRead(A0) < 50 )
+// For generic EPS8622 boards you can use a digital pin of your choice
+// #define AP_BUTTON_PRESSED ( digitalRead(1) == HIGH )
+
+
 #if PINGER_SUPPORTED == 1
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif

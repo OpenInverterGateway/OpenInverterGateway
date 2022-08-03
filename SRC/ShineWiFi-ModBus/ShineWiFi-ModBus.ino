@@ -530,12 +530,12 @@ void loop()
     if ((now - TimerButtonms) > 500)
     {
         TimerButtonms = now;
-        int adcValue = analogRead(BUTTON);
-        if (adcValue < 50)
+
+        if( AP_BUTTON_PRESSED )
         {
             if (btnPressed > 5)
             {
-                #if ENABLE_DEBUG_OUTPUT == 1     
+                #if ENABLE_DEBUG_OUTPUT == 1
                     Serial.println("Handle press");
                 #endif
                 StartedConfigAfterBoot = true;
@@ -544,10 +544,8 @@ void loop()
             {
                 btnPressed++;
             }
-            int adcValue = analogRead(BUTTON);
-            #if ENABLE_DEBUG_OUTPUT == 1     
-                Serial.print("Btn pressed: ");
-                Serial.println(adcValue);
+            #if ENABLE_DEBUG_OUTPUT == 1
+                Serial.print("Btn pressed");
             #endif
         }
         else
@@ -560,7 +558,7 @@ void loop()
     {
         digitalWrite(LED_BL, 1);
         httpServer.stop();
-        #if ENABLE_DEBUG_OUTPUT == 1     
+        #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println("Config after boot started");
         #endif
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
