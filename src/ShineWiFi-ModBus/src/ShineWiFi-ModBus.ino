@@ -1,45 +1,4 @@
 /*
-Datei -> Voreinstellungen -> Zusaetzliche Boardverwalter-URLs -> "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-Werkzeuge -> Board -> Boardverwalter -> ESP8266
-
-Used Libs
-----------
-
-Donwload WifiManager from
-https://github.com/tzapu/WiFiManager
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
-
-The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
-    GrowattConfig
-using password:
-    growsolar
-
-When button is pressed on PCB, the configuration portal AP will also be loaded.
-
-Download MQTT Client from
-https://github.com/knolleary/pubsubclient
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
-
-Download ModbusMaster by Doc Walker
-
-Board: Generic ESP8266 Module
-Flash Mode: DIO
-Cristal Freq:: 26 MHz
-Flash Freq: 40 MHz
-Upload Using: Serial
-CPU Freq: 80 MHz
-Flash Size: 4 MB (FS:1MB OTA~1019KB)
-UploadSpeed: 115200
-
-Thanks to Jethro Kairys
-https://github.com/jkairys/growatt-esp8266
-
-File -> "Show verbose output during:" "compilation".
-This will show the path to the binary during compilation
-e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
-
-
-2019-10-16
 */
 // ---------------------------------------------------------------
 // User configuration area start
@@ -49,6 +8,9 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // Rename the Config.h.example from the repo to Config.h and add all your config data to it
 // The Config.h has been added to the .gitignore, so that your secrets will be kept
 #include "Config.h"
+#include <ESP8266WiFi.h>          // Wifi connection
+#include <ESP8266WebServer.h>     // Web server for general HTTP response
+#include <WiFiUdp.h>
 
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
