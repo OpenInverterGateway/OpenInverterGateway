@@ -121,11 +121,11 @@ WiFiManagerParameter* custom_mqtt_topic = NULL;
 WiFiManagerParameter* custom_mqtt_user = NULL;
 WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-const static char* serverfile = "mqtts";
-const static char* portfile = "mqttp";
-const static char* topicfile = "mqttt";
-const static char* userfile = "mqttu";
-const static char* secretfile = "mqttw";
+const static char* serverfile = "/mqtts";
+const static char* portfile = "/mqttp";
+const static char* topicfile = "/mqttt";
+const static char* userfile = "/mqttu";
+const static char* secretfile = "/mqttw";
 
 String mqttserver = "";
 String mqttport = "";
@@ -306,14 +306,20 @@ void setup()
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
 
+    #if ENABLE_DEBUG_OUTPUT == 1     
+        Serial.begin(115200);
+        Serial.println(F("Setup()"));
+    #endif
     WEB_DEBUG_PRINT("Setup()")
 
     LittleFS.begin();
-    mqttserver = load_from_file(serverfile, "10.1.2.3");
-    mqttport = load_from_file(portfile, "1883");
-    mqtttopic = load_from_file(topicfile, "energy/solar");
-    mqttuser = load_from_file(userfile, "");
-    mqttpwd = load_from_file(secretfile, "");
+    #if MQTT_SUPPORTED == 1 
+        mqttserver = load_from_file(serverfile, "10.1.2.3");
+        mqttport = load_from_file(portfile, "1883");
+        mqtttopic = load_from_file(topicfile, "energy/solar");
+        mqttuser = load_from_file(userfile, "");
+        mqttpwd = load_from_file(secretfile, "");
+    #endif
 
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
