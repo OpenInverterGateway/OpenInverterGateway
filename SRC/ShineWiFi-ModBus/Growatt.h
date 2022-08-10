@@ -151,7 +151,7 @@ class Growatt
     float            GetAcPower();
     float            GetEnergyToday();
     float            GetEnergyTotal();
-    uint32           GetOperatingTime();
+    uint32_t         GetOperatingTime();
     float            GetInverterTemperature();
     uint16_t         GetPwrLimit();
     uint16_t         GetEnExportLimit();
