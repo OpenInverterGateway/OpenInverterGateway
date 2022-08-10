@@ -63,7 +63,9 @@ uint16_t u16WebMsgNo = 0;
 // ---------------------------------------------------------------
 
 #include "LittleFS.h"
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
+#include <WebServer.h>
+
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
@@ -76,7 +78,6 @@ uint16_t u16WebMsgNo = 0;
 #endif
 
 #include "Growatt.h"
-#include <ESP8266HTTPUpdateServer.h>
 bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
@@ -111,8 +112,8 @@ PubSubClient MqttClient(espClient);
 long previousConnectTryMillis = 0;
 #endif
 Growatt      Inverter;
-ESP8266WebServer httpServer(80);
-ESP8266HTTPUpdateServer httpUpdater;
+WebServer httpServer(80);
+//ESP8266HTTPUpdateServer httpUpdater;
 WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
@@ -386,7 +387,7 @@ void setup()
 
     InverterReconnect();
 
-    httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+    //httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
     httpServer.begin();
 }
 

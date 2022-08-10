@@ -251,7 +251,7 @@ float Growatt::GetEnergyTotal()
 }
 
 // in 0.1 s
-uint32 Growatt::GetOperatingTime()
+uint32_t Growatt::GetOperatingTime()
 {
   return _Data.u32OperatingTime/2;
 }
