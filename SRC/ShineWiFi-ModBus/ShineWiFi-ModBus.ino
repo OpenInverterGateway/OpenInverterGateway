@@ -49,6 +49,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // Rename the Config.h.example from the repo to Config.h and add all your config data to it
 // The Config.h has been added to the .gitignore, so that your secrets will be kept
 #include "Config.h"
+#include <ESPHTTPUpdateServer.h>
 
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
@@ -92,7 +93,6 @@ bool StartedConfigAfterBoot = false;
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
-#define BUTTON A0 // GPIOA0 / ADC
 byte btnPressed = 0;
 
 #define NUM_OF_RETRIES 5
@@ -113,7 +113,7 @@ long previousConnectTryMillis = 0;
 #endif
 Growatt      Inverter;
 WebServer httpServer(80);
-//ESP8266HTTPUpdateServer httpUpdater;
+ESPHTTPUpdateServer httpUpdater;
 WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
@@ -305,6 +305,7 @@ void setup()
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
+    pinMode(AP_BUTTON_PIN, INPUT);
 
     #if ENABLE_DEBUG_OUTPUT == 1     
         Serial.begin(115200);
@@ -371,7 +372,7 @@ void setup()
     }
 
     #if MQTT_SUPPORTED == 1
-        uint16 port = mqttport.toInt();
+        uint16_t port = mqttport.toInt();
         if (port == 0)
             port = 1883;
         #if ENABLE_DEBUG_OUTPUT == 1
@@ -393,7 +394,7 @@ void setup()
 
     InverterReconnect();
 
-    //httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+    httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
     httpServer.begin();
 }
 
@@ -584,6 +585,7 @@ void loop()
             {
                 #if ENABLE_DEBUG_OUTPUT == 1
                     Serial.println("Handle press");
+
                 #endif
                 StartedConfigAfterBoot = true;
             }
@@ -594,6 +596,7 @@ void loop()
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.print("Btn pressed");
             #endif
+                    
         }
         else
         {
@@ -667,7 +670,7 @@ void loop()
                 #endif
                 {
                     WEB_DEBUG_PRINT("UpdateData() successful")
-                        u16PacketCnt++;
+                    u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
                     CreateJson(JsonString);
 
