@@ -41,6 +41,15 @@
 // For generic EPS8622 boards you can use a digital pin of your choice
 // #define AP_BUTTON_PRESSED ( digitalRead(1) == HIGH )
 
+// Timer definitions:
+//    REFRESH_TIMER: Modbus polling rate [ms]
+//    RETRY_TIMER: Determines the time between reconnection [ms]
+//    LED_TIMER: Led blinking rate [ms]
+//    BUTTON_TIMER: enter config mode after 5*BUTTON_TIMER [ms]
+#define REFRESH_TIMER 5000 // 5s default
+#define WIFI_RETRY_TIMER 120000 // 120s default
+#define LED_TIMER 500 //  0.5s default
+#define BUTTON_TIMER 500 //  0.5s default
 
 #if PINGER_SUPPORTED == 1
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)

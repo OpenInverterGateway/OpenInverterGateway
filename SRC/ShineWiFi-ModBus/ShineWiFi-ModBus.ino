@@ -556,10 +556,10 @@ void handlePostData()
 // -------------------------------------------------------
 // Main loop
 // -------------------------------------------------------
-long TimerButtonms = 0;
-long Timer500ms = 0;
-long Timer5s = 0;
-long Timer2m = 0;
+long ButtonTimer = 0;
+long LEDTimer = 0;
+long RefreshTimer = 0;
+long WifiRetryTimer = 0;
 
 void loop()
 {
@@ -567,9 +567,9 @@ void loop()
     long lTemp;
     char readoutSucceeded;
 
-    if ((now - TimerButtonms) > 500)
+    if ((now - ButtonTimer) > BUTTON_TIMER)
     {
-        TimerButtonms = now;
+        ButtonTimer = now;
 
         if( AP_BUTTON_PRESSED )
         {
@@ -621,28 +621,28 @@ void loop()
 
     // Toggle green LED with 1 Hz (alive)
     // ------------------------------------------------------------
-    if ((now - Timer500ms) > 500)
+    if ((now - LEDTimer) > LED_TIMER)
     {
         if (WiFi.status() == WL_CONNECTED)
             digitalWrite(LED_GN, !digitalRead(LED_GN));
         else
             digitalWrite(LED_GN, 0);
 
-        Timer500ms = now;
+        LEDTimer = now;
     }
 
     // InverterReconnect() takes a long time --> wifi will crash
     // Do it only every two minutes
-    if ((now - Timer2m) > (1000 * 60 * 2))
+    if ((now - WifiRetryTimer) > WIFI_RETRY_TIMER)
     {
         if (Inverter.GetWiFiStickType() == Undef_stick)
             InverterReconnect();
-        Timer2m = now;
+        WifiRetryTimer = now;
     }
 
-    // Read Inverter every 5 s
+    // Read Inverter every REFRESH_TIMER ms [defined in config.h]
     // ------------------------------------------------------------
-    if ((now - Timer5s) > 5000)
+    if ((now - RefreshTimer) > REFRESH_TIMER)
     {
         #if MQTT_SUPPORTED == 1
         if (MqttClient.connected() && (WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
@@ -669,7 +669,7 @@ void loop()
                     #endif
 
                     // if we got data, calculate the accumulated energy
-                    lTemp = (now - Timer5s) * Inverter.GetAcPower();      // we now get an increment in milliWattSeconds
+                    lTemp = (now - RefreshTimer) * Inverter.GetAcPower(); // we now get an increment in milliWattSeconds
                     lTemp /= 1000;                                        // WattSeconds
                     lAccumulatedEnergy += lTemp;                          // WattSeconds
 
@@ -711,7 +711,7 @@ void loop()
                 WiFi.disconnect();
         #endif
 
-        Timer5s = now;
+        RefreshTimer = now;
     }
 }
 
