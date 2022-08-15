@@ -67,7 +67,7 @@ uint16_t u16WebMsgNo = 0;
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
-#if MQTT_MAX_PACKET_SIZE < 512 
+#if MQTT_MAX_PACKET_SIZE < 512
 #error change MQTT_MAX_PACKET_SIZE to 512
 // C:\Users\<user>\Documents\Arduino\libraries\pubsubclient-master\src\PubSubClient.h
 #endif
@@ -106,7 +106,7 @@ Pinger pinger;
 #endif
 
 WiFiClient   espClient;
-#if MQTT_SUPPORTED == 1 
+#if MQTT_SUPPORTED == 1
 PubSubClient MqttClient(espClient);
 long previousConnectTryMillis = 0;
 #endif
@@ -194,7 +194,7 @@ void InverterReconnect(void)
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-#if MQTT_SUPPORTED == 1 
+#if MQTT_SUPPORTED == 1
 bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
@@ -283,7 +283,7 @@ void saveParamCallback()
 
     mqttport = custom_mqtt_port->getValue();
     write_to_file(portfile, mqttport);
-    
+
     mqtttopic = custom_mqtt_topic->getValue();
     write_to_file(topicfile, mqtttopic);
 
@@ -315,7 +315,7 @@ void setup()
     mqttpwd = load_from_file(secretfile, "");
 
     WiFi.hostname(HOSTNAME);
-    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP    
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     #if MQTT_SUPPORTED == 1
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
@@ -333,18 +333,18 @@ void setup()
 
         std::vector<const char*> menu = { "wifi","wifinoscan","param","sep","erase","restart" };
         wm.setMenu(menu); // custom menu, pass vector
-    #endif    
+    #endif
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    // Automatically connect using saved credentials,   // 
+    // Automatically connect using saved credentials,   //
     // if connection fails, it starts an access point with the specified name ( "GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
     if (!res)
     {
-        #if ENABLE_DEBUG_OUTPUT == 1     
+        #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println(F("Failed to connect"));
         #endif
         ESP.restart();
@@ -352,8 +352,8 @@ void setup()
     else
     {
         digitalWrite(LED_BL, 0);
-        #if ENABLE_DEBUG_OUTPUT == 1     
-            //if you get here you have connected to the WiFi    
+        #if ENABLE_DEBUG_OUTPUT == 1
+            //if you get here you have connected to the WiFi
             Serial.println(F("connected...yeey :)"));
         #endif
     }
@@ -367,7 +367,7 @@ void setup()
         uint16 port = mqttport.toInt();
         if (port == 0)
             port = 1883;
-        #if ENABLE_DEBUG_OUTPUT == 1     
+        #if ENABLE_DEBUG_OUTPUT == 1
             Serial.print(F("MqttServer: ")); Serial.println(mqttserver);
             Serial.print(F("MqttPort: ")); Serial.println(port);
             Serial.print(F("MqttTopic: ")); Serial.println(mqtttopic);
@@ -411,12 +411,11 @@ void SendPostSite(void)
 {
     httpServer.send(200, "text/html",
         "<form action=\"/postCommunicationModbus_p\" method=\"POST\">"
-        "<input type=\"text\" name=\"reg\" placeholder=\"RegDec\"></br>"
-        "<input type=\"text\" name=\"val\" placeholder=\"ValueDec(16Bit)\"></br>"
-        "<input type=\"checkbox\" id=\"holding\" name=\"holding\" value=\"Holding\" checked>"
-        "<label for=\"holding\"> Check: Holding Registers, Uncheck: Input Registers (readonly)</label></br>"
-        "<input type=\"checkbox\" id=\"rd\" name=\"rd\" value=\"Rd\" checked>"
-        "<label for=\"rd\"> Check Read Registers, Uncheck: Write Value to Register</label></br>"
+        "<input type=\"text\" name=\"reg\" placeholder=\"Register ID\"></br>"
+        "<input type=\"text\" name=\"val\" placeholder=\"Input Value (16bit only!)\"></br>"
+        "<select name=\"type\"><option value=\"16b\" selected>16b</option><option value=\"32b\">32b</option></select></br>"
+        "<select name=\"operation\"><option value=\"R\" selected>Read</option><option value=\"W\">Write</option></select></br>"
+        "<select name=\"registerType\"><option value=\"I\" selected>Input Register</option><option value=\"H\">Holding Register</option></select></br>"
         "<input type=\"submit\" value=\"Go\">"
         "</form>");
 }
@@ -457,11 +456,12 @@ void handlePostData()
 {
     char* msg;
     uint16_t u16Tmp;
+    uint32_t u32Tmp;
 
     msg = JsonString;
     msg[0] = 0;
 
-    if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
+    if (!httpServer.hasArg("reg"))
     {
         // If the POST request doesn't have data
         httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
@@ -469,45 +469,85 @@ void handlePostData()
     }
     else
     {
-        if (httpServer.arg("holding") == "Holding") // Read/Write Holding Registers
+        if (httpServer.arg("operation") == "R")
         {
-            if (httpServer.arg("rd") == "Rd")
+            if (httpServer.arg("registerType") == "I")
             {
-                if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                if (httpServer.arg("type") == "16b")
                 {
-                    sprintf(msg, "Read Holding register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                    if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                    {
+                        sprintf(msg, "Read 16b Input register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
                 }
                 else
                 {
-                    sprintf(msg, "Read Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u32Tmp))
+                    {
+                        sprintf(msg, "Read 32b Input register %d with value %d", httpServer.arg("reg").toInt(), u32Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 32b Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
                 }
             }
             else
             {
-                if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
-                    sprintf(msg, "Wrote Holding Register %d to a value of %d!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
-                else
-                    sprintf(msg, "Did not write Holding Register %d to a value of %d - fault!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
-            }
-        }
-        else        // Read/Write Input Registers
-        {
-            if (httpServer.arg("rd") == "Rd")
-            {
-                if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                if (httpServer.arg("type") == "16b")
                 {
-                    sprintf(msg, "Read Input register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                    if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                    {
+                        sprintf(msg, "Read 16b Holding register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
                 }
                 else
                 {
-                    sprintf(msg, "Read Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u32Tmp))
+                    {
+                        sprintf(msg, "Read 32b Holding register %d with value %d", httpServer.arg("reg").toInt(), u32Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 32b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (httpServer.arg("registerType") == "H")
+            {
+                if (httpServer.arg("type") == "16b")
+                {
+                    if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
+                    {
+                        sprintf(msg, "Wrote Holding Register %d to a value of %d!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+                else
+                {
+                    sprintf(msg, "Writing to double (32b) registers not supported");
                 }
             }
             else
             {
-                sprintf(msg, "Writing Input register is not allowed");
+                sprintf(msg, "It is not possible to write into Input Registers");
             }
         }
+
         httpServer.send(200, "text/plain", msg);
         return;
     }
@@ -624,9 +664,9 @@ void loop()
                     u8RetryCounter = NUM_OF_RETRIES;
                     CreateJson(JsonString);
 
-                    #if MQTT_SUPPORTED == 1 
+                    #if MQTT_SUPPORTED == 1
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
-                    #endif      
+                    #endif
 
                     // if we got data, calculate the accumulated energy
                     lTemp = (now - Timer5s) * Inverter.GetAcPower();      // we now get an increment in milliWattSeconds
@@ -648,7 +688,7 @@ void loop()
                     {
                         WEB_DEBUG_PRINT("Retry counter\n")
                         sprintf(JsonString, "{\"Status\": \"Disconnected\" }");
-                        #if MQTT_SUPPORTED == 1 
+                        #if MQTT_SUPPORTED == 1
                             MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
@@ -686,7 +726,7 @@ void CreateJson(char *Buffer)
     case GwStatusWaiting:
       sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
       break;
-    case GwStatusNormal: 
+    case GwStatusNormal:
       sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
       break;
     case GwStatusFault:
@@ -695,7 +735,7 @@ void CreateJson(char *Buffer)
     default:
       sprintf(Buffer, "%s  \"Status\": \"%d\",\r\n", Buffer, Inverter.GetStatus());
   }
-  
+
   sprintf(Buffer, "%s  \"DcPower\": %.1f,\r\n",         Buffer, Inverter.GetDcPower());
   sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetDcVoltage());
   sprintf(Buffer, "%s  \"DcInputCurrent\": %.1f,\r\n",  Buffer, Inverter.GetDcInputCurrent());

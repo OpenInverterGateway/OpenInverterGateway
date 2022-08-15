@@ -31,13 +31,13 @@ typedef enum
 
 typedef struct
 {
-  /* 
+  /*
    *  Allocate the Fields we might use, taken from the Protocol descriptions; 
    *  add "simplified" Fileds for single Input/Output inverters and backwards compatibility, containing a copy of the data 
    *  Roughly in ascending order of its register numbering
    */
 
-  /* 
+  /*
    *  Data from Holding Registers
    *  Contains mostly static data (Type, Capability, SerialNo, Firmware version)
    *  some may be written to (e.g. Status On/Off, Maximum Power)
@@ -53,7 +53,7 @@ typedef struct
   char      cFirmwareVersion2[6];   // 3 Registers with 6 Bytes in ASCII
   char      cSerialNumber[10];      // 5 Registers with 10 Bytes in ASCII
   uint16_t  u16ComAddress;        // Modbus Address of the RS485 Communication Interface, 1..127, can be written to
-  
+
   // Some more protocol-specific Holding Registers
   char      ManufacturerInfo[16];   // 8 Registers with 16 Bytes on ASCII (Protocol v1.05) "   PV Inverter  "
   uint16_t  u16DeviceTypeCode;    // See Device Type Code List in Note &*6 in Protocol v1.05; not mentioned in v3.05, may be helpful in Device Autodetecton
@@ -67,11 +67,11 @@ typedef struct
    *  All are Read-Only
    *  Read them periodically
    */
-  eGrowattStatus_t  InverterStatus; 
+  eGrowattStatus_t  InverterStatus;
   uint32_t u32DcPower;            // in 0.1 W   Total Input Power of all PV Strings
   uint16_t u16DcVoltage;          // in 0.1 V   PV Input Voltage for Single-Input (use value from PV1)
   uint16_t u16DcInputCurrent;     // in 0.1 A   PV Input Current for Single-Input (use value from PV1)
-  
+
   // Protocol v3.05 and v1.05 define two PV inputs, on same registers:
   uint16_t u16PV1DcVoltage;       // in 0.1 V   PV Input 1 - Voltage
   uint16_t u16PV1DcInputCurrent;  // in 0.1 A   PV Input 1 - Current
@@ -79,7 +79,7 @@ typedef struct
   uint16_t u16PV2DcVoltage;       // in 0.1 V   PV Input 2 - Voltage
   uint16_t u16PV2DcInputCurrent;  // in 0.1 A   PV Input 2 - Current
   uint32_t u32PV2DcPower;         // in 0.1 W   PV Input 2 - Power
-  
+
   // Protocol v1.05 defines up to 8 PV Inputs:
   uint16_t u16PV3DcVoltage;       // in 0.1 V   PV Input 3 - Voltage
   uint16_t u16PV3DcInputCurrent;  // in 0.1 A   PV Input 3 - Current
@@ -135,9 +135,11 @@ class Growatt
     void begin(Stream &serial);
     bool UpdateData();
     bool ReadHoldingReg(uint16_t adr, uint16_t* result);
+    bool ReadHoldingReg(uint16_t adr, uint32_t* result);
     bool WriteHoldingReg(uint16_t adr, uint16_t value);
     bool ReadInputReg(uint16_t adr, uint16_t* result);
-   
+    bool ReadInputReg(uint16_t adr, uint32_t* result);
+
     eDevice_t        GetWiFiStickType();
     eGrowattStatus_t GetStatus();
     float            GetDcPower();
@@ -154,7 +156,7 @@ class Growatt
     uint16_t         GetPwrLimit();
     uint16_t         GetEnExportLimit();
     uint16_t         GetExportPwrLimit();
-    uint16_t         GetExportFaultLimit();    
+    uint16_t         GetExportFaultLimit();
   private:
     sGrowattData_t _Data;
     eDevice_t      _eDevice;

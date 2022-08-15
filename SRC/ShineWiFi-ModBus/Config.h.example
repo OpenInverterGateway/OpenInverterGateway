@@ -5,7 +5,7 @@
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
 
-// Setting this define to 1 will ping the default gateway periodically 
+// Setting this define to 1 will ping the default gateway periodically
 // if the ping is not successful, the wifi connection will be reestablished
 #define PINGER_SUPPORTED 0
 

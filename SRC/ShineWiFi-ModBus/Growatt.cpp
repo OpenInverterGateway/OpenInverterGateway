@@ -35,7 +35,7 @@ void Growatt::begin(Stream &serial)
     {
       _eDevice = ShineWiFi_X; // USB
     }
-  }  
+  }
 }
 
 bool Growatt::UpdateData()
@@ -45,7 +45,7 @@ bool Growatt::UpdateData()
   if( _eDevice == ShineWiFi_S ) // Serial
   {
     res = Modbus.readInputRegisters(0, 33);
-    
+
     if (res == Modbus.ku8MBSuccess)
     {
       _Data.InverterStatus     = (eGrowattStatus_t)Modbus.getResponseBuffer(0);
@@ -60,7 +60,7 @@ bool Growatt::UpdateData()
       _Data.u32EnergyTotal     = (Modbus.getResponseBuffer(28) << 16) + Modbus.getResponseBuffer(29);
       _Data.u32OperatingTime   = (Modbus.getResponseBuffer(30) << 16) + Modbus.getResponseBuffer(31);
       _Data.u16Temperature     =  Modbus.getResponseBuffer(32);
-  
+
       return true;
     }else{
       return false;
@@ -75,14 +75,14 @@ bool Growatt::UpdateData()
       _Data.u32DcPower         = (Modbus.getResponseBuffer(5) << 16) + Modbus.getResponseBuffer(6);
       _Data.u16DcVoltage       =  Modbus.getResponseBuffer(3);
       _Data.u16DcInputCurrent  =  Modbus.getResponseBuffer(4);
-   
+
       //return true;
     }else{
       return false;
     }
-    
+
     res = Modbus.readInputRegisters(30, 30);
-     
+
     if (res == Modbus.ku8MBSuccess)
     {
       _Data.u16AcFrequency     =  Modbus.getResponseBuffer(37-30);
@@ -92,14 +92,14 @@ bool Growatt::UpdateData()
       _Data.u32EnergyToday     = (Modbus.getResponseBuffer(53-30) << 16) + Modbus.getResponseBuffer(54-30);
       _Data.u32EnergyTotal     = (Modbus.getResponseBuffer(55-30) << 16) + Modbus.getResponseBuffer(56-30);
       _Data.u32OperatingTime   = (Modbus.getResponseBuffer(57-30) << 16) + Modbus.getResponseBuffer(58-30);
-   
+
       //return true;
     }else{
       return false;
     }
-    
+
     res = Modbus.readInputRegisters(3093, 1);
-  
+
     if (res == Modbus.ku8MBSuccess)
     {
       _Data.u16Temperature      =  Modbus.getResponseBuffer(0);
@@ -108,19 +108,34 @@ bool Growatt::UpdateData()
       return false;
     }
   }
-  
+
   return false;
 }
 
 bool Growatt::ReadHoldingReg(uint16_t adr, uint16_t* result)
 {
   uint8_t res;
-    
+
   res = Modbus.readHoldingRegisters(adr, 1);
-  
+
   if (res == Modbus.ku8MBSuccess)
   {
     *result = Modbus.getResponseBuffer(0);
+    return true;
+  }
+  else
+    return false;
+}
+
+bool Growatt::ReadHoldingReg(uint16_t adr, uint32_t* result)
+{
+  uint8_t res;
+
+  res = Modbus.readHoldingRegisters(adr, 2);
+
+  if (res == Modbus.ku8MBSuccess)
+  {
+    *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
     return true;
   }
   else
@@ -132,7 +147,7 @@ bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value)
   uint8_t res;
 
   res = Modbus.writeSingleRegister(adr, value);
-  
+
   if (res == Modbus.ku8MBSuccess)
   {
     return true;
@@ -144,9 +159,9 @@ bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value)
 bool Growatt::ReadInputReg(uint16_t adr, uint16_t* result)
 {
   uint8_t res;
-    
+
   res = Modbus.readInputRegisters(adr, 1);
-  
+
   if (res == Modbus.ku8MBSuccess)
   {
     *result = Modbus.getResponseBuffer(0);
@@ -156,6 +171,20 @@ bool Growatt::ReadInputReg(uint16_t adr, uint16_t* result)
     return false;
 }
 
+bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result)
+{
+  uint8_t res;
+
+  res = Modbus.readInputRegisters(adr, 2);
+
+  if (res == Modbus.ku8MBSuccess)
+  {
+    *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
+    return true;
+  }
+  else
+    return false;
+}
 
 eGrowattStatus_t Growatt::GetStatus()
 {
@@ -180,13 +209,13 @@ float Growatt::GetDcInputCurrent()
   return ((float)_Data.u16DcInputCurrent)/10.0;
 }
 
-// in 0.1 VA 
+// in 0.1 VA
 float Growatt::GetAcPower()
 {
   return ((float)_Data.u32AcPower)/10.0;
 }
 
-// in 0.01 Hz 
+// in 0.01 Hz
 float Growatt::GetAcFrequency()
 {
   return ((float)_Data.u16AcFrequency)/100.0;
