@@ -461,7 +461,7 @@ void handlePostData()
     msg = JsonString;
     msg[0] = 0;
 
-    if (!httpServer.hasArg("reg"))
+    if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
     {
         // If the POST request doesn't have data
         httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
