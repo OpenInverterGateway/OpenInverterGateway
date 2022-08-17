@@ -51,6 +51,14 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include "Config.h"
 #include <ESPHTTPUpdateServer.h>
 
+#define ESP_DRD_USE_LITTLEFS    true
+#define ESP_DRD_USE_EEPROM      false
+#define DRD_TIMEOUT             10
+#define DRD_ADDRESS             0
+#include <ESP_DoubleResetDetector.h> 
+
+DoubleResetDetector* drd;
+
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
 uint16_t u16WebMsgNo = 0;
@@ -304,16 +312,18 @@ void saveParamCallback()
 
 void setup()
 {
-    pinMode(LED_GN, OUTPUT);
-    pinMode(LED_RT, OUTPUT);
-    pinMode(LED_BL, OUTPUT);
-    pinMode(AP_BUTTON_PIN, INPUT);
-
     #if ENABLE_DEBUG_OUTPUT == 1     
         Serial.begin(115200);
         Serial.println(F("Setup()"));
     #endif
-    WEB_DEBUG_PRINT("Setup()")
+    WEB_DEBUG_PRINT("Setup()");
+    
+    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+
+    pinMode(LED_GN, OUTPUT);
+    pinMode(LED_RT, OUTPUT);
+    pinMode(LED_BL, OUTPUT);
+    pinMode(AP_BUTTON_PIN, INPUT);
 
     LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
     #if MQTT_SUPPORTED == 1 
@@ -323,6 +333,13 @@ void setup()
         mqttuser = load_from_file(userfile, "");
         mqttpwd = load_from_file(secretfile, "");
     #endif
+
+    if (drd->detectDoubleReset()) { 
+        #if ENABLE_DEBUG_OUTPUT == 1     
+            Serial.println(F("Double reset detected"));
+        #endif 
+        StartedConfigAfterBoot = true; 
+    }
 
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
@@ -572,6 +589,8 @@ long WifiRetryTimer = 0;
 
 void loop()
 {
+    drd->loop();
+
     long now = millis();
     long lTemp;
     char readoutSucceeded;
@@ -586,7 +605,6 @@ void loop()
             {
                 #if ENABLE_DEBUG_OUTPUT == 1
                     Serial.println("Handle press");
-
                 #endif
                 StartedConfigAfterBoot = true;
             }
