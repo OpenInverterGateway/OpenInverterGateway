@@ -707,7 +707,8 @@ void CreateJson(char *Buffer)
   sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",     Buffer, Inverter.GetOperatingTime());
   sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",     Buffer, Inverter.GetInverterTemperature());
   sprintf(Buffer, "%s  \"AccumulatedEnergy\": %d,\r\n", Buffer, lAccumulatedEnergy / 3600);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s  \"Cnt\": %u,\r\n",               Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s  \"Mac\": \"%s\"\r\n",            Buffer, WiFi.macAddress().c_str());
   sprintf(Buffer, "%s}\r\n", Buffer);
 #else
   #warning simulating the inverter
@@ -724,7 +725,8 @@ void CreateJson(char *Buffer)
   sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n",  Buffer);
   sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
   sprintf(Buffer, "%s  \"AccumulatedEnergy\": 320,\r\n", Buffer);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                 Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s  \"Cnt\": %u,\r\n",                Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s  \"Mac\": \"%s\"\r\n",             Buffer, WiFi.macAddress().c_str());
   sprintf(Buffer, "%s}", Buffer);
 #endif // SIMULATE_INVERTER
 }
