@@ -132,7 +132,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[MQTT_MAX_PACKET_SIZE] = strcat("{\"Status\": \"Disconnected\",\"Seraial\": \"",strcat(WiFi.macAddress(),"\"}")) ;
+char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"Status\": \"Disconnected\" }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
