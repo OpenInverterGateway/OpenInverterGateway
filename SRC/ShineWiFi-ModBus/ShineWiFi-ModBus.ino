@@ -221,7 +221,7 @@ bool MqttReconnect()
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect("GrowattWL", mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect(MQTT_ID, mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
