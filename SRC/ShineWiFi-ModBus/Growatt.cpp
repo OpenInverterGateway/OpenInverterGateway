@@ -1,6 +1,7 @@
 #include <ModbusMaster.h>
 
 #include "Growatt.h"
+#include "Config.h"
 
 ModbusMaster Modbus;
 
@@ -16,7 +17,11 @@ void Growatt::begin(Stream &serial)
   uint8_t res;
   uint32_t u32EnergyTotal;
 
-  _eDevice = Undef_stick;
+  #if SIMULATE_INVERTER == 1
+    _eDevice = SIMULATE_DEVICE;
+  #else
+    _eDevice = Undef_stick;
+  #endif
 
   Serial.begin(9600);
   Modbus.begin(1, serial);
