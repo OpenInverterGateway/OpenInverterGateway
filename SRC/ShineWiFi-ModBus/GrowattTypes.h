@@ -36,7 +36,6 @@ typedef enum {
     EPV1_TODAY, EPV1_TOTAL,
     EPV2_TODAY, EPV2_TOTAL,
     TEMP1, TEMP2, TEMP3,
-
 } SupportedModbusInputRegisters_t;
 
 typedef enum {
@@ -68,13 +67,11 @@ typedef struct {
   float multiplier;
   RegisterUnit_t unit;
   bool frontend;
-  bool writable;
 } sGrowattModbusReg_t;
 
 // Growatt limits maximal number of registers that can be polled
 // with a single read. Define reading frames using this. Can be nicer..
-typedef struct
-{
+typedef struct {
     uint16_t StartAddress;
     uint8_t FragmentSize;
 } sGrowattReadFragment_t;

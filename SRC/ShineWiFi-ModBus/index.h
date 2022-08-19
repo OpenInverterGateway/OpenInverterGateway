@@ -12,8 +12,8 @@ copies or substantial portions of the Software. -->
   <style>
     body {
       min-width: 310px;
-    	max-width: 800px;
-    	height: 400px;
+      max-width: 800px;
+      height: 400px;
       margin: 0 auto;
     }
     h2 {
@@ -27,14 +27,14 @@ copies or substantial portions of the Software. -->
   <h2>Growatt Inverter</h2>
   <div id="chart-power" class="container"></div>
 
-  
+
   <p id="AcPower"></p>
   <p id="EnergyToday"></p>
   <p id="EnergyTotal"></p>
   <p id="DcVoltage"></p>
-  <a href="./firmware">Firmware update</a> - 
-  <a href="./status">Json</a> - 
-  <a href="./debug">Log</a> - 
+  <a href="./firmware">Firmware update</a> -
+  <a href="./status">Json</a> -
+  <a href="./debug">Log</a> -
   <a href="./postCommunicationModbus">RW Modbus</a>
 
 </body>
@@ -73,17 +73,17 @@ var chartT = new Highcharts.Chart({
 
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() 
+  xhttp.onreadystatechange = function()
   {
-    if (this.readyState == 4 && this.status == 200) 
-	{
+    if (this.readyState == 4 && this.status == 200)
+  {
 
-	  var obj = JSON.parse(this.responseText);
-	  document.getElementById("AcPower").innerHTML = "Power: " + obj.AcPower + " W"; 
-	  document.getElementById("EnergyToday").innerHTML = "Today: " + obj.EnergyToday + " kWh"; 
-	  document.getElementById("EnergyTotal").innerHTML = "Total: " + obj.EnergyTotal + " kWh"; 
-	  document.getElementById("DcVoltage").innerHTML = "DC Voltage: " + obj.DcVoltage + " V"; 
-	
+    var obj = JSON.parse(this.responseText);
+    document.getElementById("AcPower").innerHTML = "Power: " + obj.AcPower + " W";
+    document.getElementById("EnergyToday").innerHTML = "Today: " + obj.EnergyToday + " kWh";
+    document.getElementById("EnergyTotal").innerHTML = "Total: " + obj.EnergyTotal + " kWh";
+    document.getElementById("DcVoltage").innerHTML = "DC Voltage: " + obj.DcVoltage + " V";
+
       var x = (new Date()).getTime(),
           y = obj.AcPower;
       console.log(this.responseText);

@@ -3,6 +3,7 @@
 #include "Growatt124.h"
 #include "GrowattTypes.h"
 #include "Growatt.h"
+#include "Config.h"
 
 
 ModbusMaster Modbus;
@@ -10,6 +11,7 @@ ModbusMaster Modbus;
 // Constructor
 Growatt::Growatt() {
   _eDevice = Undef_stick;
+  _PacketCnt = 0;
 }
 
 void Growatt::begin(Stream &serial, uint16_t version) {
@@ -56,6 +58,7 @@ eDevice_t Growatt::GetWiFiStickType() {
    * @brief After initialisation the type of the wifi stick is known
    * @returns eDevice_t type of the wifi stick
    */
+
   return _eDevice;
 }
 
@@ -75,32 +78,32 @@ bool Growatt::_ReadRegisterData(
   uint8_t res;
 
   // read each fragment separately
-  for (int i = 0; i < fragmentCount; i++) {
-    res = Modbus.readInputRegisters(
-      readFragments[i].StartAddress,
-      readFragments[i].FragmentSize
-    );
-    if(res == Modbus.ku8MBSuccess) {
-      for (int j = 0; j < readCount; j++) {
-        // make sure the register we try to read is in the fragment
-        if (registers[j].address >= readFragments[i].StartAddress) {
-          // when we exceed the fragment size, skip to new fragment
-          if (registers[j].address >= readFragments[i].StartAddress + readFragments[i].FragmentSize)
-            break;
-          // let's say the register address is 1013 and read window is 1000-1050
-          // that means the response in the buffer is on position 1013 - 1000 = 13
-          registerAddress = registers[j].address - readFragments[i].StartAddress;
-          if (registers[j].size == SIZE_16BIT) {
-            registers[j].value = Modbus.getResponseBuffer(registerAddress);
-          } else {
-            registers[j].value = Modbus.getResponseBuffer(registerAddress) << 16 + Modbus.getResponseBuffer(registerAddress + 1);
-          }
-        }
-      }
-    } else {
-      return false;
-    }
-  }
+  // for (int i = 0; i < fragmentCount; i++) {
+  //   res = Modbus.readInputRegisters(
+  //     readFragments[i].StartAddress,
+  //     readFragments[i].FragmentSize
+  //   );
+  //   if(res == Modbus.ku8MBSuccess) {
+  //     for (int j = 0; j < readCount; j++) {
+  //       // make sure the register we try to read is in the fragment
+  //       if (registers[j].address >= readFragments[i].StartAddress) {
+  //         // when we exceed the fragment size, skip to new fragment
+  //         if (registers[j].address >= readFragments[i].StartAddress + readFragments[i].FragmentSize)
+  //           break;
+  //         // let's say the register address is 1013 and read window is 1000-1050
+  //         // that means the response in the buffer is on position 1013 - 1000 = 13
+  //         registerAddress = registers[j].address - readFragments[i].StartAddress;
+  //         if (registers[j].size == SIZE_16BIT) {
+  //           registers[j].value = Modbus.getResponseBuffer(registerAddress);
+  //         } else {
+  //           registers[j].value = Modbus.getResponseBuffer(registerAddress) << 16 + Modbus.getResponseBuffer(registerAddress + 1);
+  //         }
+  //       }
+  //     }
+  //   } else {
+  //     return false;
+  //   }
+  // }
   _GotData = true;
   return true;
 }
@@ -116,13 +119,14 @@ bool Growatt::ReadData() {
     _Protocol.HoldingFragmentCount,
     _Protocol.HoldingReadFragments
     );
-  bool holding_res = _ReadRegisterData(
-    _Protocol.InputFragmentCount,
-    _Protocol.InputRegisters,
-    _Protocol.InputFragmentCount,
-    _Protocol.InputReadFragments
-  );
-  return input_res && holding_res;
+  // bool holding_res = _ReadRegisterData(
+  //   _Protocol.InputFragmentCount,
+  //   _Protocol.InputRegisters,
+  //   _Protocol.InputFragmentCount,
+  //   _Protocol.InputReadFragments
+  // );
+  _PacketCnt = _PacketCnt + 1;
+  return input_res;// && holding_res;
 }
 
 sGrowattModbusReg_t Growatt::GetInputRegister(SupportedModbusInputRegisters_t reg) {
@@ -240,8 +244,7 @@ float Growatt::GetAcPower() {
   return 1.0; //TODO!
 }
 
-void Growatt::CreateJson(char *Buffer)
-{
+void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   Buffer[0] = 0; // Terminate first byte
 
 #if SIMULATE_INVERTER != 1
@@ -265,11 +268,12 @@ void Growatt::CreateJson(char *Buffer)
       _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier
     );
   }
-  sprintf(Buffer, "%s}}\r\n", Buffer);
-
+  sprintf(Buffer, "%s}\r\n\"Mac\": \"%s\"\r\n", Buffer, MacAddress);
+  sprintf(Buffer, "%s\"Cnt\": %u,\r\n", Buffer, _PacketCnt);
+  sprintf(Buffer, "%s}", Buffer);
 #else
   #warning simulating the inverter
-  sprintf(Buffer, "{\r\n");
+  sprintf(Buffer, "{\r\n\"Input\": {\r\n");
   sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",     Buffer);
   sprintf(Buffer, "%s  \"DcPower\": \"230\",\r\n",       Buffer);
   sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",        Buffer);
@@ -282,7 +286,9 @@ void Growatt::CreateJson(char *Buffer)
   sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n",  Buffer);
   sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
   sprintf(Buffer, "%s  \"AccumulatedEnergy\": 320,\r\n", Buffer);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                 Buffer, u16PacketCnt);
+  sprintf(Buffer, "%s}\r\n\"Holding\": {}\r\n", Buffer);
+  sprintf(Buffer, "%s\"Cnt\": %u,\r\n",                  Buffer, _PacketCnt);
+  sprintf(Buffer, "%s\"Mac\": \"%s\"\r\n",               Buffer, MacAddress);
   sprintf(Buffer, "%s}", Buffer);
 #endif // SIMULATE_INVERTER
 }
