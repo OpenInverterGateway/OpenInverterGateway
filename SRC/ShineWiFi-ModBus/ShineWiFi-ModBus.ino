@@ -179,7 +179,7 @@ void WiFi_Reconnect()
 void InverterReconnect(void)
 {
     // Baudrate will be set here, depending on the version of the stick
-    Inverter.begin(Serial);
+    Inverter.begin(Serial, 124);
 
     #if ENABLE_WEB_DEBUG == 1
         if (Inverter.GetWiFiStickType() == ShineWiFi_S)
@@ -616,19 +616,19 @@ void loop()
                 #if SIMULATE_INVERTER == 1
                 if (1) // do it always
                 #else
-                if (Inverter.UpdateData()) // get new data from inverter
+                if (Inverter.ReadData()) // get new data from inverter
                 #endif
                 {
-                    WEB_DEBUG_PRINT("UpdateData() successful")
+                    WEB_DEBUG_PRINT("ReadData() successful")
                         u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
-                    CreateJson(JsonString);
+                    Inverter.CreateJson(JsonString);
 
                     #if MQTT_SUPPORTED == 1 
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
-                    #endif      
+                    #endif
 
-                    // if we got data, calculate the accumulated energy
+                    // if we got data, calculate the accumulated energy // TODO what is this????
                     lTemp = (now - Timer5s) * Inverter.GetAcPower();      // we now get an increment in milliWattSeconds
                     lTemp /= 1000;                                        // WattSeconds
                     lAccumulatedEnergy += lTemp;                          // WattSeconds
@@ -639,7 +639,7 @@ void loop()
                 }
                 else
                 {
-                    WEB_DEBUG_PRINT("UpdateData() NOT successful")
+                    WEB_DEBUG_PRINT("ReadData() NOT successful")
                     if (u8RetryCounter)
                     {
                         u8RetryCounter--;
@@ -675,56 +675,3 @@ void loop()
     }
 }
 
-void CreateJson(char *Buffer)
-{
-  Buffer[0] = 0; // Terminate first byte
-
-#if SIMULATE_INVERTER != 1
-  sprintf(Buffer, "{\r\n");
-  switch( Inverter.GetStatus() )
-  {
-    case GwStatusWaiting:
-      sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
-      break;
-    case GwStatusNormal: 
-      sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
-      break;
-    case GwStatusFault:
-      sprintf(Buffer, "%s  \"Status\": \"Fault\",\r\n", Buffer);
-      break;
-    default:
-      sprintf(Buffer, "%s  \"Status\": \"%d\",\r\n", Buffer, Inverter.GetStatus());
-  }
-  
-  sprintf(Buffer, "%s  \"DcPower\": %.1f,\r\n",         Buffer, Inverter.GetDcPower());
-  sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetDcVoltage());
-  sprintf(Buffer, "%s  \"DcInputCurrent\": %.1f,\r\n",  Buffer, Inverter.GetDcInputCurrent());
-  sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",          Buffer, Inverter.GetAcFrequency());
-  sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetAcVoltage());
-  sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",         Buffer, Inverter.GetAcPower());
-  sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",     Buffer, Inverter.GetEnergyToday());
-  sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",     Buffer, Inverter.GetEnergyTotal());
-  sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",     Buffer, Inverter.GetOperatingTime());
-  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",     Buffer, Inverter.GetInverterTemperature());
-  sprintf(Buffer, "%s  \"AccumulatedEnergy\": %d,\r\n", Buffer, lAccumulatedEnergy / 3600);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s}\r\n", Buffer);
-#else
-  #warning simulating the inverter
-  sprintf(Buffer, "{\r\n");
-  sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"DcPower\": \"230\",\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",        Buffer);
-  sprintf(Buffer, "%s  \"DcInputCurrent\": 8.5,\r\n",    Buffer);
-  sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",      Buffer);
-  sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n",  Buffer);
-  sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"AccumulatedEnergy\": 320,\r\n", Buffer);
-  sprintf(Buffer, "%s  \"Cnt\": %u\r\n",                 Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s}", Buffer);
-#endif // SIMULATE_INVERTER
-}
