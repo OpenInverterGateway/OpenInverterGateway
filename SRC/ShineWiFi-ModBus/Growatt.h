@@ -18,7 +18,7 @@ class Growatt {
     bool ReadHoldingReg(uint16_t adr, uint16_t* result);
     bool WriteHoldingReg(uint16_t adr, uint16_t value);
 
-    void CreateJson(char *Buffer, const char* MacAddress);
+    void CreateJson(char *Buffer, const char *MacAddress);
 
     eGrowattStatus_t GetStatus();
     float GetAcPower();

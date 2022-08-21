@@ -21,6 +21,7 @@ https://github.com/knolleary/pubsubclient
 Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
 
 Download ModbusMaster by Doc Walker
+Download ArduinoJson by Benoit Blanchon
 
 Board: Generic ESP8266 Module
 Flash Mode: DIO
@@ -132,7 +133,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"Status\": \"Disconnected\" }";
+char JsonString[4096] = "{\"Status\": \"Disconnected\" }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary

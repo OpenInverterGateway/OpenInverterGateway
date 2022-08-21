@@ -1,4 +1,5 @@
 #include <ModbusMaster.h>
+#include <ArduinoJson.h>
 
 #include "Growatt124.h"
 #include "GrowattTypes.h"
@@ -78,32 +79,32 @@ bool Growatt::_ReadRegisterData(
   uint8_t res;
 
   // read each fragment separately
-  // for (int i = 0; i < fragmentCount; i++) {
-  //   res = Modbus.readInputRegisters(
-  //     readFragments[i].StartAddress,
-  //     readFragments[i].FragmentSize
-  //   );
-  //   if(res == Modbus.ku8MBSuccess) {
-  //     for (int j = 0; j < readCount; j++) {
-  //       // make sure the register we try to read is in the fragment
-  //       if (registers[j].address >= readFragments[i].StartAddress) {
-  //         // when we exceed the fragment size, skip to new fragment
-  //         if (registers[j].address >= readFragments[i].StartAddress + readFragments[i].FragmentSize)
-  //           break;
-  //         // let's say the register address is 1013 and read window is 1000-1050
-  //         // that means the response in the buffer is on position 1013 - 1000 = 13
-  //         registerAddress = registers[j].address - readFragments[i].StartAddress;
-  //         if (registers[j].size == SIZE_16BIT) {
-  //           registers[j].value = Modbus.getResponseBuffer(registerAddress);
-  //         } else {
-  //           registers[j].value = Modbus.getResponseBuffer(registerAddress) << 16 + Modbus.getResponseBuffer(registerAddress + 1);
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     return false;
-  //   }
-  // }
+  for (int i = 0; i < fragmentCount; i++) {
+    res = Modbus.readInputRegisters(
+      readFragments[i].StartAddress,
+      readFragments[i].FragmentSize
+    );
+    if(res == Modbus.ku8MBSuccess) {
+      for (int j = 0; j < readCount; j++) {
+        // make sure the register we try to read is in the fragment
+        if (registers[j].address >= readFragments[i].StartAddress) {
+          // when we exceed the fragment size, skip to new fragment
+          if (registers[j].address >= readFragments[i].StartAddress + readFragments[i].FragmentSize)
+            break;
+          // let's say the register address is 1013 and read window is 1000-1050
+          // that means the response in the buffer is on position 1013 - 1000 = 13
+          registerAddress = registers[j].address - readFragments[i].StartAddress;
+          if (registers[j].size == SIZE_16BIT) {
+            registers[j].value = Modbus.getResponseBuffer(registerAddress);
+          } else {
+            registers[j].value = Modbus.getResponseBuffer(registerAddress) << 16 + Modbus.getResponseBuffer(registerAddress + 1);
+          }
+        }
+      }
+    } else {
+      return false;
+    }
+  }
   _GotData = true;
   return true;
 }
@@ -119,12 +120,12 @@ bool Growatt::ReadData() {
     _Protocol.HoldingFragmentCount,
     _Protocol.HoldingReadFragments
     );
-  // bool holding_res = _ReadRegisterData(
-  //   _Protocol.InputFragmentCount,
-  //   _Protocol.InputRegisters,
-  //   _Protocol.InputFragmentCount,
-  //   _Protocol.InputReadFragments
-  // );
+  bool holding_res = _ReadRegisterData(
+    _Protocol.InputFragmentCount,
+    _Protocol.InputRegisters,
+    _Protocol.InputFragmentCount,
+    _Protocol.InputReadFragments
+  );
   _PacketCnt = _PacketCnt + 1;
   return input_res;// && holding_res;
 }
@@ -245,50 +246,38 @@ float Growatt::GetAcPower() {
 }
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
-  Buffer[0] = 0; // Terminate first byte
+  StaticJsonDocument<2048> doc;
+  JsonObject input = doc.createNestedObject("input");
+  JsonObject holding = doc.createNestedObject("holding");
+
+  input[_Protocol.InputRegisters[0].name] = _Protocol.InputRegisters[0].value * _Protocol.InputRegisters[0].multiplier;
 
 #if SIMULATE_INVERTER != 1
-  sprintf(Buffer, "{\r\n\"Input\": {\r\n");
-  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
-    sprintf(
-      Buffer,
-      "%s \"%s\": %.1f,\r\n",
-      Buffer,
-      _Protocol.InputRegisters[i].name,
-      _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier
-    );
-  }
-  sprintf(Buffer, "%s}\r\n\"Holding\": {\r\n", Buffer);
-  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-    sprintf(
-      Buffer,
-      "%s \"%s\": %.1f,\r\n",
-      Buffer,
-      _Protocol.HoldingRegisters[i].name,
-      _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier
-    );
-  }
-  sprintf(Buffer, "%s}\r\n\"Mac\": \"%s\"\r\n", Buffer, MacAddress);
-  sprintf(Buffer, "%s\"Cnt\": %u,\r\n", Buffer, _PacketCnt);
-  sprintf(Buffer, "%s}", Buffer);
+  // for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+  //   input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
+  // }
+  // for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+  //   holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+  // }
 #else
   #warning simulating the inverter
-  sprintf(Buffer, "{\r\n\"Input\": {\r\n");
-  sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"DcPower\": \"230\",\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",        Buffer);
-  sprintf(Buffer, "%s  \"DcInputCurrent\": 8.5,\r\n",    Buffer);
-  sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",      Buffer);
-  sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n",  Buffer);
-  sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"AccumulatedEnergy\": 320,\r\n", Buffer);
-  sprintf(Buffer, "%s}\r\n\"Holding\": {}\r\n", Buffer);
-  sprintf(Buffer, "%s\"Cnt\": %u,\r\n",                  Buffer, _PacketCnt);
-  sprintf(Buffer, "%s\"Mac\": \"%s\"\r\n",               Buffer, MacAddress);
-  sprintf(Buffer, "%s}", Buffer);
+  input['Status'] = 1;
+  input['DcPower'] = 230;
+  input['DcVoltage'] = 70.5;
+  input['DcInputCurrent'] = 8.5;
+  input['AcFreq'] = 50.00;
+  input['AcVoltage'] = 230.0;
+  input['AcPower'] = 0.00;
+  input['EnergyToday'] = 0.3;
+  input['EnergyTotal'] = 49.1;
+  input['OperatingTime'] = 123456;
+  input['Temperature'] = 21.12;
+  input['AccumulatedEnergy'] = 320;
+  input['EnergyToday'] = 0.3;
+  input['EnergyToday'] = 0.3;
 #endif // SIMULATE_INVERTER
+  doc['Mac'] = MacAddress;
+  doc['Cnt'] = _PacketCnt;
+
+  serializeJson(doc, Buffer, 4096);
 }
