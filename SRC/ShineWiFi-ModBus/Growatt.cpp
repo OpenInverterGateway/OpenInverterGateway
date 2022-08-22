@@ -53,6 +53,7 @@ void Growatt::begin(Stream &serial) {
       if(res == Modbus.ku8MBSuccess) {
         _eDevice = ShineWiFi_X; // USB
       }
+      delay(1000);
     }
   #endif
 }
@@ -66,41 +67,41 @@ eDevice_t Growatt::GetWiFiStickType() {
   return _eDevice;
 }
 
-bool Growatt::_ReadRegisterData(
-  uint16_t readCount,
-  sGrowattModbusReg_t *registers,
-  uint8_t fragmentCount,
-  sGrowattReadFragment_t *readFragments
-) {
+bool Growatt::ReadData() {
   /**
-   * @brief reads the data from the registers (input/holding)
-   * @param registers pointer to the register structure
-   * @param readFragments pointer to the read fragment structure
-   * @returns true if successful, false otherwise
+   * @brief Reads the data from the inverter and updates the internal data structures
+   * @returns true if data was read successfully, false otherwise
    */
+  // bool holding_res = _ReadRegisterData(
+  //   _Protocol.HoldingRegisterCount,
+  //   _Protocol.HoldingRegisters,
+  //   _Protocol.HoldingFragmentCount,
+  //   _Protocol.HoldingReadFragments
+  //   );
   uint16_t registerAddress;
   uint8_t res;
 
+  // read Input Registers
   // read each fragment separately
-  for (int i = 0; i < fragmentCount; i++) {
+  for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
     res = Modbus.readInputRegisters(
-      readFragments[i].StartAddress,
-      readFragments[i].FragmentSize
+      _Protocol.InputReadFragments[i].StartAddress,
+      _Protocol.InputReadFragments[i].FragmentSize
     );
     if(res == Modbus.ku8MBSuccess) {
-      for (int j = 0; j < readCount; j++) {
+      for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
         // make sure the register we try to read is in the fragment
-        if (registers[j].address >= readFragments[i].StartAddress) {
+        if (_Protocol.InputRegisters[j].address >= _Protocol.InputReadFragments[i].StartAddress) {
           // when we exceed the fragment size, skip to new fragment
-          if (registers[j].address >= readFragments[i].StartAddress + readFragments[i].FragmentSize)
+          if (_Protocol.InputRegisters[j].address >= _Protocol.InputReadFragments[i].StartAddress + _Protocol.InputReadFragments[i].FragmentSize)
             break;
           // let's say the register address is 1013 and read window is 1000-1050
           // that means the response in the buffer is on position 1013 - 1000 = 13
-          registerAddress = registers[j].address - readFragments[i].StartAddress;
-          if (registers[j].size == SIZE_16BIT) {
-            registers[j].value = Modbus.getResponseBuffer(registerAddress);
+          registerAddress = _Protocol.InputRegisters[j].address - _Protocol.InputReadFragments[i].StartAddress;
+          if (_Protocol.InputRegisters[j].size == SIZE_16BIT) {
+            _Protocol.InputRegisters[j].value = Modbus.getResponseBuffer(registerAddress);
           } else {
-            registers[j].value = Modbus.getResponseBuffer(registerAddress) << 16 + Modbus.getResponseBuffer(registerAddress + 1);
+            _Protocol.InputRegisters[j].value = (Modbus.getResponseBuffer(registerAddress) << 16) + Modbus.getResponseBuffer(registerAddress + 1);
           }
         }
       }
@@ -108,29 +109,9 @@ bool Growatt::_ReadRegisterData(
       return false;
     }
   }
+
   _GotData = true;
   return true;
-}
-
-bool Growatt::ReadData() {
-  /**
-   * @brief Reads the data from the inverter and updates the internal data structures
-   * @returns true if data was read successfully, false otherwise
-   */
-  bool input_res = _ReadRegisterData(
-    _Protocol.HoldingRegisterCount,
-    _Protocol.HoldingRegisters,
-    _Protocol.HoldingFragmentCount,
-    _Protocol.HoldingReadFragments
-    );
-  // bool holding_res = _ReadRegisterData(
-  //   _Protocol.InputFragmentCount,
-  //   _Protocol.InputRegisters,
-  //   _Protocol.InputFragmentCount,
-  //   _Protocol.InputReadFragments
-  // );
-  _PacketCnt = _PacketCnt + 1;
-  return input_res;// && holding_res;
 }
 
 sGrowattModbusReg_t Growatt::GetInputRegister(SupportedModbusInputRegisters_t reg) {
@@ -181,7 +162,7 @@ bool Growatt::ReadHoldingReg(uint16_t adr, uint32_t* result) {
    */
     uint8_t res = Modbus.readHoldingRegisters(adr, 2);
     if (res == Modbus.ku8MBSuccess) {
-        *result = Modbus.getResponseBuffer(0);
+        *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
         return true;
     }
     return false;
@@ -226,7 +207,7 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
    */
     uint8_t res = Modbus.readInputRegisters(adr, 2);
     if (res == Modbus.ku8MBSuccess) {
-        *result = Modbus.getResponseBuffer(0);
+        *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
         return true;
     }
     return false;
@@ -250,9 +231,6 @@ float Growatt::GetAcPower() {
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
-  doc['Mac'] = MacAddress;
-  doc['Cnt'] = _PacketCnt;
-
   JsonObject input = doc.createNestedObject("input");
   JsonObject holding = doc.createNestedObject("holding");
 
@@ -260,9 +238,9 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
   }
-  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-    holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
-  }
+  // for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+  //   holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+  // }
 #else
   #warning simulating the inverter
   input['Status'] = 1;
@@ -280,6 +258,8 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   input['EnergyToday'] = 0.3;
   input['EnergyToday'] = 0.3;
 #endif // SIMULATE_INVERTER
+  doc['Mac'] = MacAddress;
+  doc['Cnt'] = _PacketCnt;
 
   serializeJson(doc, Buffer, 4096);
 }

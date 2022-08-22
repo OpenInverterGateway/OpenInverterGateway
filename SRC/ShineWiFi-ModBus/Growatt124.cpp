@@ -2,9 +2,11 @@
 
 #include "Growatt124.h"
 
+
+// NOTE: my inverter (SPH4-10KTL3 BH-UP) only manages to read 64 registers in one read!
 void init_growatt124(sProtocolDefinition_t &Protocol) {
     // definition of input registers
-    Protocol.InputRegisterCount = 28;
+    Protocol.InputRegisterCount = 41;
     // address, value, size, name, multiplier, unit, frontend
     // FEAGMENT 1: BEGIN
     Protocol.InputRegisters[I_STATUS] = sGrowattModbusReg_t{0, 0, SIZE_16BIT, "InverterStatus", 1, INVERTER_STATUS, true}; // #1
@@ -18,7 +20,7 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
     Protocol.InputRegisters[PV2_POWER] = sGrowattModbusReg_t{9, 0, SIZE_32BIT, "PV2 input power", 0.1, POWER_W, true}; // #8
 
     Protocol.InputRegisters[PAC] = sGrowattModbusReg_t{35, 0, SIZE_32BIT, "Output power", 0.1, POWER_W, true}; // #9
-    Protocol.InputRegisters[FAC] = sGrowattModbusReg_t{37, 0, SIZE_16BIT, "Grid frequency", 0.1, FREQUENCY, true}; // #10
+    Protocol.InputRegisters[FAC] = sGrowattModbusReg_t{37, 0, SIZE_16BIT, "Grid frequency", 0.01, FREQUENCY, true}; // #10
 
     Protocol.InputRegisters[VAC1] = sGrowattModbusReg_t{38, 0, SIZE_16BIT, "L1 Three phase grid voltage", 0.1, VOLTAGE, true}; // #11
     Protocol.InputRegisters[IAC1] = sGrowattModbusReg_t{39, 0, SIZE_16BIT, "L1 Three phase grid output current", 0.1, CURRENT, true}; // #12
@@ -29,7 +31,9 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
     Protocol.InputRegisters[VAC3] = sGrowattModbusReg_t{46, 0, SIZE_16BIT, "L3 Three phase grid voltage", 0.1, VOLTAGE, true}; // #17
     Protocol.InputRegisters[IAC3] = sGrowattModbusReg_t{47, 0, SIZE_16BIT, "L3 Three phase grid output current", 0.1, CURRENT, true}; // #18
     Protocol.InputRegisters[PAC3] = sGrowattModbusReg_t{48, 0, SIZE_32BIT, "L3 Three phase grid output power", 0.1, POWER_W, true}; // #19
+    // FEAGMENT 1: END
 
+    // FEAGMENT 2: BEGIN
     Protocol.InputRegisters[EAC_TODAY] = sGrowattModbusReg_t{53, 0, SIZE_32BIT, "Today generate energy", 0.1, POWER_KWH, true}; // #20
     Protocol.InputRegisters[EAC_TOTAL] = sGrowattModbusReg_t{55, 0, SIZE_32BIT, "Total generate energy", 0.1, POWER_KWH, true}; // #21
     Protocol.InputRegisters[TIME_TOTAL] = sGrowattModbusReg_t{57, 0, SIZE_32BIT, "TWork time total", 0.5, SECONDS, true}; // #22
@@ -42,13 +46,13 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
     Protocol.InputRegisters[TEMP1] = sGrowattModbusReg_t{93, 0, SIZE_16BIT, "Inverter temperature", 0.1, TEMPERATURE, true}; // #27
     Protocol.InputRegisters[TEMP2] = sGrowattModbusReg_t{94, 0, SIZE_16BIT, "Temperature inside IPM", 0.1, TEMPERATURE, true}; // #28
     Protocol.InputRegisters[TEMP3] = sGrowattModbusReg_t{95, 0, SIZE_16BIT, "Boost temperature", 0.1, TEMPERATURE, true}; // #29
-    // FEAGMENT 1: END
+    // FEAGMENT 2: END
 
-    // FEAGMENT 2: BEGIN
+    // FEAGMENT 3: BEGIN
     Protocol.InputRegisters[PDISCHARGE] = sGrowattModbusReg_t{1009, 0, SIZE_32BIT, "Discharge power", 0.1, POWER_W, true}; // #30
     Protocol.InputRegisters[PCHARGE] = sGrowattModbusReg_t{1011, 0, SIZE_32BIT, "Charge power", 0.1, POWER_W, true}; // #31
     Protocol.InputRegisters[VBAT] = sGrowattModbusReg_t{1013, 0, SIZE_16BIT, "Battery voltage", 0.1, VOLTAGE, true}; // #32
-    Protocol.InputRegisters[SOC] = sGrowattModbusReg_t{1014, 0, SIZE_16BIT, "SOC", 0.1, PRECENTAGE, true}; // #33
+    Protocol.InputRegisters[SOC] = sGrowattModbusReg_t{1014, 0, SIZE_16BIT, "SOC", 1, PRECENTAGE, true}; // #33
     Protocol.InputRegisters[PAC_TO_USER] = sGrowattModbusReg_t{1015, 0, SIZE_32BIT, "AC power to user", 0.1, POWER_W, true}; // #34
     Protocol.InputRegisters[PAC_TO_USER_TOTAL] = sGrowattModbusReg_t{1021, 0, SIZE_32BIT, "AC power to user total", 0.1, POWER_W, true}; // #35
     Protocol.InputRegisters[PAC_TO_GRID] = sGrowattModbusReg_t{1023, 0, SIZE_32BIT, "AC power to grid", 0.1, POWER_W, true}; // #36
@@ -58,11 +62,12 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
 
     Protocol.InputRegisters[IPM_TEMPERATURE] = sGrowattModbusReg_t{1039, 0, SIZE_16BIT, "REC Temperature", 0.1, TEMPERATURE, true}; // #40
     Protocol.InputRegisters[BATTERY_TEMPERATURE] = sGrowattModbusReg_t{1040, 0, SIZE_16BIT, "Battery Temperature", 0.1, TEMPERATURE, true}; // #41
-    // FEAGMENT 2: END
+    // FEAGMENT 3: END
 
-    Protocol.InputFragmentCount = 1;
-    Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 95};
-    // Protocol.InputReadFragments[1] = sGrowattReadFragment_t{1000, 41};
+    Protocol.InputFragmentCount = 3;
+    Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 49};
+    Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 43};
+    Protocol.InputReadFragments[2] = sGrowattReadFragment_t{1009, 32};
 
     Protocol.HoldingRegisterCount = 0;
     Protocol.HoldingFragmentCount = 0;

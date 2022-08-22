@@ -32,7 +32,6 @@ class Growatt {
     uint32_t _PacketCnt;
 
     eDevice_t _InitModbusCommunication();
-    bool _ReadRegisterData(uint16_t registerCount, sGrowattModbusReg_t *registers, uint8_t fragmentCount, sGrowattReadFragment_t *readFragments);
 };
 
 #endif // _GROWATT_H_
