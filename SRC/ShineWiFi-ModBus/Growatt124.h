@@ -7,6 +7,6 @@
 
 // Growatt modbus protocol version 1.24 from 2020-08-04
 
-sProtocolDefinition_t init_growatt124();
+void init_growatt124(sProtocolDefinition_t &Protocol);
 
 #endif // _GROWATT_1_24_H_

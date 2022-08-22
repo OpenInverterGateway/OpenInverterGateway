@@ -36,6 +36,11 @@ typedef enum {
     EPV1_TODAY, EPV1_TOTAL,
     EPV2_TODAY, EPV2_TOTAL,
     TEMP1, TEMP2, TEMP3,
+    PDISCHARGE, PCHARGE, VBAT, SOC,
+    PAC_TO_USER, PAC_TO_USER_TOTAL,
+    PAC_TO_GRID, PAC_TO_GRID_TOTAL,
+    PLOCAL_LOAD, PLOCAL_LOAD_TOTAL,
+    IPM_TEMPERATURE, BATTERY_TEMPERATURE,
 } SupportedModbusInputRegisters_t;
 
 typedef enum {
@@ -81,10 +86,10 @@ typedef struct {
     uint8_t InputFragmentCount;
     uint16_t HoldingRegisterCount;
     uint8_t HoldingFragmentCount;
-    sGrowattModbusReg_t *InputRegisters;
-    sGrowattModbusReg_t *HoldingRegisters;
-    sGrowattReadFragment_t *InputReadFragments;
-    sGrowattReadFragment_t *HoldingReadFragments;
+    sGrowattModbusReg_t InputRegisters[50];
+    sGrowattModbusReg_t HoldingRegisters[50];
+    sGrowattReadFragment_t InputReadFragments[10];
+    sGrowattReadFragment_t HoldingReadFragments[10];
 } sProtocolDefinition_t;
 
 

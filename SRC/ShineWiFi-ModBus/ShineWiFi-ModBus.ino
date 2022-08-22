@@ -111,7 +111,7 @@ WiFiClient   espClient;
 PubSubClient MqttClient(espClient);
 long previousConnectTryMillis = 0;
 #endif
-Growatt      Inverter;
+Growatt Inverter;
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
 WiFiManager wm;
@@ -180,7 +180,7 @@ void WiFi_Reconnect()
 void InverterReconnect(void)
 {
     // Baudrate will be set here, depending on the version of the stick
-    Inverter.begin(Serial, 124);
+    Inverter.begin(Serial);
 
     #if ENABLE_WEB_DEBUG == 1
         if (Inverter.GetWiFiStickType() == ShineWiFi_S)
@@ -385,6 +385,10 @@ void setup()
         httpServer.on("/debug", SendDebug);
     #endif
 
+    Inverter.InitProtocol(124);
+    char debugstr[128];
+    sprintf(debugstr, "input_reg_0.value = %u", Inverter._Protocol.InputRegisters[I_STATUS].value);
+    WEB_DEBUG_PRINT(debugstr)
     InverterReconnect();
 
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);

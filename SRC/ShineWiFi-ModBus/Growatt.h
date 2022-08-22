@@ -7,7 +7,10 @@
 class Growatt {
   public:
     Growatt();
-    void begin(Stream &serial, uint16_t version);
+    sProtocolDefinition_t _Protocol;
+
+    void begin(Stream &serial);
+    void InitProtocol(uint16_t version);
     bool ReadData();
     eDevice_t GetWiFiStickType();
     sGrowattModbusReg_t GetInputRegister(SupportedModbusInputRegisters_t register);
@@ -24,7 +27,6 @@ class Growatt {
     float GetAcPower();
 
   private:
-    sProtocolDefinition_t _Protocol;
     eDevice_t _eDevice;
     bool _GotData;
     uint32_t _PacketCnt;

@@ -15,23 +15,26 @@ Growatt::Growatt() {
   _PacketCnt = 0;
 }
 
-void Growatt::begin(Stream &serial, uint16_t version) {
+void Growatt::InitProtocol(uint16_t version) {
+  /**
+   * @brief Initialize the protocol struct
+   * @param version The version of the modbus protocol to use
+   */
+  if (version == 124) {
+      init_growatt124(_Protocol);
+  } else if (version == 305) {
+      init_growatt124(_Protocol);
+  } else {
+      init_growatt124(_Protocol);
+  }
+}
+
+void Growatt::begin(Stream &serial) {
   /**
    * @brief Set up communication with the inverter
    * @param serial The serial interface
-   * @param version The version of the modbus protocol to use
    */
   uint8_t res;
-
-  // choose the right protocol definition based on protocol version
-  if (version == 124) {
-      _Protocol = init_growatt124();
-  } else if (version == 305) {
-      //_Protocol = Growatt305;
-      _Protocol = init_growatt124();
-  } else {
-      _Protocol = init_growatt124();
-  }
 
   #if SIMULATE_INVERTER == 1
     _eDevice = SIMULATE_DEVICE;
@@ -120,12 +123,12 @@ bool Growatt::ReadData() {
     _Protocol.HoldingFragmentCount,
     _Protocol.HoldingReadFragments
     );
-  bool holding_res = _ReadRegisterData(
-    _Protocol.InputFragmentCount,
-    _Protocol.InputRegisters,
-    _Protocol.InputFragmentCount,
-    _Protocol.InputReadFragments
-  );
+  // bool holding_res = _ReadRegisterData(
+  //   _Protocol.InputFragmentCount,
+  //   _Protocol.InputRegisters,
+  //   _Protocol.InputFragmentCount,
+  //   _Protocol.InputReadFragments
+  // );
   _PacketCnt = _PacketCnt + 1;
   return input_res;// && holding_res;
 }
@@ -247,18 +250,19 @@ float Growatt::GetAcPower() {
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
+  doc['Mac'] = MacAddress;
+  doc['Cnt'] = _PacketCnt;
+
   JsonObject input = doc.createNestedObject("input");
   JsonObject holding = doc.createNestedObject("holding");
 
-  input[_Protocol.InputRegisters[0].name] = _Protocol.InputRegisters[0].value * _Protocol.InputRegisters[0].multiplier;
-
 #if SIMULATE_INVERTER != 1
-  // for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
-  //   input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
-  // }
-  // for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-  //   holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
-  // }
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+    input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
+  }
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+    holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+  }
 #else
   #warning simulating the inverter
   input['Status'] = 1;
@@ -276,8 +280,6 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   input['EnergyToday'] = 0.3;
   input['EnergyToday'] = 0.3;
 #endif // SIMULATE_INVERTER
-  doc['Mac'] = MacAddress;
-  doc['Cnt'] = _PacketCnt;
 
   serializeJson(doc, Buffer, 4096);
 }
