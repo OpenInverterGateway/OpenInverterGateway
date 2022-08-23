@@ -377,6 +377,7 @@ void setup()
     #endif
 
     httpServer.on("/status", SendJsonSite);
+    httpServer.on("/uistatus", SendUiJsonSite);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     httpServer.on("/setAccumulatedEnergy", HTTP_POST, vSetAccumulatedEnergy);
@@ -397,6 +398,15 @@ void setup()
 
 void SendJsonSite(void)
 {
+    JsonString[0] = '\0';
+    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
+    httpServer.send(200, "application/json", JsonString);
+}
+
+void SendUiJsonSite(void)
+{
+    JsonString[0] = '\0';
+    Inverter.CreateUIJson(JsonString);
     httpServer.send(200, "application/json", JsonString);
 }
 
@@ -666,7 +676,6 @@ void loop() {
                     WEB_DEBUG_PRINT("ReadData() successful")
                         u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
-                    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);

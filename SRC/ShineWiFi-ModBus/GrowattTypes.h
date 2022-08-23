@@ -35,12 +35,20 @@ typedef enum {
     TIME_TOTAL,
     EPV1_TODAY, EPV1_TOTAL,
     EPV2_TODAY, EPV2_TOTAL,
+    EPV_TOTAL,
     TEMP1, TEMP2, TEMP3,
     PDISCHARGE, PCHARGE, VBAT, SOC,
     PAC_TO_USER, PAC_TO_USER_TOTAL,
     PAC_TO_GRID, PAC_TO_GRID_TOTAL,
     PLOCAL_LOAD, PLOCAL_LOAD_TOTAL,
-    IPM_TEMPERATURE, BATTERY_TEMPERATURE,
+    BATTERY_TEMPERATURE,
+    BATTERY_STATE,
+    ETOUSER_TODAY, ETOUSER_TOTAL,
+    ETOGRID_TODAY, ETOGRID_TOTAL,
+    EDISCHARGE_TODAY, EDISCHARGE_TOTAL,
+    ECHARGE_TODAY, ECHARGE_TOTAL,
+    ETOLOCALLOAD_TODAY, ETOLOCALLOAD_TOTAL,
+
 } SupportedModbusInputRegisters_t;
 
 typedef enum {
@@ -48,7 +56,7 @@ typedef enum {
 } SupportedModbusHoldingRegisters_t;
 
 typedef enum {
-    INVERTER_STATUS,
+    NONE,
     POWER_W,
     POWER_KWH,
     VOLTAGE,
@@ -57,6 +65,7 @@ typedef enum {
     PRECENTAGE,
     FREQUENCY,
     TEMPERATURE,
+    VA,
 } RegisterUnit_t;
 
 typedef enum {
@@ -72,6 +81,7 @@ typedef struct {
   float multiplier;
   RegisterUnit_t unit;
   bool frontend;
+  bool plot;
 } sGrowattModbusReg_t;
 
 // Growatt limits maximal number of registers that can be polled
@@ -86,8 +96,8 @@ typedef struct {
     uint8_t InputFragmentCount;
     uint16_t HoldingRegisterCount;
     uint8_t HoldingFragmentCount;
-    sGrowattModbusReg_t InputRegisters[50];
-    sGrowattModbusReg_t HoldingRegisters[50];
+    sGrowattModbusReg_t InputRegisters[100];
+    sGrowattModbusReg_t HoldingRegisters[100];
     sGrowattReadFragment_t InputReadFragments[10];
     sGrowattReadFragment_t HoldingReadFragments[10];
 } sProtocolDefinition_t;

@@ -226,7 +226,7 @@ float Growatt::GetAcPower() {
    * @brief Returns the status of the inverter
    * @returns eGrowattStatus_t status of the inverter
    */
-  return 1.0; //TODO!
+  return _Protocol.InputRegisters[PAC1].value * _Protocol.InputRegisters[PAC1].multiplier;
 }
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
@@ -238,9 +238,9 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
   }
-  // for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-  //   holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
-  // }
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+    holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+  }
 #else
   #warning simulating the inverter
   input['Status'] = 1;
@@ -260,6 +260,60 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
 #endif // SIMULATE_INVERTER
   doc['Mac'] = MacAddress;
   doc['Cnt'] = _PacketCnt;
+
+  serializeJson(doc, Buffer, 4096);
+}
+
+void Growatt::CreateUIJson(char *Buffer) {
+  StaticJsonDocument<2048> doc;
+  const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "C"};
+
+#if SIMULATE_INVERTER != 1
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+    if (_Protocol.InputRegisters[i].frontend == true || _Protocol.InputRegisters[i].plot == true) {
+      JsonArray arr = doc.createNestedArray(_Protocol.InputRegisters[i].name);
+      arr.add(_Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier); // value
+      arr.add(unitStr[_Protocol.InputRegisters[i].unit]); //unit
+      arr.add(_Protocol.InputRegisters[i].plot); //should be plotted
+    }
+  }
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+    if (_Protocol.HoldingRegisters[i].frontend == true || _Protocol.HoldingRegisters[i].plot == true) {
+      JsonArray arr = doc.createNestedArray(_Protocol.HoldingRegisters[i].name);
+      arr.add(_Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier);
+      arr.add(unitStr[_Protocol.HoldingRegisters[i].unit]);
+      arr.add(_Protocol.HoldingRegisters[i].plot); //should be plotted
+    }
+  }
+#else
+  #warning simulating the inverter
+  JsonArray arr = doc.createNestedArray("Status");
+  arr.add(1);arr.add("");arr.add(false);
+  arr = doc.createNestedArray("DcPower");
+  arr.add(230);arr.add("W");arr.add(true);
+  arr = doc.createNestedArray("DcVoltage");
+  arr.add(70.5);arr.add("V");arr.add(false);
+  arr = doc.createNestedArray("DcInputCurrent");
+  arr.add(8.5);arr.add("A");arr.add(false);
+  arr = doc.createNestedArray("AcFreq");
+  arr.add(50);arr.add("Hz");arr.add(false);
+  arr = doc.createNestedArray("AcVoltage");
+  arr.add(230);arr.add("V");arr.add(false);
+  arr = doc.createNestedArray("AcPower");
+  arr.add(0.00);arr.add("W");arr.add(false);
+  arr = doc.createNestedArray("EnergyToday");
+  arr.add(0.3);arr.add("kWh");arr.add(false);
+  arr = doc.createNestedArray("EnergyTotal");
+  arr.add(49.1);arr.add("kWh");arr.add(false);
+  arr = doc.createNestedArray("OperatingTime");
+  arr.add(123456);arr.add("s");arr.add(false);
+  arr = doc.createNestedArray("Temperature");
+  arr.add(21.12);arr.add("C");arr.add(false);
+  arr = doc.createNestedArray("AccumulatedEnergy");
+  arr.add(320);arr.add("kWh");arr.add(false);
+  arr = doc.createNestedArray("EnergyToday");
+  arr.add(0.3);arr.add("kWh");arr.add(false);
+#endif // SIMULATE_INVERTER
 
   serializeJson(doc, Buffer, 4096);
 }
