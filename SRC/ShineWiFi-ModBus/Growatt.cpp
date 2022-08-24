@@ -108,12 +108,12 @@ bool Growatt::ReadData() {
   // read Holding Registers
   // read each fragment separately
   for (int i = 0; i < _Protocol.HoldingFragmentCount; i++) {
-    res = Modbus.readInputRegisters(
+    res = Modbus.readHoldingRegisters(
       _Protocol.HoldingReadFragments[i].StartAddress,
       _Protocol.HoldingReadFragments[i].FragmentSize
     );
     if(res == Modbus.ku8MBSuccess) {
-      for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
+      for (int j = 0; j < _Protocol.HoldingRegisterCount; j++) {
         if (_Protocol.HoldingRegisters[j].address >= _Protocol.HoldingReadFragments[i].StartAddress) {
           if (_Protocol.HoldingRegisters[j].address >= _Protocol.HoldingReadFragments[i].StartAddress + _Protocol.HoldingReadFragments[i].FragmentSize)
             break;
@@ -129,6 +129,7 @@ bool Growatt::ReadData() {
       return false;
     }
   }
+  _PacketCnt++;
   _GotData = true;
   return true;
 }
@@ -234,9 +235,6 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
-  doc['Mac'] = MacAddress;
-  doc['Cnt'] = _PacketCnt;
-
   JsonObject input = doc.createNestedObject("input");
   JsonObject holding = doc.createNestedObject("holding");
 
@@ -249,23 +247,24 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   }
 #else
   #warning simulating the inverter
-  input['Status'] = 1;
-  input['DcPower'] = 230;
-  input['DcVoltage'] = 70.5;
-  input['DcInputCurrent'] = 8.5;
-  input['AcFreq'] = 50.00;
-  input['AcVoltage'] = 230.0;
-  input['AcPower'] = 0.00;
-  input['EnergyToday'] = 0.3;
-  input['EnergyTotal'] = 49.1;
-  input['OperatingTime'] = 123456;
-  input['Temperature'] = 21.12;
-  input['AccumulatedEnergy'] = 320;
-  input['EnergyToday'] = 0.3;
-  input['EnergyToday'] = 0.3;
+  input["Status"] = 1;
+  input["DcPower"] = 230;
+  input["DcVoltage"] = 70.5;
+  input["DcInputCurrent"] = 8.5;
+  input["AcFreq"] = 50.00;
+  input["AcVoltage"] = 230.0;
+  input["AcPower"] = 0.00;
+  input["EnergyToday"] = 0.3;
+  input["EnergyTotal"] = 49.1;
+  input["OperatingTime"] = 123456;
+  input["Temperature"] = 21.12;
+  input["AccumulatedEnergy"] = 320;
+  input["EnergyToday"] = 0.3;
+  input["EnergyToday"] = 0.3;
 #endif // SIMULATE_INVERTER
-
-  serializeJson(doc, Buffer, 4096);
+  doc["Mac"] = MacAddress;
+  doc["Cnt"] = _PacketCnt;
+  serializeJson(doc, Buffer, MQTT_PACKET_SIZE);
 }
 
 void Growatt::CreateUIJson(char *Buffer) {

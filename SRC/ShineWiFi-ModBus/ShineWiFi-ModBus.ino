@@ -68,12 +68,6 @@ uint16_t u16WebMsgNo = 0;
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
-#if MQTT_MAX_PACKET_SIZE < 512
-#error change MQTT_MAX_PACKET_SIZE to 512
-// C:\Users\<user>\Documents\Arduino\libraries\pubsubclient-master\src\PubSubClient.h
-#endif
-#else
-#define MQTT_MAX_PACKET_SIZE 512
 #endif
 
 #include "Growatt.h"
@@ -131,7 +125,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[4096] = "{\"Status\": \"Disconnected\" }";
+char JsonString[MQTT_PACKET_SIZE] = "{\"Status\": \"Disconnected\" }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
@@ -317,6 +311,8 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     #if MQTT_SUPPORTED == 1
+        MqttClient.setBufferSize(MQTT_PACKET_SIZE);
+
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
         custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
         custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
@@ -337,8 +333,8 @@ void setup()
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    // Automatically connect using saved credentials,   //
-    // if connection fails, it starts an access point with the specified name ( "GrowattConfig")
+    // Automatically connect using saved credentials,
+    // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
     if (!res)
