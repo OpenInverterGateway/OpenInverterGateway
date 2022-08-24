@@ -2,6 +2,13 @@
 // Build configuration area start
 // ---------------------------------------------------------------
 
+// Define used modbus version used by your invertor here. Currently
+// only 124 (v1.24) and 305 (v3.05) versions are supported.
+// New protocols can be easily defined by adding new Growatt<version>.cpp/h
+// files and then specifying the protocol there. See existing procol files
+// for reference.
+#define GROWATT_MODBUS_VERSION 124
+
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
 

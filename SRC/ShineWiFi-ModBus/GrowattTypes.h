@@ -23,35 +23,6 @@ typedef enum {
 } eGrowattOnOff_t;
 
 typedef enum {
-    I_STATUS = 0,
-    INPUT_POWER,
-    PV1_VOLTAGE, PV1_CURRENT, PV1_POWER,
-    PV2_VOLTAGE, PV2_CURRENT, PV2_POWER,
-    PAC, FAC,
-    VAC1, IAC1, PAC1,
-    VAC2, IAC2, PAC2,
-    VAC3, IAC3, PAC3,
-    EAC_TODAY, EAC_TOTAL,
-    TIME_TOTAL,
-    EPV1_TODAY, EPV1_TOTAL,
-    EPV2_TODAY, EPV2_TOTAL,
-    EPV_TOTAL,
-    TEMP1, TEMP2, TEMP3,
-    PDISCHARGE, PCHARGE, VBAT, SOC,
-    PAC_TO_USER, PAC_TO_USER_TOTAL,
-    PAC_TO_GRID, PAC_TO_GRID_TOTAL,
-    PLOCAL_LOAD, PLOCAL_LOAD_TOTAL,
-    BATTERY_TEMPERATURE,
-    BATTERY_STATE,
-    ETOUSER_TODAY, ETOUSER_TOTAL,
-    ETOGRID_TODAY, ETOGRID_TOTAL,
-    EDISCHARGE_TODAY, EDISCHARGE_TOTAL,
-    ECHARGE_TODAY, ECHARGE_TOTAL,
-    ETOLOCALLOAD_TODAY, ETOLOCALLOAD_TOTAL,
-
-} SupportedModbusInputRegisters_t;
-
-typedef enum {
     H_STATUS = 0,
 } SupportedModbusHoldingRegisters_t;
 
@@ -96,8 +67,8 @@ typedef struct {
     uint8_t InputFragmentCount;
     uint16_t HoldingRegisterCount;
     uint8_t HoldingFragmentCount;
-    sGrowattModbusReg_t InputRegisters[100];
-    sGrowattModbusReg_t HoldingRegisters[100];
+    sGrowattModbusReg_t InputRegisters[75];
+    sGrowattModbusReg_t HoldingRegisters[75];
     sGrowattReadFragment_t InputReadFragments[10];
     sGrowattReadFragment_t HoldingReadFragments[10];
 } sProtocolDefinition_t;

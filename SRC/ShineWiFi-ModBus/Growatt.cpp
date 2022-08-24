@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 
 #include "Growatt124.h"
+#include "Growatt305.h"
 #include "GrowattTypes.h"
 #include "Growatt.h"
 #include "Config.h"
@@ -21,11 +22,12 @@ void Growatt::InitProtocol(uint16_t version) {
    * @param version The version of the modbus protocol to use
    */
   if (version == 124) {
-      init_growatt124(_Protocol);
+    init_growatt124(_Protocol);
   } else if (version == 305) {
-      init_growatt124(_Protocol);
+    init_growatt305(_Protocol);
   } else {
-      init_growatt124(_Protocol);
+    // fall back into 124 protocol when unknown version specified
+    init_growatt124(_Protocol);
   }
 }
 
@@ -72,12 +74,6 @@ bool Growatt::ReadData() {
    * @brief Reads the data from the inverter and updates the internal data structures
    * @returns true if data was read successfully, false otherwise
    */
-  // bool holding_res = _ReadRegisterData(
-  //   _Protocol.HoldingRegisterCount,
-  //   _Protocol.HoldingRegisters,
-  //   _Protocol.HoldingFragmentCount,
-  //   _Protocol.HoldingReadFragments
-  //   );
   uint16_t registerAddress;
   uint8_t res;
 
@@ -109,12 +105,35 @@ bool Growatt::ReadData() {
       return false;
     }
   }
-
+  // read Holding Registers
+  // read each fragment separately
+  for (int i = 0; i < _Protocol.HoldingFragmentCount; i++) {
+    res = Modbus.readInputRegisters(
+      _Protocol.HoldingReadFragments[i].StartAddress,
+      _Protocol.HoldingReadFragments[i].FragmentSize
+    );
+    if(res == Modbus.ku8MBSuccess) {
+      for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
+        if (_Protocol.HoldingRegisters[j].address >= _Protocol.HoldingReadFragments[i].StartAddress) {
+          if (_Protocol.HoldingRegisters[j].address >= _Protocol.HoldingReadFragments[i].StartAddress + _Protocol.HoldingReadFragments[i].FragmentSize)
+            break;
+          registerAddress = _Protocol.HoldingRegisters[j].address - _Protocol.HoldingReadFragments[i].StartAddress;
+          if (_Protocol.HoldingRegisters[j].size == SIZE_16BIT) {
+            _Protocol.HoldingRegisters[j].value = Modbus.getResponseBuffer(registerAddress);
+          } else {
+            _Protocol.HoldingRegisters[j].value = (Modbus.getResponseBuffer(registerAddress) << 16) + Modbus.getResponseBuffer(registerAddress + 1);
+          }
+        }
+      }
+    } else {
+      return false;
+    }
+  }
   _GotData = true;
   return true;
 }
 
-sGrowattModbusReg_t Growatt::GetInputRegister(SupportedModbusInputRegisters_t reg) {
+sGrowattModbusReg_t Growatt::GetInputRegister(uint16_t reg) {
   /**
    * @brief get the internal representation of the input register
    * @param reg the register to get
@@ -126,7 +145,7 @@ sGrowattModbusReg_t Growatt::GetInputRegister(SupportedModbusInputRegisters_t re
     return _Protocol.InputRegisters[reg];
 }
 
-sGrowattModbusReg_t Growatt::GetHoldingRegister(SupportedModbusHoldingRegisters_t reg) {
+sGrowattModbusReg_t Growatt::GetHoldingRegister(uint16_t reg) {
   /**
    * @brief get the internal representation of the holding register
    * @param reg the register to get
@@ -213,24 +232,11 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
     return false;
 }
 
-eGrowattStatus_t Growatt::GetStatus() {
-  /**
-   * @brief Returns the status of the inverter
-   * @returns eGrowattStatus_t status of the inverter
-   */
-  return (eGrowattStatus_t)Growatt::GetInputRegister(I_STATUS).value;
-}
-
-float Growatt::GetAcPower() {
-  /**
-   * @brief Returns the status of the inverter
-   * @returns eGrowattStatus_t status of the inverter
-   */
-  return _Protocol.InputRegisters[PAC1].value * _Protocol.InputRegisters[PAC1].multiplier;
-}
-
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
+  doc['Mac'] = MacAddress;
+  doc['Cnt'] = _PacketCnt;
+
   JsonObject input = doc.createNestedObject("input");
   JsonObject holding = doc.createNestedObject("holding");
 
@@ -258,8 +264,6 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   input['EnergyToday'] = 0.3;
   input['EnergyToday'] = 0.3;
 #endif // SIMULATE_INVERTER
-  doc['Mac'] = MacAddress;
-  doc['Cnt'] = _PacketCnt;
 
   serializeJson(doc, Buffer, 4096);
 }

@@ -98,8 +98,6 @@ byte btnPressed = 0;
 #define NUM_OF_RETRIES 5
 char u8RetryCounter = NUM_OF_RETRIES;
 
-long lAccumulatedEnergy = 0;
-
 const char* update_path = "/firmware";
 uint16_t u16PacketCnt = 0;
 #if PINGER_SUPPORTED == 1
@@ -380,16 +378,12 @@ void setup()
     httpServer.on("/uistatus", SendUiJsonSite);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
-    httpServer.on("/setAccumulatedEnergy", HTTP_POST, vSetAccumulatedEnergy);
     httpServer.on("/", MainPage);
     #if ENABLE_WEB_DEBUG == 1
         httpServer.on("/debug", SendDebug);
     #endif
 
-    Inverter.InitProtocol(124);
-    char debugstr[128];
-    sprintf(debugstr, "input_reg_0.value = %u", Inverter._Protocol.InputRegisters[I_STATUS].value);
-    WEB_DEBUG_PRINT(debugstr)
+    Inverter.InitProtocol(GROWATT_MODBUS_VERSION);
     InverterReconnect();
 
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
@@ -433,38 +427,6 @@ void SendPostSite(void)
         "<select name=\"registerType\"><option value=\"I\" selected>Input Register</option><option value=\"H\">Holding Register</option></select></br>"
         "<input type=\"submit\" value=\"Go\">"
         "</form>");
-}
-
-void vSetAccumulatedEnergy()
-{
-    if (httpServer.hasArg("AcE"))
-    {
-        // only react if AcE is transmitted
-        char* msg;
-        msg = JsonString;
-
-        if (lAccumulatedEnergy <= 0)
-        {
-            lAccumulatedEnergy = httpServer.arg("AcE").toInt() * 3600;
-            sprintf(msg, "Setting accumulated value to %d", httpServer.arg("AcE").toInt());
-        }
-        else
-        {
-            sprintf(msg, "Error: AccumulatedEnergy was not Zero or lower. Set to 0 first.");
-        }
-
-        if (httpServer.arg("AcE").toInt() == 0)
-        {
-            lAccumulatedEnergy = -1000 * 3600;
-            sprintf(msg, "Prepared to set AcE. You can change it as long as it is negative.");
-        }
-
-        httpServer.send(200, "text/plain", msg);
-    }
-    else
-    {
-        httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
-    }
 }
 
 void handlePostData()
@@ -680,11 +642,6 @@ void loop() {
                     #if MQTT_SUPPORTED == 1
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                     #endif
-
-                    // if we got data, calculate the accumulated energy
-                    lTemp = (now - RefreshTimer) * Inverter.GetAcPower(); // we now get an increment in milliWattSeconds
-                    lTemp /= 1000;                                        // WattSeconds
-                    lAccumulatedEnergy += lTemp;                          // WattSeconds
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
                     // leave while-loop
