@@ -18,10 +18,6 @@
 // Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
 #define ENABLE_WEB_DEBUG 0
 
-// Identification for MQTT broker
-// If you have connected more than one inverter to the same broker the Id has to be different
-#define MQTT_ID           "GrowattWL"
-
 // Setting this flag to 1 will simulate the inverter
 // This could be helpful if it is night and the inverter is not working or
 // during development where the stick is not connected to the inverter
