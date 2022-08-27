@@ -49,7 +49,12 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // Rename the Config.h.example from the repo to Config.h and add all your config data to it
 // The Config.h has been added to the .gitignore, so that your secrets will be kept
 #include "Config.h"
+
+#ifdef ESP8266
+#include <ESP8266HTTPUpdateServer.h>
+#elif ESP32
 #include <ESPHTTPUpdateServer.h>
+#endif
 
 #define ESP_DRD_USE_LITTLEFS    true
 #define ESP_DRD_USE_EEPROM      false
@@ -72,9 +77,14 @@ uint16_t u16WebMsgNo = 0;
 // ---------------------------------------------------------------
 
 #include "LittleFS.h"
+
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h> 
+#elif ESP32
 #include <WiFi.h>
 #include <WebServer.h>
-
+#endif
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
@@ -119,11 +129,21 @@ Pinger pinger;
 WiFiClient   espClient;
 #if MQTT_SUPPORTED == 1
 PubSubClient MqttClient(espClient);
+
 long previousConnectTryMillis = 0;
 #endif
 Growatt      Inverter;
+#ifdef ESP8266
+ESP8266WebServer httpServer(80);
+#elif ESP32
 WebServer httpServer(80);
+#endif
+
+#ifdef ESP8266
+ESP8266HTTPUpdateServer httpUpdater;
+#elif ESP32
 ESPHTTPUpdateServer httpUpdater;
+#endif
 WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
@@ -205,7 +225,7 @@ void InverterReconnect(void)
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-#if MQTT_SUPPORTED == 1
+#if MQTT_SUPPORTED == 1 
 bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
@@ -232,7 +252,7 @@ bool MqttReconnect()
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect(MQTT_ID, mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -310,6 +330,17 @@ void saveParamCallback()
     }
 }
 
+String getId() 
+{
+    #ifdef ESP8266
+    uint64_t id = ESP.getChipId();
+    #elif ESP32
+    uint64_t id = ESP.getEfuseMac();
+    #endif
+
+    return String("Growatt"+id);
+}
+
 void setup()
 {
     #if ENABLE_DEBUG_OUTPUT == 1     
@@ -323,9 +354,13 @@ void setup()
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
-    pinMode(AP_BUTTON_PIN, INPUT);
 
+    #ifdef ESP8266
+    LittleFS.begin();
+    #elif ESP32
     LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
+    #endif
+
     #if MQTT_SUPPORTED == 1 
         mqttserver = load_from_file(serverfile, "10.1.2.3");
         mqttport = load_from_file(portfile, "1883");
@@ -615,7 +650,6 @@ void loop()
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.print("Btn pressed");
             #endif
-                    
         }
         else
         {
