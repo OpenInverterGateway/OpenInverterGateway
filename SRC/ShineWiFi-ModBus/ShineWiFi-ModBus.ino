@@ -93,6 +93,8 @@ bool StartedConfigAfterBoot = false;
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
+#define FORMAT_LITTLEFS_IF_FAILED true
+
 byte btnPressed = 0;
 
 #define NUM_OF_RETRIES 5
@@ -313,7 +315,7 @@ void setup()
     #endif
     WEB_DEBUG_PRINT("Setup()")
 
-    LittleFS.begin();
+    LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
     #if MQTT_SUPPORTED == 1 
         mqttserver = load_from_file(serverfile, "10.1.2.3");
         mqttport = load_from_file(portfile, "1883");
@@ -555,7 +557,6 @@ void handlePostData()
                 sprintf(msg, "It is not possible to write into Input Registers");
             }
         }
-
         httpServer.send(200, "text/plain", msg);
         return;
     }
