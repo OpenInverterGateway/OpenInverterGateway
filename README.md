@@ -1,5 +1,5 @@
 # Growatt_ShineWiFi
-Firmware replacement for Growatt ShineWiFi-S (serial) and ShineWiFi-X (USB)
+Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build stick (ESP8266).
 
 This arduino sketch will replace the original firmware of the Growatt ShineWiFi stick.
 
@@ -35,8 +35,8 @@ Potential features not implemented yet:
 * Wemos-D1 with Growatt 600TL-X connected to USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
 
-I expect that almost any ESP8266 module with an USB-Serial chip will work out of the box on inverters with USB port.
-I expect that almost any ESP8266 module with added 9-Pin Serial port and level shifter will work with little soldering.
+I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work).
+I almost all ESP8266 module with added 9-Pin Serial port and level shifter will work with little soldering.
 
 See the short decriptions to the devices in den directories with their pictures in /IMG/*
 
