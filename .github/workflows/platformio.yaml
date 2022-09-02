@@ -35,4 +35,4 @@ jobs:
       run: |
         cp "SRC/ShineWiFi-ModBus/Config.h.example" "SRC/ShineWiFi-ModBus/Config.h"
     - name: Run PlatformIO
-      run: pio run
+      run: pio run -e ShineWifiX -e lolin32 -e nodemcu-32s
