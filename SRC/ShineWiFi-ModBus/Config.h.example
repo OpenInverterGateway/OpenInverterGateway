@@ -40,6 +40,8 @@
 #define AP_BUTTON_PRESSED ( analogRead(A0) < 50 )
 // For generic EPS8622 boards you can use a digital pin of your choice
 // #define AP_BUTTON_PRESSED ( digitalRead(1) == HIGH )
+// For boards without any button you can detect double resets with the Double reset detector by setting this to 1
+#define ENABLE_DOUBLE_RESET 0
 
 // Timer definitions:
 //    REFRESH_TIMER: Modbus polling rate [ms]
