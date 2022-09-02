@@ -56,13 +56,14 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include <ESPHTTPUpdateServer.h>
 #endif
 
+#ifdef ENABLE_DOUBLE_RESET
 #define ESP_DRD_USE_LITTLEFS    true
 #define ESP_DRD_USE_EEPROM      false
 #define DRD_TIMEOUT             10
 #define DRD_ADDRESS             0
 #include <ESP_DoubleResetDetector.h> 
-
 DoubleResetDetector* drd;
+#endif
 
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
@@ -349,7 +350,9 @@ void setup()
     #endif
     WEB_DEBUG_PRINT("Setup()");
     
+    #ifdef ENABLE_DOUBLE_RESET
     drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+    #endif
 
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
@@ -369,12 +372,14 @@ void setup()
         mqttpwd = load_from_file(secretfile, "");
     #endif
 
+    #ifdef ENABLE_DOUBLE_RESET
     if (drd->detectDoubleReset()) { 
         #if ENABLE_DEBUG_OUTPUT == 1     
             Serial.println(F("Double reset detected"));
         #endif 
         StartedConfigAfterBoot = true; 
     }
+    #endif
 
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
@@ -624,7 +629,9 @@ long WifiRetryTimer = 0;
 
 void loop()
 {
+    #ifdef ENABLE_DOUBLE_RESET
     drd->loop();
+    #endif
 
     long now = millis();
     long lTemp;
