@@ -1,6 +1,6 @@
 /*
 
-Add ESP8266 Compiler to arduino IDE
+Add ESP8266 compiler to arduino IDE
   - In your Arduino IDE, go to File -> Preferences
   - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
 
