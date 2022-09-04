@@ -127,13 +127,11 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
      
 
 ## 2022-02-18 Update
-
-*    Graph will display the data with the timezone of the host pc (UTC was used before)
-*    Moved the source to a folder which is named like the arduino project, because arduino IDE will otherwise not open the project
+* Graph will display the data with the timezone of the host pc (UTC was used before)
+* Moved the source to a folder which is named like the arduino project, because arduino IDE will otherwise not open the project
 
 
 ## 2022-05-24 Update
-
 * Export already-implemented DcPower and DcInputCurrent values
 * Extend RW-Modbus Webpage to also read Input Registers
 * Prepare sGrowattData for additional Registers
@@ -141,3 +139,6 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 ## 2022-07-31 Update
 * Wifi manager added. Thanks to @roel80
 
+## 2022-08-04
+* Added support for platform-io (crasu, zinserjan)
+* Added support for ESP32 (crasu)
