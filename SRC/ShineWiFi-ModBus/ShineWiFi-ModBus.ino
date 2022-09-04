@@ -1,35 +1,27 @@
 /*
-Datei -> Voreinstellungen -> Zusaetzliche Boardverwalter-URLs -> "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-Werkzeuge -> Board -> Boardverwalter -> ESP8266
+
+Add ESP8266 Compiler to arduino IDE
+  - In your Arduino IDE, go to File -> Preferences
+  - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
 
 Used Libs
-----------
+  - WiFiManager         by tzapu        https://github.com/tzapu/WiFiManager
+  - PubSubClient        by Nick O´Leary https://github.com/knolleary/pubsubclient
+  - DoubleResetDetector by Khai Hoang   https://github.com/khoih-prog/ESP_DoubleResetDetector
+  - ModbusMaster        by Doc Walker   https://github.com/knolleary/pubsubclient
 
-Donwload WifiManager from
-https://github.com/tzapu/WiFiManager
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
+To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
+or download them from github (Sketch -> Include Library -> Add .ZIP Library)
 
-The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
+Connect to WiFi
+  The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
     GrowattConfig
-using password:
+  using password:
     growsolar
+  default IP:
+    192.168.4.1
 
-When button is pressed on PCB, the configuration portal AP will also be loaded.
-
-Download MQTT Client from
-https://github.com/knolleary/pubsubclient
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
-
-Download ModbusMaster by Doc Walker
-
-Board: Generic ESP8266 Module
-Flash Mode: DIO
-Cristal Freq:: 26 MHz
-Flash Freq: 40 MHz
-Upload Using: Serial
-CPU Freq: 80 MHz
-Flash Size: 4 MB (FS:1MB OTA~1019KB)
-UploadSpeed: 115200
+  When button is pressed on PCB, the configuration portal AP will also be loaded.
 
 Thanks to Jethro Kairys
 https://github.com/jkairys/growatt-esp8266
@@ -39,7 +31,6 @@ This will show the path to the binary during compilation
 e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 
 
-2019-10-16
 */
 // ---------------------------------------------------------------
 // User configuration area start
