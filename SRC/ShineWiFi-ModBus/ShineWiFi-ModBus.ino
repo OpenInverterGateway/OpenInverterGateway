@@ -148,7 +148,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[MQTT_PACKET_SIZE] = "{\"Status\": \"Disconnected\" }";
+char JsonString[MQTT_PACKET_SIZE] = "{\"Status\": -1 }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
@@ -237,7 +237,7 @@ bool MqttReconnect()
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": -1 }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -718,7 +718,7 @@ void loop()
                     else
                     {
                         WEB_DEBUG_PRINT("Retry counter\n")
-                        sprintf(JsonString, "{\"Status\": \"Disconnected\" }");
+                        sprintf(JsonString, "{\"Status\": -1 }");
                         #if MQTT_SUPPORTED == 1
                             MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                         #endif
