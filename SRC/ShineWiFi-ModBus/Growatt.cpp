@@ -253,32 +253,30 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
 
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
-  JsonObject input = doc.createNestedObject("input");
-  JsonObject holding = doc.createNestedObject("holding");
 
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
-    input[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
+    doc[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
   }
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-    holding[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+    doc[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
   }
 #else
   #warning simulating the inverter
-  input["Status"] = 1;
-  input["DcPower"] = 230;
-  input["DcVoltage"] = 70.5;
-  input["DcInputCurrent"] = 8.5;
-  input["AcFreq"] = 50.00;
-  input["AcVoltage"] = 230.0;
-  input["AcPower"] = 0.00;
-  input["EnergyToday"] = 0.3;
-  input["EnergyTotal"] = 49.1;
-  input["OperatingTime"] = 123456;
-  input["Temperature"] = 21.12;
-  input["AccumulatedEnergy"] = 320;
-  input["EnergyToday"] = 0.3;
-  input["EnergyToday"] = 0.3;
+  doc["Status"] = 1;
+  doc["DcPower"] = 230;
+  doc["DcVoltage"] = 70.5;
+  doc["DcInputCurrent"] = 8.5;
+  doc["AcFreq"] = 50.00;
+  doc["AcVoltage"] = 230.0;
+  doc["AcPower"] = 0.00;
+  doc["EnergyToday"] = 0.3;
+  doc["EnergyTotal"] = 49.1;
+  doc["OperatingTime"] = 123456;
+  doc["Temperature"] = 21.12;
+  doc["AccumulatedEnergy"] = 320;
+  doc["EnergyToday"] = 0.3;
+  doc["EnergyToday"] = 0.3;
 #endif // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
