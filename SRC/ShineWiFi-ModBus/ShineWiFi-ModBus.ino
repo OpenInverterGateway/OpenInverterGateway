@@ -73,7 +73,7 @@ uint16_t u16WebMsgNo = 0;
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h> 
+#include <ESP8266WebServer.h>
 #elif ESP32
 #include <WiFi.h>
 #include <WebServer.h>

@@ -1,7 +1,6 @@
 #ifndef _GROWATT_H_
 #define _GROWATT_H_
 
-#include "Arduino.h"
 #include "GrowattTypes.h"
 
 class Growatt {
@@ -13,8 +12,8 @@ class Growatt {
     void InitProtocol(uint16_t version);
     bool ReadData();
     eDevice_t GetWiFiStickType();
-    sGrowattModbusReg_t GetInputRegister(uint16_t register);
-    sGrowattModbusReg_t GetHoldingRegister(uint16_t register);
+    sGrowattModbusReg_t GetInputRegister(uint16_t reg);
+    sGrowattModbusReg_t GetHoldingRegister(uint16_t reg);
     bool ReadInputReg(uint16_t adr, uint32_t* result);
     bool ReadInputReg(uint16_t adr, uint16_t* result);
     bool ReadHoldingReg(uint16_t adr, uint32_t* result);
