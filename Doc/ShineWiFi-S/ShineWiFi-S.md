@@ -68,3 +68,14 @@ Aadd a 1k resistor between the output of the SW1 and GPIO0. So it is possible to
 
 Updating an already installed firware is very easy using OTA built into the Stick's webserver:
 Use: http://&lt;ip&gt;/firmware
+
+
+### Arduino IDE settings
+* Board: Generic ESP8266 Module
+* Flash Mode: DIO
+* Cristal Freq:: 26 MHz
+* Flash Freq: 40 MHz
+* Upload Using: Serial
+* CPU Freq: 80 MHz
+* Flash Size: 4 MB (FS:1MB OTA~1019KB)
+* UploadSpeed: 115200

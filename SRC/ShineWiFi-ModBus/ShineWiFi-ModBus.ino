@@ -1,36 +1,28 @@
 /*
-Datei -> Voreinstellungen -> Zusaetzliche Boardverwalter-URLs -> "http://arduino.esp8266.com/stable/package_esp8266com_index.json"
-Werkzeuge -> Board -> Boardverwalter -> ESP8266
+
+Add ESP8266 compiler to arduino IDE
+  - In your Arduino IDE, go to File -> Preferences
+  - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
 
 Used Libs
-----------
+  - WiFiManager         by tzapu           https://github.com/tzapu/WiFiManager
+  - PubSubClient        by Nick O´Leary    https://github.com/knolleary/pubsubclient
+  - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
+  - ModbusMaster        by Doc Walker      https://github.com/knolleary/pubsubclient
+  - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
 
-Donwload WifiManager from
-https://github.com/tzapu/WiFiManager
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
+To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
+or download them from github (Sketch -> Include Library -> Add .ZIP Library)
 
-The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
+Connect to WiFi
+  The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
     GrowattConfig
-using password:
+  using password:
     growsolar
+  default IP:
+    192.168.4.1
 
-When button is pressed on PCB, the configuration portal AP will also be loaded.
-
-Download MQTT Client from
-https://github.com/knolleary/pubsubclient
-Install --> Sketch -> Bibliothek einbinden -> .Zip Bibliotherk hinzufuegen
-
-Download ModbusMaster by Doc Walker
-Download ArduinoJson by Benoit Blanchon
-
-Board: Generic ESP8266 Module
-Flash Mode: DIO
-Cristal Freq:: 26 MHz
-Flash Freq: 40 MHz
-Upload Using: Serial
-CPU Freq: 80 MHz
-Flash Size: 4 MB (FS:1MB OTA~1019KB)
-UploadSpeed: 115200
+  When button is pressed on PCB, the configuration portal AP will also be loaded.
 
 Thanks to Jethro Kairys
 https://github.com/jkairys/growatt-esp8266
@@ -40,7 +32,6 @@ This will show the path to the binary during compilation
 e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 
 
-2019-10-16
 */
 // ---------------------------------------------------------------
 // User configuration area start
@@ -50,6 +41,21 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // Rename the Config.h.example from the repo to Config.h and add all your config data to it
 // The Config.h has been added to the .gitignore, so that your secrets will be kept
 #include "Config.h"
+
+#ifdef ESP8266
+#include <ESP8266HTTPUpdateServer.h>
+#elif ESP32
+#include <ESPHTTPUpdateServer.h>
+#endif
+
+#ifdef ENABLE_DOUBLE_RESET
+#define ESP_DRD_USE_LITTLEFS    true
+#define ESP_DRD_USE_EEPROM      false
+#define DRD_TIMEOUT             10
+#define DRD_ADDRESS             0
+#include <ESP_DoubleResetDetector.h> 
+DoubleResetDetector* drd;
+#endif
 
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
@@ -64,14 +70,20 @@ uint16_t u16WebMsgNo = 0;
 // ---------------------------------------------------------------
 
 #include "LittleFS.h"
+
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h> 
+#elif ESP32
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
 #endif
 
 #include "Growatt.h"
-#include <ESP8266HTTPUpdateServer.h>
 bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 #include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
@@ -86,7 +98,8 @@ bool StartedConfigAfterBoot = false;
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
-#define BUTTON A0 // GPIOA0 / ADC
+#define FORMAT_LITTLEFS_IF_FAILED true
+
 byte btnPressed = 0;
 
 #define NUM_OF_RETRIES 5
@@ -101,11 +114,21 @@ Pinger pinger;
 WiFiClient   espClient;
 #if MQTT_SUPPORTED == 1
 PubSubClient MqttClient(espClient);
+
 long previousConnectTryMillis = 0;
 #endif
-Growatt Inverter;
+Growatt      Inverter;
+#ifdef ESP8266
 ESP8266WebServer httpServer(80);
+#elif ESP32
+WebServer httpServer(80);
+#endif
+
+#ifdef ESP8266
 ESP8266HTTPUpdateServer httpUpdater;
+#elif ESP32
+ESPHTTPUpdateServer httpUpdater;
+#endif
 WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
@@ -113,11 +136,11 @@ WiFiManagerParameter* custom_mqtt_topic = NULL;
 WiFiManagerParameter* custom_mqtt_user = NULL;
 WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-const static char* serverfile = "mqtts";
-const static char* portfile = "mqttp";
-const static char* topicfile = "mqttt";
-const static char* userfile = "mqttu";
-const static char* secretfile = "mqttw";
+const static char* serverfile = "/mqtts";
+const static char* portfile = "/mqttp";
+const static char* topicfile = "/mqttt";
+const static char* userfile = "/mqttu";
+const static char* secretfile = "/mqttw";
 
 String mqttserver = "";
 String mqttport = "";
@@ -187,7 +210,7 @@ void InverterReconnect(void)
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-#if MQTT_SUPPORTED == 1
+#if MQTT_SUPPORTED == 1 
 bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
@@ -214,7 +237,7 @@ bool MqttReconnect()
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect(MQTT_ID, mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -292,20 +315,55 @@ void saveParamCallback()
     }
 }
 
+String getId() 
+{
+    #ifdef ESP8266
+    uint64_t id = ESP.getChipId();
+    #elif ESP32
+    uint64_t id = ESP.getEfuseMac();
+    #endif
+
+    return String("Growatt"+id);
+}
+
 void setup()
 {
+    #if ENABLE_DEBUG_OUTPUT == 1     
+        Serial.begin(115200);
+        Serial.println(F("Setup()"));
+    #endif
+    WEB_DEBUG_PRINT("Setup()");
+    
+    #ifdef ENABLE_DOUBLE_RESET
+    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+    #endif
+
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
 
-    WEB_DEBUG_PRINT("Setup()")
-
+    #ifdef ESP8266
     LittleFS.begin();
-    mqttserver = load_from_file(serverfile, "10.1.2.3");
-    mqttport = load_from_file(portfile, "1883");
-    mqtttopic = load_from_file(topicfile, "energy/solar");
-    mqttuser = load_from_file(userfile, "");
-    mqttpwd = load_from_file(secretfile, "");
+    #elif ESP32
+    LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
+    #endif
+
+    #if MQTT_SUPPORTED == 1 
+        mqttserver = load_from_file(serverfile, "10.1.2.3");
+        mqttport = load_from_file(portfile, "1883");
+        mqtttopic = load_from_file(topicfile, "energy/solar");
+        mqttuser = load_from_file(userfile, "");
+        mqttpwd = load_from_file(secretfile, "");
+    #endif
+
+    #ifdef ENABLE_DOUBLE_RESET
+    if (drd->detectDoubleReset()) { 
+        #if ENABLE_DEBUG_OUTPUT == 1     
+            Serial.println(F("Double reset detected"));
+        #endif 
+        StartedConfigAfterBoot = true; 
+    }
+    #endif
 
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
@@ -359,7 +417,7 @@ void setup()
     }
 
     #if MQTT_SUPPORTED == 1
-        uint16 port = mqttport.toInt();
+        uint16_t port = mqttport.toInt();
         if (port == 0)
             port = 1883;
         #if ENABLE_DEBUG_OUTPUT == 1
@@ -520,7 +578,6 @@ void handlePostData()
                 sprintf(msg, "It is not possible to write into Input Registers");
             }
         }
-
         httpServer.send(200, "text/plain", msg);
         return;
     }
@@ -534,7 +591,12 @@ long LEDTimer = 0;
 long RefreshTimer = 0;
 long WifiRetryTimer = 0;
 
-void loop() {
+void loop()
+{
+    #ifdef ENABLE_DOUBLE_RESET
+    drd->loop();
+    #endif
+
     long now = millis();
     long lTemp;
     char readoutSucceeded;
@@ -632,7 +694,7 @@ void loop() {
                 #endif
                 {
                     WEB_DEBUG_PRINT("ReadData() successful")
-                        u16PacketCnt++;
+                    u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
 
                     #if MQTT_SUPPORTED == 1

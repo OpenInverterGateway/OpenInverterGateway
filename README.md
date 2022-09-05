@@ -1,5 +1,5 @@
 # Growatt_ShineWiFi
-Firmware replacement for Growatt ShineWiFi-S (serial) and ShineWiFi-X (USB)
+Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build stick (ESP8266).
 
 This arduino sketch will replace the original firmware of the Growatt ShineWiFi stick.
 
@@ -36,8 +36,8 @@ Potential features not implemented yet:
 * Wemos-D1 with Growatt 600TL-X connected to USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
 
-I expect that almost any ESP8266 module with an USB-Serial chip will work out of the box on inverters with USB port.
-I expect that almost any ESP8266 module with added 9-Pin Serial port and level shifter will work with little soldering.
+I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work).
+I almost all ESP8266 module with added 9-Pin Serial port and level shifter will work with little soldering.
 
 See the short decriptions to the devices in den directories with their pictures in /IMG/*
 
@@ -134,19 +134,21 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
      
 
 ## 2022-02-18 Update
-
-*    Graph will display the data with the timezone of the host pc (UTC was used before)
-*    Moved the source to a folder which is named like the arduino project, because arduino IDE will otherwise not open the project
+* Graph will display the data with the timezone of the host pc (UTC was used before)
+* Moved the source to a folder which is named like the arduino project, because arduino IDE will otherwise not open the project
 
 
 ## 2022-05-24 Update
-
 * Export already-implemented DcPower and DcInputCurrent values
 * Extend RW-Modbus Webpage to also read Input Registers
 * Prepare sGrowattData for additional Registers
 
 ## 2022-07-31 Update
 * Wifi manager added. Thanks to @roel80
+
+## 2022-08-04
+* Added support for platform-io (crasu, zinserjan)
+* Added support for ESP32 (crasu)
 
 ## 2022-08-24 Update
 * Redesigned the Growatt class to manage various protocols. (v3.05 and v1.24 implemented)

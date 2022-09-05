@@ -3,3 +3,13 @@ Libs/
 *.obj
 
 SRC/ShineWiFi-ModBus/Config.h
+
+# PlatformIO
+.pio
+
+# VisualStudioCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+*.code-workspace
