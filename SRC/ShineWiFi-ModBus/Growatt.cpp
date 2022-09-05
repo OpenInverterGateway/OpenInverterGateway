@@ -69,15 +69,14 @@ eDevice_t Growatt::GetWiFiStickType() {
   return _eDevice;
 }
 
-bool Growatt::ReadData() {
+bool Growatt::ReadInputRegisters() {
   /**
-   * @brief Reads the data from the inverter and updates the internal data structures
+   * @brief Read the input registers from the inverter
    * @returns true if data was read successfully, false otherwise
    */
   uint16_t registerAddress;
   uint8_t res;
 
-  // read Input Registers
   // read each fragment separately
   for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
     res = Modbus.readInputRegisters(
@@ -105,7 +104,17 @@ bool Growatt::ReadData() {
       return false;
     }
   }
-  // read Holding Registers
+  return true;
+}
+
+bool Growatt::ReadHoldingRegisters() {
+  /**
+   * @brief Read the holding registers from the inverter
+   * @returns true if data was read successfully, false otherwise
+   */
+  uint16_t registerAddress;
+  uint8_t res;
+
   // read each fragment separately
   for (int i = 0; i < _Protocol.HoldingFragmentCount; i++) {
     res = Modbus.readHoldingRegisters(
@@ -129,9 +138,18 @@ bool Growatt::ReadData() {
       return false;
     }
   }
-  _PacketCnt++;
-  _GotData = true;
   return true;
+}
+
+bool Growatt::ReadData() {
+  /**
+   * @brief Reads the data from the inverter and updates the internal data structures
+   * @returns true if data was read successfully, false otherwise
+   */
+
+  _PacketCnt++;
+  _GotData = ReadInputRegisters() && ReadHoldingRegisters();
+  return _GotData;
 }
 
 sGrowattModbusReg_t Growatt::GetInputRegister(uint16_t reg) {

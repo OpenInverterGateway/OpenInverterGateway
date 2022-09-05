@@ -328,12 +328,12 @@ String getId()
 
 void setup()
 {
-    #if ENABLE_DEBUG_OUTPUT == 1     
+    #if ENABLE_DEBUG_OUTPUT == 1
         Serial.begin(115200);
         Serial.println(F("Setup()"));
     #endif
     WEB_DEBUG_PRINT("Setup()");
-    
+
     #ifdef ENABLE_DOUBLE_RESET
     drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
@@ -357,11 +357,11 @@ void setup()
     #endif
 
     #ifdef ENABLE_DOUBLE_RESET
-    if (drd->detectDoubleReset()) { 
-        #if ENABLE_DEBUG_OUTPUT == 1     
+    if (drd->detectDoubleReset()) {
+        #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println(F("Double reset detected"));
-        #endif 
-        StartedConfigAfterBoot = true; 
+        #endif
+        StartedConfigAfterBoot = true;
     }
     #endif
 
@@ -598,7 +598,6 @@ void loop()
     #endif
 
     long now = millis();
-    long lTemp;
     char readoutSucceeded;
 
     if ((now - ButtonTimer) > BUTTON_TIMER)
@@ -696,6 +695,10 @@ void loop()
                     WEB_DEBUG_PRINT("ReadData() successful")
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
+
+                    // Create JSON string
+                    JsonString[0] = '\0';
+                    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);

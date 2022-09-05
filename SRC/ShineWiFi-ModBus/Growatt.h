@@ -10,6 +10,9 @@ class Growatt {
 
     void begin(Stream &serial);
     void InitProtocol(uint16_t version);
+
+    bool ReadInputRegisters();
+    bool ReadHoldingRegisters();
     bool ReadData();
     eDevice_t GetWiFiStickType();
     sGrowattModbusReg_t GetInputRegister(uint16_t reg);
