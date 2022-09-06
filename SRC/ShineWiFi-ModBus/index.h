@@ -82,10 +82,16 @@ setInterval(function ( ) {
       // add data fields to the main page
       var obj = JSON.parse(this.responseText);
 
-      // init the chart if not already done
+      // init the UI if not already done
       if (initialised == false) {
         var i = 0;
+
+        // clear data container just in case
+        container = document.getElementById("DataCointainer");
+        container.innerHTML = "";
+
         for (var key in obj) {
+          // init chart
           if (obj[key][2] == true) {
             chartT.addSeries({
               name: key + " [" + obj[key][1] + "]",
@@ -94,27 +100,29 @@ setInterval(function ( ) {
             nameToId[key] = i;
             i++;
           }
+          // init data container
+          var element = document.createElement("p");
+          element.innerHTML = key + ": " + obj[key][0].toFixed(2) + " " + obj[key][1];
+          element.setAttribute("id", key);
+          container.appendChild(element);
         }
         initialised = true;
-      }
-
-      container = document.getElementById("DataCointainer");
-      container.innerHTML = "";
-      let x = (new Date()).getTime();
-      for (var key in obj) {
-        // update site data
-        var element = document.createElement("p");
-        element.innerHTML = key + ": " + obj[key][0].toFixed(2) + " " + obj[key][1];
-        container.appendChild(element);
-        // update chart data
-        if (obj[key][2] == true) {
-          if (chartT.series[nameToId[key]].data.length <= 50) {
-            chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, false, true);
-          } else {
-            chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, true, true);
+      } else {
+        let x = (new Date()).getTime();
+        for (var key in obj) {
+          // update site data
+          var element = document.getElementById(key);
+          element.innerHTML = key + ": " + obj[key][0].toFixed(2) + " " + obj[key][1];
+          // update chart data
+          if (obj[key][2] == true) {
+            if (chartT.series[nameToId[key]].data.length <= 50) {
+              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, false, true);
+            } else {
+              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, true, true);
+            }
           }
         }
-      };
+      }
     };
   }
   xhttp.open("GET", "./uistatus", true);
