@@ -280,7 +280,7 @@ void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
 #endif // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
-  serializeJson(doc, Buffer, MQTT_PACKET_SIZE);
+  serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }
 
 void Growatt::CreateUIJson(char *Buffer) {

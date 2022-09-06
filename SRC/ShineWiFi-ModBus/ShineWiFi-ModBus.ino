@@ -81,6 +81,11 @@ uint16_t u16WebMsgNo = 0;
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
+#if MQTT_MAX_PACKET_SIZE < 2048
+#error change MQTT_MAX_PACKET_SIZE to 2048
+#endif
+#else
+#define MQTT_MAX_PACKET_SIZE 2048
 #endif
 
 #include "Growatt.h"
@@ -148,7 +153,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[MQTT_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
+char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
@@ -369,8 +374,6 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     #if MQTT_SUPPORTED == 1
-        MqttClient.setBufferSize(MQTT_PACKET_SIZE);
-
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
         custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
         custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
@@ -677,11 +680,7 @@ void loop()
     // ------------------------------------------------------------
     if ((now - RefreshTimer) > REFRESH_TIMER)
     {
-        #if MQTT_SUPPORTED == 1
-        if (MqttClient.connected() && (WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
-        #else
-        if (1)
-        #endif
+        if ((WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
         {
             readoutSucceeded = 0;
             while ((u8RetryCounter) && !(readoutSucceeded))
@@ -701,6 +700,7 @@ void loop()
                     Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
+                    if (MqttClient.connected())
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                     #endif
 
@@ -720,6 +720,7 @@ void loop()
                         WEB_DEBUG_PRINT("Retry counter\n")
                         sprintf(JsonString, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
+                        if (MqttClient.connected())
                             MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
