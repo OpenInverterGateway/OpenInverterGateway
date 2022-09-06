@@ -5,12 +5,14 @@
 #include "Growatt.h"
 #include "Config.h"
 
-#if GROWATT_MODBUS_VERSION == 124
-#include "Growatt124.h"
+#if GROWATT_MODBUS_VERSION == 120
+  #include "Growatt120.h"
+#elif GROWATT_MODBUS_VERSION == 124
+  #include "Growatt124.h"
 #elif GROWATT_MODBUS_VERSION == 305
-#include "Growatt305.h"
+  #include "Growatt305.h"
 #else
-#error "Unsupported Growatt Modbus version"
+  #error "Unsupported Growatt Modbus version"
 #endif
 
 ModbusMaster Modbus;
@@ -26,12 +28,14 @@ void Growatt::InitProtocol() {
    * @brief Initialize the protocol struct
    * @param version The version of the modbus protocol to use
    */
-  #if GROWATT_MODBUS_VERSION == 124
-  init_growatt124(_Protocol);
+  #if GROWATT_MODBUS_VERSION == 120
+    init_growatt120(_Protocol); 
+  #elif GROWATT_MODBUS_VERSION == 124
+    init_growatt124(_Protocol);
   #elif GROWATT_MODBUS_VERSION == 305
-  init_growatt305(_Protocol);
+    init_growatt305(_Protocol);
   #else
-  #error "Unsupported Growatt Modbus version"
+    #error "Unsupported Growatt Modbus version"
   #endif
 }
 
