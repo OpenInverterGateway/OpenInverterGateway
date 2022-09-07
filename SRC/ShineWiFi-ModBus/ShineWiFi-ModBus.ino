@@ -13,16 +13,6 @@ Used Libs
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
 or download them from github (Sketch -> Include Library -> Add .ZIP Library)
 
-Connect to WiFi
-  The wificlient will show a configuration portal for the MQTT and wifi settings. This can be accessed using WIFI by connecting to Wifi:
-    GrowattConfig
-  using password:
-    growsolar
-  default IP:
-    192.168.4.1
-
-  When button is pressed on PCB, the configuration portal AP will also be loaded.
-
 Thanks to Jethro Kairys
 https://github.com/jkairys/growatt-esp8266
 
