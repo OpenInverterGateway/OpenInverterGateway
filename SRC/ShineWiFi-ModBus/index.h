@@ -102,7 +102,7 @@ setInterval(function ( ) {
           }
           // init data container
           var element = document.createElement("p");
-          element.innerHTML = key + ": " + obj[key][0].toFixed(2) + " " + obj[key][1];
+          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
           element.setAttribute("id", key);
           container.appendChild(element);
         }
@@ -112,7 +112,7 @@ setInterval(function ( ) {
         for (var key in obj) {
           // update site data
           var element = document.getElementById(key);
-          element.innerHTML = key + ": " + obj[key][0].toFixed(2) + " " + obj[key][1];
+          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
           // update chart data
           if (obj[key][2] == true) {
             if (chartT.series[nameToId[key]].data.length <= 50) {

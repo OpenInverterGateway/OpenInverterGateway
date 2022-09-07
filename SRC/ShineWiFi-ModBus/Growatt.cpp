@@ -251,15 +251,27 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
     return false;
 }
 
+double Growatt::_round2(double value) {
+   return (int)(value * 100 + 0.5) / 100.0;
+}
+
 void Growatt::CreateJson(char *Buffer, const char *MacAddress) {
   StaticJsonDocument<2048> doc;
 
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
-    doc[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
+    if (_Protocol.InputRegisters[i].multiplier  == (int)_Protocol.InputRegisters[i].multiplier) {
+      doc[_Protocol.InputRegisters[i].name] = _Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier;
+    } else {
+      doc[_Protocol.InputRegisters[i].name] = _round2(_Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier);
+    }
   }
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-    doc[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+    if (_Protocol.HoldingRegisters[i].multiplier  == (int)_Protocol.HoldingRegisters[i].multiplier) {
+      doc[_Protocol.HoldingRegisters[i].name] = _Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier;
+    } else {
+      doc[_Protocol.HoldingRegisters[i].name] = _round2(_Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier);
+    }
   }
 #else
   #warning simulating the inverter
@@ -291,7 +303,13 @@ void Growatt::CreateUIJson(char *Buffer) {
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     if (_Protocol.InputRegisters[i].frontend == true || _Protocol.InputRegisters[i].plot == true) {
       JsonArray arr = doc.createNestedArray(_Protocol.InputRegisters[i].name);
-      arr.add(_Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier); // value
+
+       // value
+      if (_Protocol.InputRegisters[i].multiplier  == (int)_Protocol.InputRegisters[i].multiplier) {
+        arr.add(_Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier);
+      } else {
+        arr.add(_round2(_Protocol.InputRegisters[i].value * _Protocol.InputRegisters[i].multiplier));
+      }
       arr.add(unitStr[_Protocol.InputRegisters[i].unit]); //unit
       arr.add(_Protocol.InputRegisters[i].plot); //should be plotted
     }
@@ -299,7 +317,13 @@ void Growatt::CreateUIJson(char *Buffer) {
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
     if (_Protocol.HoldingRegisters[i].frontend == true || _Protocol.HoldingRegisters[i].plot == true) {
       JsonArray arr = doc.createNestedArray(_Protocol.HoldingRegisters[i].name);
-      arr.add(_Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier);
+
+      //value
+      if (_Protocol.HoldingRegisters[i].multiplier  == (int)_Protocol.HoldingRegisters[i].multiplier) {
+        arr.add(_Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier);
+      } else {
+        arr.add(_round2(_Protocol.HoldingRegisters[i].value * _Protocol.HoldingRegisters[i].multiplier));
+      }
       arr.add(unitStr[_Protocol.HoldingRegisters[i].unit]);
       arr.add(_Protocol.HoldingRegisters[i].plot); //should be plotted
     }

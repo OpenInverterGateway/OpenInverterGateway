@@ -30,6 +30,8 @@ class Growatt {
     uint32_t _PacketCnt;
 
     eDevice_t _InitModbusCommunication();
+    static double _round2(double value);
+
 };
 
 #endif // _GROWATT_H_
