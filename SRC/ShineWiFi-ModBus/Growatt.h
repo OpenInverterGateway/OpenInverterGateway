@@ -9,7 +9,7 @@ class Growatt {
     sProtocolDefinition_t _Protocol;
 
     void begin(Stream &serial);
-    void InitProtocol(uint16_t version);
+    void InitProtocol();
 
     bool ReadInputRegisters();
     bool ReadHoldingRegisters();

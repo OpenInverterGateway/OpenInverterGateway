@@ -1,12 +1,17 @@
 #include <ModbusMaster.h>
 #include <ArduinoJson.h>
 
-#include "Growatt124.h"
-#include "Growatt305.h"
 #include "GrowattTypes.h"
 #include "Growatt.h"
 #include "Config.h"
 
+#if GROWATT_MODBUS_VERSION == 124
+#include "Growatt124.h"
+#elif GROWATT_MODBUS_VERSION == 305
+#include "Growatt305.h"
+#else
+#error "Unsupported Growatt Modbus version"
+#endif
 
 ModbusMaster Modbus;
 
@@ -16,19 +21,18 @@ Growatt::Growatt() {
   _PacketCnt = 0;
 }
 
-void Growatt::InitProtocol(uint16_t version) {
+void Growatt::InitProtocol() {
   /**
    * @brief Initialize the protocol struct
    * @param version The version of the modbus protocol to use
    */
-  if (version == 124) {
-    init_growatt124(_Protocol);
-  } else if (version == 305) {
-    init_growatt305(_Protocol);
-  } else {
-    // fall back into 124 protocol when unknown version specified
-    init_growatt124(_Protocol);
-  }
+  #if GROWATT_MODBUS_VERSION == 124
+  init_growatt124(_Protocol);
+  #elif GROWATT_MODBUS_VERSION == 305
+  init_growatt305(_Protocol);
+  #else
+  #error "Unsupported Growatt Modbus version"
+  #endif
 }
 
 void Growatt::begin(Stream &serial) {

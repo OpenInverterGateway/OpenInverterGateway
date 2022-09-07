@@ -440,7 +440,7 @@ void setup()
         httpServer.on("/debug", SendDebug);
     #endif
 
-    Inverter.InitProtocol(GROWATT_MODBUS_VERSION);
+    Inverter.InitProtocol();
     InverterReconnect();
 
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
