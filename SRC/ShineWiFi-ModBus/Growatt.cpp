@@ -29,7 +29,7 @@ void Growatt::InitProtocol() {
    * @param version The version of the modbus protocol to use
    */
   #if GROWATT_MODBUS_VERSION == 120
-    init_growatt120(_Protocol); 
+    init_growatt120(_Protocol);
   #elif GROWATT_MODBUS_VERSION == 124
     init_growatt124(_Protocol);
   #elif GROWATT_MODBUS_VERSION == 305
@@ -39,33 +39,52 @@ void Growatt::InitProtocol() {
   #endif
 }
 
-void Growatt::begin(Stream &serial) {
-  /**
-   * @brief Set up communication with the inverter
-   * @param serial The serial interface
-   */
-  uint8_t res;
-
-  #if SIMULATE_INVERTER == 1
-    _eDevice = SIMULATE_DEVICE;
+void Growatt::begin(Stream &serial)
+// Note that we do not need preTransmission and postTransmission callback functions, since the hardware is actually not using half-duplex RS-485
+{
+  #ifdef OVERWRITE_INVERTER
+    _eDevice = OVERWRITE_INVERTER;
+    ConfigureInverter(_eDevice, serial);
   #else
-    // init communication with the inverter
-    Serial.begin(9600);
-    Modbus.begin(1, serial);
-    res = Modbus.readInputRegisters(0, 1);
-    if(res == Modbus.ku8MBSuccess) {
-      _eDevice = ShineWiFi_S; // Serial
-    } else {
-      delay(1000);
+    _eDevice = Undef_stick;
+    AutoConfigureInverter(serial);
+  #endif
+}
+
+void Growatt::ConfigureInverter(uint32_t inverter, Stream &serial)
+{
+    if (inverter == ShineWiFi_S)
+    {
+      Serial.begin(9600);
+      Modbus.begin(1, serial);
+    }
+    if (inverter == ShineWiFi_X)
+    {
       Serial.begin(115200);
       Modbus.begin(1, serial);
-      res = Modbus.readInputRegisters(0, 1);
-      if(res == Modbus.ku8MBSuccess) {
-        _eDevice = ShineWiFi_X; // USB
-      }
-      delay(1000);
     }
-  #endif
+}
+
+void Growatt::AutoConfigureInverter(Stream &serial)
+{
+  uint8_t res;
+
+  ConfigureInverter(ShineWiFi_S, serial);
+  res = Modbus.readInputRegisters(28, 2); // dummy read total energy
+  if( res == Modbus.ku8MBSuccess )
+  {
+    _eDevice = ShineWiFi_S; // Serial
+  }
+  else
+  {
+    delay(1000);
+    ConfigureInverter(ShineWiFi_X, serial);
+    res = Modbus.readInputRegisters(55, 2); // dummy read total energy
+    if( res == Modbus.ku8MBSuccess)
+    {
+      _eDevice = ShineWiFi_X; // USB
+    }
+  }
 }
 
 eDevice_t Growatt::GetWiFiStickType() {

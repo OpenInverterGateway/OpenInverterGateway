@@ -31,7 +31,8 @@ class Growatt {
 
     eDevice_t _InitModbusCommunication();
     static double _round2(double value);
-
+    void ConfigureInverter(uint32_t inverter, Stream &serial);
+    void AutoConfigureInverter(Stream &serial);
 };
 
 #endif // _GROWATT_H_

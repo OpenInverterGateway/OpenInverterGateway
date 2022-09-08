@@ -25,12 +25,16 @@
 // Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
 #define ENABLE_WEB_DEBUG 0
 
+// You can use OVERWRITE_INVERTER_TYPE to set the inverter type if auto detection fails
+// Could be ShineWiFi_X or ShineWiFi_S
+// #define OVERWRITE_INVERTER_TYPE ShineWiFi_X
+
 // Setting this flag to 1 will simulate the inverter
 // This could be helpful if it is night and the inverter is not working or
 // during development where the stick is not connected to the inverter
-// if Simulating the Inverter we've to set a Device Type this could be ShineWiFi_X or ShineWiFi_S
+// When simulating the inverter OVERWRITE_INVERTER_TYPE has to be set as well
 #define SIMULATE_INVERTER 0
-#define SIMULATE_DEVICE ShineWiFi_X
+
 
 // Data of the Wifi access point
 // Default IP 192.168.4.1
