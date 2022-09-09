@@ -157,7 +157,7 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 * Added support for ESP32 (crasu)
 
 ## 2022-08-24 Update
-* Redesigned the Growatt class to manage various protocols. (v3.05 and v1.24 implemented)
+* Redesigned the Growatt class to manage various protocols. (v3.05, v1.20 and v1.24 implemented)
 * The new protocol definition allows user to define what modbus register should be read and which ones should be:
 	* exported in JSON by calling `http://<ip>/status`
 	* displayed on the UI `http://<ip>`
