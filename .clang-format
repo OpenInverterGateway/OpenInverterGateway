@@ -1,0 +1,18 @@
+---
+# We'll use defaults from the LLVM style
+BasedOnStyle: LLVM
+# and use some custom settings  (see https://clang.llvm.org/docs/ClangFormatStyleOptions.html)
+IndentWidth: 4
+UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+BreakBeforeBraces: Allman
+IndentPPDirectives: BeforeHash
+ColumnLimit: 0
+PointerAlignment: Left
+
+---
+Language: Cpp
+# special settings for CPP
+
+
