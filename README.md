@@ -86,8 +86,7 @@ ESP8266, ESP-07S, Growatt 1000S, Growatt 600TL, ShineWifi, Arduino, MQTT, JSON, 
 example:
 
     {
-      "input": {
-        "Status": "Normal",
+        "InverterStatus": "Normal",
         "DcVoltage": 114.1,
         "AcFreq": 50.000,
         "AcVoltage": 239.5,
@@ -98,13 +97,11 @@ example:
         "Temperature": 12.1,
         "AccumulatedEnergy": 320,
         "Cnt": 333
-      },
-      "holding": {}
     }
 
 
 * Firmware can be updated over the Webserver (`http://<ip>/firmware`)
-  
+
 * A status website with live graph can be found under `http://<ip>`
 
 ## 2020-10-22 Update
@@ -131,7 +128,6 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 
 @BeoQ Thanks for your investigations
 
-     
 
 ## 2022-02-18 Update
 * Graph will display the data with the timezone of the host pc (UTC was used before)

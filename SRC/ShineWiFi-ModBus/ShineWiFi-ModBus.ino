@@ -53,7 +53,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #define ESP_DRD_USE_EEPROM      false
 #define DRD_TIMEOUT             10
 #define DRD_ADDRESS             0
-#include <ESP_DoubleResetDetector.h> 
+#include <ESP_DoubleResetDetector.h>
 DoubleResetDetector* drd;
 #endif
 
@@ -81,11 +81,6 @@ uint16_t u16WebMsgNo = 0;
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
-#if MQTT_MAX_PACKET_SIZE < 2048
-#error change MQTT_MAX_PACKET_SIZE to 2048
-#endif
-#else
-#define MQTT_MAX_PACKET_SIZE 2048
 #endif
 
 #include "Growatt.h"
@@ -215,7 +210,7 @@ void InverterReconnect(void)
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-#if MQTT_SUPPORTED == 1 
+#if MQTT_SUPPORTED == 1
 bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
@@ -320,7 +315,7 @@ void saveParamCallback()
     }
 }
 
-String getId() 
+String getId()
 {
     #ifdef ESP8266
     uint64_t id = ESP.getChipId();
@@ -353,7 +348,7 @@ void setup()
     LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
     #endif
 
-    #if MQTT_SUPPORTED == 1 
+    #if MQTT_SUPPORTED == 1
         mqttserver = load_from_file(serverfile, "10.1.2.3");
         mqttport = load_from_file(portfile, "1883");
         mqtttopic = load_from_file(topicfile, "energy/solar");
@@ -374,6 +369,9 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     #if MQTT_SUPPORTED == 1
+        // make sure the packet size is set correctly in the library
+        MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
         custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
         custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
