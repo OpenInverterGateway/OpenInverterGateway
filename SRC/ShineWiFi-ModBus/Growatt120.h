@@ -46,6 +46,6 @@ typedef enum
     P120_Active_P_Rate     // Register 3
 } eP120HoldingRegisters_t;
 
-void init_growatt120(sProtocolDefinition_t &Protocol);
+void init_growatt120(sProtocolDefinition_t& Protocol);
 
 #endif // _GROWATT_1_20_H_

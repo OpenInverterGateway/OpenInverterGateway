@@ -12,8 +12,7 @@
 // - Storage(SPA Type)
 // - Storage(SPH Type)：
 
-
-void init_growatt120(sProtocolDefinition_t &Protocol)
+void init_growatt120(sProtocolDefinition_t& Protocol)
 {
     // definition of input registers
     Protocol.InputRegisterCount = 29;

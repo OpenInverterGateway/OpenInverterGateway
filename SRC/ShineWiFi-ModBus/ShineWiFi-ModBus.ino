@@ -33,26 +33,30 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include "Config.h"
 
 #ifdef ESP8266
-#include <ESP8266HTTPUpdateServer.h>
+    #include <ESP8266HTTPUpdateServer.h>
 #elif ESP32
-#include <ESPHTTPUpdateServer.h>
+    #include <ESPHTTPUpdateServer.h>
 #endif
 
 #ifdef ENABLE_DOUBLE_RESET
-#define ESP_DRD_USE_LITTLEFS    true
-#define ESP_DRD_USE_EEPROM      false
-#define DRD_TIMEOUT             10
-#define DRD_ADDRESS             0
-#include <ESP_DoubleResetDetector.h>
+    #define ESP_DRD_USE_LITTLEFS true
+    #define ESP_DRD_USE_EEPROM false
+    #define DRD_TIMEOUT 10
+    #define DRD_ADDRESS 0
+    #include <ESP_DoubleResetDetector.h>
 DoubleResetDetector* drd;
 #endif
 
 #if ENABLE_WEB_DEBUG == 1
 char acWebDebug[1024] = "";
 uint16_t u16WebMsgNo = 0;
-#define WEB_DEBUG_PRINT(s) {if( (strlen(acWebDebug)+strlen(s)+50) < sizeof(acWebDebug) ) sprintf(acWebDebug, "%s#%i: %s\n", acWebDebug, u16WebMsgNo++, s);}
+    #define WEB_DEBUG_PRINT(s)                                                    \
+        {                                                                         \
+            if ((strlen(acWebDebug) + strlen(s) + 50) < sizeof(acWebDebug))       \
+                sprintf(acWebDebug, "%s#%i: %s\n", acWebDebug, u16WebMsgNo++, s); \
+        }
 #else
-#define WEB_DEBUG_PRINT(s) ;
+    #define WEB_DEBUG_PRINT(s) ;
 #endif
 
 // ---------------------------------------------------------------
@@ -62,26 +66,26 @@ uint16_t u16WebMsgNo = 0;
 #include "LittleFS.h"
 
 #ifdef ESP8266
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
+    #include <ESP8266WebServer.h>
+    #include <ESP8266WiFi.h>
 #elif ESP32
-#include <WiFi.h>
-#include <WebServer.h>
+    #include <WebServer.h>
+    #include <WiFi.h>
 #endif
 
 #if MQTT_SUPPORTED == 1
-#include <PubSubClient.h>
+    #include <PubSubClient.h>
 #endif
 
 #include "Growatt.h"
 bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
-#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 #include "index.h"
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 #if PINGER_SUPPORTED == 1
-#include <Pinger.h>
-#include <PingerResponse.h>
+    #include <Pinger.h>
+    #include <PingerResponse.h>
 #endif
 
 #define LED_GN 0  // GPIO0
@@ -101,13 +105,13 @@ uint16_t u16PacketCnt = 0;
 Pinger pinger;
 #endif
 
-WiFiClient   espClient;
+WiFiClient espClient;
 #if MQTT_SUPPORTED == 1
 PubSubClient MqttClient(espClient);
 
 long previousConnectTryMillis = 0;
 #endif
-Growatt      Inverter;
+Growatt Inverter;
 #ifdef ESP8266
 ESP8266WebServer httpServer(80);
 #elif ESP32
@@ -156,20 +160,20 @@ void WiFi_Reconnect()
         while (WiFi.status() != WL_CONNECTED)
         {
             delay(200);
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.print("x");
-            #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+            Serial.print("x");
+#endif
             digitalWrite(LED_RT, !digitalRead(LED_RT)); // toggle red led on WiFi (re)connect
         }
 
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println("");
-            WiFi.printDiag(Serial);
-            Serial.print("local IP:");
-            Serial.println(WiFi.localIP());
-            Serial.print("Hostname: ");
-            Serial.println(HOSTNAME);
-        #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+        Serial.println("");
+        WiFi.printDiag(Serial);
+        Serial.print("local IP:");
+        Serial.println(WiFi.localIP());
+        Serial.print("Hostname: ");
+        Serial.println(HOSTNAME);
+#endif
 
         WEB_DEBUG_PRINT("WiFi reconnected")
 
@@ -179,22 +183,22 @@ void WiFi_Reconnect()
 
 // Conection can fail after sunrise. The stick powers up before the inverter.
 // So the detection of the inverter will fail. If no inverter is detected, we have to retry later (s. loop() )
-// The detection without running inverter will take several seconds, because the ModBus-Lib has a timeout of 2s 
-// for each read access (and we do several of them). The WiFi can crash during this function. Perhaps we can fix 
+// The detection without running inverter will take several seconds, because the ModBus-Lib has a timeout of 2s
+// for each read access (and we do several of them). The WiFi can crash during this function. Perhaps we can fix
 // this by using the callback function of the ModBus-Lib
 void InverterReconnect(void)
 {
     // Baudrate will be set here, depending on the version of the stick
     Inverter.begin(Serial);
 
-    #if ENABLE_WEB_DEBUG == 1
-        if (Inverter.GetWiFiStickType() == ShineWiFi_S)
-            WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
-        else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
-            WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
-        else
-            WEB_DEBUG_PRINT("Error: Unknown Shine Stick")
-    #endif
+#if ENABLE_WEB_DEBUG == 1
+    if (Inverter.GetWiFiStickType() == ShineWiFi_S)
+        WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
+    else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
+        WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
+    else
+        WEB_DEBUG_PRINT("Error: Unknown Shine Stick")
+#endif
 }
 
 // -------------------------------------------------------
@@ -205,7 +209,7 @@ bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
     {
-        //No server configured
+        // No server configured
         return false;
     }
 
@@ -217,30 +221,33 @@ bool MqttReconnect()
 
     if (millis() - previousConnectTryMillis >= (5000))
     {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.print("MqttServer: "); Serial.println(mqttserver);
-            Serial.print("MqttUser: "); Serial.println(mqttuser);
-            Serial.print("MqttTopic: "); Serial.println(mqtttopic);
-            Serial.print("Attempting MQTT connection...");
-        #endif
+    #if ENABLE_DEBUG_OUTPUT == 1
+        Serial.print("MqttServer: ");
+        Serial.println(mqttserver);
+        Serial.print("MqttUser: ");
+        Serial.println(mqttuser);
+        Serial.print("MqttTopic: ");
+        Serial.println(mqtttopic);
+        Serial.print("Attempting MQTT connection...");
+    #endif
 
-        //Run only once every 5 seconds
+        // Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
         if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"InverterStatus\": -1 }"))
         {
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.println("connected");
-                return true;
-            #endif
+    #if ENABLE_DEBUG_OUTPUT == 1
+            Serial.println("connected");
+            return true;
+    #endif
         }
         else
         {
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.print("failed, rc=");
-                Serial.print(MqttClient.state());
-                Serial.println(" try again in 5 seconds");
-            #endif
+    #if ENABLE_DEBUG_OUTPUT == 1
+            Serial.print("failed, rc=");
+            Serial.print(MqttClient.state());
+            Serial.println(" try again in 5 seconds");
+    #endif
             WEB_DEBUG_PRINT("MQTT Connect failed")
             previousConnectTryMillis = millis();
         }
@@ -249,15 +256,18 @@ bool MqttReconnect()
 }
 #endif
 
-String load_from_file(const char* file_name, String defaultvalue) {
+String load_from_file(const char* file_name, String defaultvalue)
+{
     String result = "";
 
     File this_file = LittleFS.open(file_name, "r");
-    if (!this_file) { // failed to open the file, return defaultvalue
+    if (!this_file)
+    { // failed to open the file, return defaultvalue
         return defaultvalue;
     }
 
-    while (this_file.available()) {
+    while (this_file.available())
+    {
         result += (char)this_file.read();
     }
 
@@ -265,15 +275,18 @@ String load_from_file(const char* file_name, String defaultvalue) {
     return result;
 }
 
-bool write_to_file(const char* file_name, String contents) {
+bool write_to_file(const char* file_name, String contents)
+{
     File this_file = LittleFS.open(file_name, "w");
-    if (!this_file) { // failed to open the file, return false
+    if (!this_file)
+    { // failed to open the file, return false
         return false;
     }
 
     int bytesWritten = this_file.print(contents);
 
-    if (bytesWritten == 0) { // write failed
+    if (bytesWritten == 0)
+    { // write failed
         return false;
     }
 
@@ -307,77 +320,78 @@ void saveParamCallback()
 
 String getId()
 {
-    #ifdef ESP8266
+#ifdef ESP8266
     uint64_t id = ESP.getChipId();
-    #elif ESP32
+#elif ESP32
     uint64_t id = ESP.getEfuseMac();
-    #endif
+#endif
 
-    return String("Growatt"+id);
+    return String("Growatt" + id);
 }
 
 void setup()
 {
-    #if ENABLE_DEBUG_OUTPUT == 1
-        Serial.begin(115200);
-        Serial.println(F("Setup()"));
-    #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+    Serial.begin(115200);
+    Serial.println(F("Setup()"));
+#endif
     WEB_DEBUG_PRINT("Setup()");
 
-    #ifdef ENABLE_DOUBLE_RESET
+#ifdef ENABLE_DOUBLE_RESET
     drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-    #endif
+#endif
 
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
 
-    #ifdef ESP8266
+#ifdef ESP8266
     LittleFS.begin();
-    #elif ESP32
+#elif ESP32
     LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
-    #endif
+#endif
 
-    #if MQTT_SUPPORTED == 1
-        mqttserver = load_from_file(serverfile, "10.1.2.3");
-        mqttport = load_from_file(portfile, "1883");
-        mqtttopic = load_from_file(topicfile, "energy/solar");
-        mqttuser = load_from_file(userfile, "");
-        mqttpwd = load_from_file(secretfile, "");
-    #endif
+#if MQTT_SUPPORTED == 1
+    mqttserver = load_from_file(serverfile, "10.1.2.3");
+    mqttport = load_from_file(portfile, "1883");
+    mqtttopic = load_from_file(topicfile, "energy/solar");
+    mqttuser = load_from_file(userfile, "");
+    mqttpwd = load_from_file(secretfile, "");
+#endif
 
-    #ifdef ENABLE_DOUBLE_RESET
-    if (drd->detectDoubleReset()) {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Double reset detected"));
-        #endif
+#ifdef ENABLE_DOUBLE_RESET
+    if (drd->detectDoubleReset())
+    {
+    #if ENABLE_DEBUG_OUTPUT == 1
+        Serial.println(F("Double reset detected"));
+    #endif
         StartedConfigAfterBoot = true;
     }
-    #endif
+#endif
 
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-    #if MQTT_SUPPORTED == 1
-        // make sure the packet size is set correctly in the library
-        MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+#if MQTT_SUPPORTED == 1
+                         // make sure the packet size is set correctly in the library
+    MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
 
-        custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
-        custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
-        custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
-        custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttuser.c_str(), 40);
-        custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttpwd.c_str(), 40);
+    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
+    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
+    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
+    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttuser.c_str(), 40);
+    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttpwd.c_str(), 40);
 
-        wm.addParameter(custom_mqtt_server);
-        wm.addParameter(custom_mqtt_port);
-        wm.addParameter(custom_mqtt_topic);
-        wm.addParameter(custom_mqtt_user);
-        wm.addParameter(custom_mqtt_pwd);
-        wm.setSaveParamsCallback(saveParamCallback);
+    wm.addParameter(custom_mqtt_server);
+    wm.addParameter(custom_mqtt_port);
+    wm.addParameter(custom_mqtt_topic);
+    wm.addParameter(custom_mqtt_user);
+    wm.addParameter(custom_mqtt_pwd);
+    wm.setSaveParamsCallback(saveParamCallback);
 
-        std::vector<const char*> menu = { "wifi","wifinoscan","param","sep","erase","restart" };
-        wm.setMenu(menu); // custom menu, pass vector
-    #endif
+    std::vector<const char*> menu = {"wifi", "wifinoscan", "param", "sep", "erase", "restart"};
+    wm.setMenu(menu); // custom menu, pass vector
+#endif
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
@@ -388,18 +402,18 @@ void setup()
 
     if (!res)
     {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Failed to connect"));
-        #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+        Serial.println(F("Failed to connect"));
+#endif
         ESP.restart();
     }
     else
     {
         digitalWrite(LED_BL, 0);
-        #if ENABLE_DEBUG_OUTPUT == 1
-            //if you get here you have connected to the WiFi
-            Serial.println(F("connected...yeey :)"));
-        #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+        // if you get here you have connected to the WiFi
+        Serial.println(F("connected...yeey :)"));
+#endif
     }
 
     while (WiFi.status() != WL_CONNECTED)
@@ -407,26 +421,29 @@ void setup()
         WiFi_Reconnect();
     }
 
-    #if MQTT_SUPPORTED == 1
-        uint16_t port = mqttport.toInt();
-        if (port == 0)
-            port = 1883;
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.print(F("MqttServer: ")); Serial.println(mqttserver);
-            Serial.print(F("MqttPort: ")); Serial.println(port);
-            Serial.print(F("MqttTopic: ")); Serial.println(mqtttopic);
-        #endif
-        MqttClient.setServer(mqttserver.c_str(), port);
+#if MQTT_SUPPORTED == 1
+    uint16_t port = mqttport.toInt();
+    if (port == 0)
+        port = 1883;
+    #if ENABLE_DEBUG_OUTPUT == 1
+    Serial.print(F("MqttServer: "));
+    Serial.println(mqttserver);
+    Serial.print(F("MqttPort: "));
+    Serial.println(port);
+    Serial.print(F("MqttTopic: "));
+    Serial.println(mqtttopic);
     #endif
+    MqttClient.setServer(mqttserver.c_str(), port);
+#endif
 
     httpServer.on("/status", SendJsonSite);
     httpServer.on("/uistatus", SendUiJsonSite);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     httpServer.on("/", MainPage);
-    #if ENABLE_WEB_DEBUG == 1
-        httpServer.on("/debug", SendDebug);
-    #endif
+#if ENABLE_WEB_DEBUG == 1
+    httpServer.on("/debug", SendDebug);
+#endif
 
     Inverter.InitProtocol();
     InverterReconnect();
@@ -464,14 +481,14 @@ void MainPage(void)
 void SendPostSite(void)
 {
     httpServer.send(200, "text/html",
-        "<form action=\"/postCommunicationModbus_p\" method=\"POST\">"
-        "<input type=\"text\" name=\"reg\" placeholder=\"Register ID\"></br>"
-        "<input type=\"text\" name=\"val\" placeholder=\"Input Value (16bit only!)\"></br>"
-        "<select name=\"type\"><option value=\"16b\" selected>16b</option><option value=\"32b\">32b</option></select></br>"
-        "<select name=\"operation\"><option value=\"R\" selected>Read</option><option value=\"W\">Write</option></select></br>"
-        "<select name=\"registerType\"><option value=\"I\" selected>Input Register</option><option value=\"H\">Holding Register</option></select></br>"
-        "<input type=\"submit\" value=\"Go\">"
-        "</form>");
+                    "<form action=\"/postCommunicationModbus_p\" method=\"POST\">"
+                    "<input type=\"text\" name=\"reg\" placeholder=\"Register ID\"></br>"
+                    "<input type=\"text\" name=\"val\" placeholder=\"Input Value (16bit only!)\"></br>"
+                    "<select name=\"type\"><option value=\"16b\" selected>16b</option><option value=\"32b\">32b</option></select></br>"
+                    "<select name=\"operation\"><option value=\"R\" selected>Read</option><option value=\"W\">Write</option></select></br>"
+                    "<select name=\"registerType\"><option value=\"I\" selected>Input Register</option><option value=\"H\">Holding Register</option></select></br>"
+                    "<input type=\"submit\" value=\"Go\">"
+                    "</form>");
 }
 
 void handlePostData()
@@ -584,9 +601,9 @@ long WifiRetryTimer = 0;
 
 void loop()
 {
-    #ifdef ENABLE_DOUBLE_RESET
+#ifdef ENABLE_DOUBLE_RESET
     drd->loop();
-    #endif
+#endif
 
     long now = millis();
     char readoutSucceeded;
@@ -595,22 +612,22 @@ void loop()
     {
         ButtonTimer = now;
 
-        if( AP_BUTTON_PRESSED )
+        if (AP_BUTTON_PRESSED)
         {
             if (btnPressed > 5)
             {
-                #if ENABLE_DEBUG_OUTPUT == 1
-                    Serial.println("Handle press");
-                #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+                Serial.println("Handle press");
+#endif
                 StartedConfigAfterBoot = true;
             }
             else
             {
                 btnPressed++;
             }
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.print("Btn pressed");
-            #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+            Serial.print("Btn pressed");
+#endif
         }
         else
         {
@@ -622,9 +639,9 @@ void loop()
     {
         digitalWrite(LED_BL, 1);
         httpServer.stop();
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println("Config after boot started");
-        #endif
+#if ENABLE_DEBUG_OUTPUT == 1
+        Serial.println("Config after boot started");
+#endif
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
         wm.startConfigPortal("GrowattConfig", APPassword);
         digitalWrite(LED_BL, 0);
@@ -634,12 +651,12 @@ void loop()
 
     WiFi_Reconnect();
 
-    #if MQTT_SUPPORTED == 1
-        if (MqttReconnect())
-        {
-            MqttClient.loop();
-        }
-    #endif
+#if MQTT_SUPPORTED == 1
+    if (MqttReconnect())
+    {
+        MqttClient.loop();
+    }
+#endif
 
     httpServer.handleClient();
 
@@ -673,11 +690,11 @@ void loop()
             readoutSucceeded = 0;
             while ((u8RetryCounter) && !(readoutSucceeded))
             {
-                #if SIMULATE_INVERTER == 1
+#if SIMULATE_INVERTER == 1
                 if (1) // do it always
-                #else
+#else
                 if (Inverter.ReadData()) // get new data from inverter
-                #endif
+#endif
                 {
                     WEB_DEBUG_PRINT("ReadData() successful")
                     u16PacketCnt++;
@@ -687,10 +704,10 @@ void loop()
                     JsonString[0] = '\0';
                     Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
-                    #if MQTT_SUPPORTED == 1
+#if MQTT_SUPPORTED == 1
                     if (MqttClient.connected())
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
-                    #endif
+#endif
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
                     // leave while-loop
@@ -707,10 +724,10 @@ void loop()
                     {
                         WEB_DEBUG_PRINT("Retry counter\n")
                         sprintf(JsonString, "{\"InverterStatus\": -1 }");
-                        #if MQTT_SUPPORTED == 1
+#if MQTT_SUPPORTED == 1
                         if (MqttClient.connected())
                             MqttClient.publish(mqtttopic.c_str(), JsonString, true);
-                        #endif
+#endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
                     }
                 }
@@ -718,18 +735,18 @@ void loop()
             u8RetryCounter = NUM_OF_RETRIES;
         }
 
-        #if MQTT_SUPPORTED == 1
-            if (!MqttClient.connected())
-                digitalWrite(LED_RT, 1);
-            else
-                digitalWrite(LED_RT, 0);
-        #endif
+#if MQTT_SUPPORTED == 1
+        if (!MqttClient.connected())
+            digitalWrite(LED_RT, 1);
+        else
+            digitalWrite(LED_RT, 0);
+#endif
 
-        #if PINGER_SUPPORTED == 1
-            //frequently check if gateway is reachable
-            if (pinger.Ping(GATEWAY_IP) == false)
-                WiFi.disconnect();
-        #endif
+#if PINGER_SUPPORTED == 1
+        // frequently check if gateway is reachable
+        if (pinger.Ping(GATEWAY_IP) == false)
+            WiFi.disconnect();
+#endif
 
         RefreshTimer = now;
     }

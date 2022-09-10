@@ -3,12 +3,13 @@
 
 #include "GrowattTypes.h"
 
-class Growatt {
+class Growatt
+{
   public:
     Growatt();
     sProtocolDefinition_t _Protocol;
 
-    void begin(Stream &serial);
+    void begin(Stream& serial);
     void InitProtocol();
 
     bool ReadInputRegisters();
@@ -22,8 +23,9 @@ class Growatt {
     bool ReadHoldingReg(uint16_t adr, uint32_t* result);
     bool ReadHoldingReg(uint16_t adr, uint16_t* result);
     bool WriteHoldingReg(uint16_t adr, uint16_t value);
-    void CreateJson(char *Buffer, const char *MacAddress);
-    void CreateUIJson(char *Buffer);
+    void CreateJson(char* Buffer, const char* MacAddress);
+    void CreateUIJson(char* Buffer);
+
   private:
     eDevice_t _eDevice;
     bool _GotData;
@@ -31,7 +33,6 @@ class Growatt {
 
     eDevice_t _InitModbusCommunication();
     static double _round2(double value);
-
 };
 
 #endif // _GROWATT_H_

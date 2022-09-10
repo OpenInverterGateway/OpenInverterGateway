@@ -6,7 +6,8 @@
 #include "GrowattTypes.h"
 
 // Growatt modbus protocol version 1.24 from 2020-08-04
-typedef enum {
+typedef enum
+{
     P305_I_STATUS = 0,
     P305_DC_POWER,
     P305_DC_VOLTAGE,
@@ -21,6 +22,6 @@ typedef enum {
     P305_TEMPERATURE,
 } eP305InputRegisters_t;
 
-void init_growatt305(sProtocolDefinition_t &Protocol);
+void init_growatt305(sProtocolDefinition_t& Protocol);
 
 #endif // _GROWATT_3_05_H_
