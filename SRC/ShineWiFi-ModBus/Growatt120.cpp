@@ -22,7 +22,8 @@ void init_growatt120(sProtocolDefinition_t& Protocol)
 
     // FRAGMENT 1: BEGIN
     // address, value, size, name, multiplier, unit, frontend, plot
-    Protocol.InputRegisters[P120_I_STATUS] = sGrowattModbusReg_t{0, 0, SIZE_16BIT, "InverterStatus", 1, NONE, true, false};    // #1
+    Protocol.InputRegisters[P120_I_STATUS] = sGrowattModbusReg_t{0, 0,
+SIZE_16BIT, "InverterStatus", 1, NONE, true, false};    // #1
     Protocol.InputRegisters[P120_INPUT_POWER] = sGrowattModbusReg_t{1, 0, SIZE_32BIT, "InputPower", 0.1, POWER_W, true, true}; // #2
 
     Protocol.InputRegisters[P120_PV1_VOLTAGE] = sGrowattModbusReg_t{3, 0, SIZE_16BIT, "PV1Voltage", 0.1, VOLTAGE, false, false};            // #3
