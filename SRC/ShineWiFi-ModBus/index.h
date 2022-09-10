@@ -27,11 +27,8 @@ copies or substantial portions of the Software. -->
   <h2>Growatt Inverter</h2>
   <div id="chart-power" class="container"></div>
 
+  <div id="DataCointainer"> </div>
 
-  <p id="AcPower"></p>
-  <p id="EnergyToday"></p>
-  <p id="EnergyTotal"></p>
-  <p id="DcVoltage"></p>
   <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
   <a href="./debug">Log</a> -
@@ -42,6 +39,8 @@ copies or substantial portions of the Software. -->
 
 const d = new Date();
 let diff = d.getTimezoneOffset();
+let initialised = false;
+let nameToId = {};
 
 Highcharts.setOptions({
 time: {
@@ -51,53 +50,84 @@ timezoneOffset: diff
 
 var chartT = new Highcharts.Chart({
   chart:{ renderTo : 'chart-power' },
-  title: { text: 'Power' },
-  series: [{
-    showInLegend: false,
-    data: []
-  }],
+  title: { text: 'Inverter Data' },
+  series: [],
   plotOptions: {
     line: { animation: false,
       dataLabels: { enabled: true }
     },
-    series: { color: '#059e8a' }
   },
   xAxis: { type: 'datetime',
     dateTimeLabelFormats: { second: '%H:%M:%S' }
   },
-  yAxis: {
-    title: { text: 'Power [W]' }
+  credits: {
+    enabled: false
   },
-  credits: { enabled: false }
+  legend: {
+    align: 'left',
+    verticalAlign: 'top',
+    borderWidth: 0,
+  },
+  tooltip: {
+    shared: true,
+    crosshairs: true,
+  }
 });
 
 setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function()
-  {
-    if (this.readyState == 4 && this.status == 200)
-  {
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
 
-    var obj = JSON.parse(this.responseText);
-    document.getElementById("AcPower").innerHTML = "Power: " + obj.AcPower + " W";
-    document.getElementById("EnergyToday").innerHTML = "Today: " + obj.EnergyToday + " kWh";
-    document.getElementById("EnergyTotal").innerHTML = "Total: " + obj.EnergyTotal + " kWh";
-    document.getElementById("DcVoltage").innerHTML = "DC Voltage: " + obj.DcVoltage + " V";
+      // add data fields to the main page
+      var obj = JSON.parse(this.responseText);
 
-      var x = (new Date()).getTime(),
-          y = obj.AcPower;
-      console.log(this.responseText);
-      if(chartT.series[0].data.length > 40) {
-        chartT.series[0].addPoint([x, y], true, true, true);
+      // init the UI if not already done
+      if (initialised == false) {
+        var i = 0;
+
+        // clear data container just in case
+        container = document.getElementById("DataCointainer");
+        container.innerHTML = "";
+
+        for (var key in obj) {
+          // init chart
+          if (obj[key][2] == true) {
+            chartT.addSeries({
+              name: key + " [" + obj[key][1] + "]",
+              data: []
+            });
+            nameToId[key] = i;
+            i++;
+          }
+          // init data container
+          var element = document.createElement("p");
+          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
+          element.setAttribute("id", key);
+          container.appendChild(element);
+        }
+        initialised = true;
       } else {
-        chartT.series[0].addPoint([x, y], true, false, true);
+        let x = (new Date()).getTime();
+        for (var key in obj) {
+          // update site data
+          var element = document.getElementById(key);
+          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
+          // update chart data
+          if (obj[key][2] == true) {
+            if (chartT.series[nameToId[key]].data.length <= 50) {
+              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, false, true);
+            } else {
+              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, true, true);
+            }
+          }
+        }
       }
-    }
-  };
-  xhttp.open("GET", "./status", true);
+    };
+  }
+  xhttp.open("GET", "./uistatus", true);
   xhttp.send();
 }, 5000 ) ;
-
 
 </script>
 

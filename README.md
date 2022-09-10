@@ -17,20 +17,21 @@ Implemented Features:
 * Built-in simple Webserver
 * The inverter is queried using Modbus Protocol
 * The data received will be transmitted by MQTT to a server of your choice.
-* The data received is also provied as JSON 
+* The data received is also provied as JSON
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
 * It supports convenient OTA firmware update (`http://<ip>/firmware`)
 * It supports basic access to arbitrary modbus data
 * It tries to autodected which protocol version to use
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
+* Currently Growatt v1.24 and 3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards..
 * It does not communicate to Growatt Cloud at all.
 
 Potential features not implemented yet:
-* Extend to support 3-Phase-AC inverters
-* Extend to support additional PV strings
+* Extend to support 3-Phase-AC inverters *done*
+* Extend to support additional PV strings *done*
 * Since it is all Modbus, other imvertery could be added.
 
 
@@ -51,7 +52,7 @@ The documentation from Growatt on the Modbus interface is avaliable, search for 
 
 The older inverters apparently use Protocol v3.05 from year 2013.
 The newer inverters apparently use protocol v1.05 from year 2018.
-The newer protocol allows for additional inverter functionality, which is not implemented in this firmware (yet).
+There is also a new protocol version v1.24 from 2020. (used with SPH4-10KTL3 BH-UP inverter)
 
 
 ## JSON Format Data
@@ -60,17 +61,20 @@ For IoT applications the raw data can now read in JSON format (application/json)
 example:
 
     {
-      "Status": "Normal",
-      "DcVoltage": 114.1,
-      "AcFreq": 50.000,
-      "AcVoltage": 239.5,
-      "AcPower": 20.6,
-      "EnergyToday": 0.2,
-      "EnergyTotal": 48.3,
-      "OperatingTime": 2821777,
-      "Temperature": 12.1,
-      "AccumulatedEnergy": 320,
-      "Cnt": 333
+      "input": {
+        "Status": "Normal",
+        "DcVoltage": 114.1,
+        "AcFreq": 50.000,
+        "AcVoltage": 239.5,
+        "AcPower": 20.6,
+        "EnergyToday": 0.2,
+        "EnergyTotal": 48.3,
+        "OperatingTime": 2821777,
+        "Temperature": 12.1,
+        "AccumulatedEnergy": 320,
+        "Cnt": 333
+      },
+      "holding": {}
     }
 
 
@@ -92,22 +96,22 @@ https://github.com/jkairys/growatt-esp8266
 example:
 
     {
-      "Status": "Normal",
-      "DcVoltage": 114.1,
-      "AcFreq": 50.000,
-      "AcVoltage": 239.5,
-      "AcPower": 20.6,
-      "EnergyToday": 0.2,
-      "EnergyTotal": 48.3,
-      "OperatingTime": 2821777,
-      "Temperature": 12.1,
-      "AccumulatedEnergy": 320,
-      "Cnt": 333
+        "InverterStatus": "Normal",
+        "DcVoltage": 114.1,
+        "AcFreq": 50.000,
+        "AcVoltage": 239.5,
+        "AcPower": 20.6,
+        "EnergyToday": 0.2,
+        "EnergyTotal": 48.3,
+        "OperatingTime": 2821777,
+        "Temperature": 12.1,
+        "AccumulatedEnergy": 320,
+        "Cnt": 333
     }
 
 
 * Firmware can be updated over the Webserver (`http://<ip>/firmware`)
-  
+
 * A status website with live graph can be found under `http://<ip>`
 
 ## 2020-10-22 Update
@@ -134,7 +138,6 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 
 @BeoQ Thanks for your investigations
 
-     
 
 ## 2022-02-18 Update
 * Graph will display the data with the timezone of the host pc (UTC was used before)
@@ -152,3 +155,16 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 ## 2022-08-04
 * Added support for platform-io (crasu, zinserjan)
 * Added support for ESP32 (crasu)
+
+## 2022-08-24 Update
+* Redesigned the Growatt class to manage various protocols. (v3.05, v1.20 and v1.24 implemented)
+* The new protocol definition allows user to define what modbus register should be read and which ones should be:
+	* exported in JSON by calling `http://<ip>/status`
+	* displayed on the UI `http://<ip>`
+	* added to the graph in the UI
+* MQTT_MAX_PACKET_SIZE doesn't need to be updated manually in the library. Instead the `PubSubClient::setBufferSize`has been used to do this dynamically.
+* New `http://<ip>/uistatus` has been created to provide data for the UI
+* UI changes:
+	* Ui is generated dynamically based on the JSON provided.
+	* Graph is now able to plot multiple values
+

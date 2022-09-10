@@ -5,10 +5,11 @@ Add ESP8266 compiler to arduino IDE
   - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
 
 Used Libs
-  - WiFiManager         by tzapu        https://github.com/tzapu/WiFiManager
-  - PubSubClient        by Nick O´Leary https://github.com/knolleary/pubsubclient
-  - DoubleResetDetector by Khai Hoang   https://github.com/khoih-prog/ESP_DoubleResetDetector
-  - ModbusMaster        by Doc Walker   https://github.com/knolleary/pubsubclient
+  - WiFiManager         by tzapu           https://github.com/tzapu/WiFiManager
+  - PubSubClient        by Nick O´Leary    https://github.com/knolleary/pubsubclient
+  - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
+  - ModbusMaster        by Doc Walker      https://github.com/knolleary/pubsubclient
+  - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
 or download them from github (Sketch -> Include Library -> Add .ZIP Library)
@@ -42,7 +43,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #define ESP_DRD_USE_EEPROM      false
 #define DRD_TIMEOUT             10
 #define DRD_ADDRESS             0
-#include <ESP_DoubleResetDetector.h> 
+#include <ESP_DoubleResetDetector.h>
 DoubleResetDetector* drd;
 #endif
 
@@ -62,7 +63,7 @@ uint16_t u16WebMsgNo = 0;
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h> 
+#include <ESP8266WebServer.h>
 #elif ESP32
 #include <WiFi.h>
 #include <WebServer.h>
@@ -70,12 +71,6 @@ uint16_t u16WebMsgNo = 0;
 
 #if MQTT_SUPPORTED == 1
 #include <PubSubClient.h>
-#if MQTT_MAX_PACKET_SIZE < 512
-#error change MQTT_MAX_PACKET_SIZE to 512
-// C:\Users\<user>\Documents\Arduino\libraries\pubsubclient-master\src\PubSubClient.h
-#endif
-#else
-#define MQTT_MAX_PACKET_SIZE 512
 #endif
 
 #include "Growatt.h"
@@ -99,8 +94,6 @@ byte btnPressed = 0;
 
 #define NUM_OF_RETRIES 5
 char u8RetryCounter = NUM_OF_RETRIES;
-
-long lAccumulatedEnergy = 0;
 
 const char* update_path = "/firmware";
 uint16_t u16PacketCnt = 0;
@@ -145,7 +138,7 @@ String mqtttopic = "";
 String mqttuser = "";
 String mqttpwd = "";
 
-char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"Status\": \"Disconnected\" }";
+char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
@@ -207,7 +200,7 @@ void InverterReconnect(void)
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-#if MQTT_SUPPORTED == 1 
+#if MQTT_SUPPORTED == 1
 bool MqttReconnect()
 {
     if (mqttserver.length() == 0)
@@ -234,7 +227,7 @@ bool MqttReconnect()
         //Run only once every 5 seconds
         previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"Status\": \"Disconnected\" }"))
+        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"InverterStatus\": -1 }"))
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -312,7 +305,7 @@ void saveParamCallback()
     }
 }
 
-String getId() 
+String getId()
 {
     #ifdef ESP8266
     uint64_t id = ESP.getChipId();
@@ -325,12 +318,12 @@ String getId()
 
 void setup()
 {
-    #if ENABLE_DEBUG_OUTPUT == 1     
+    #if ENABLE_DEBUG_OUTPUT == 1
         Serial.begin(115200);
         Serial.println(F("Setup()"));
     #endif
     WEB_DEBUG_PRINT("Setup()");
-    
+
     #ifdef ENABLE_DOUBLE_RESET
     drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
@@ -345,7 +338,7 @@ void setup()
     LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED);
     #endif
 
-    #if MQTT_SUPPORTED == 1 
+    #if MQTT_SUPPORTED == 1
         mqttserver = load_from_file(serverfile, "10.1.2.3");
         mqttport = load_from_file(portfile, "1883");
         mqtttopic = load_from_file(topicfile, "energy/solar");
@@ -354,11 +347,11 @@ void setup()
     #endif
 
     #ifdef ENABLE_DOUBLE_RESET
-    if (drd->detectDoubleReset()) { 
-        #if ENABLE_DEBUG_OUTPUT == 1     
+    if (drd->detectDoubleReset()) {
+        #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println(F("Double reset detected"));
-        #endif 
-        StartedConfigAfterBoot = true; 
+        #endif
+        StartedConfigAfterBoot = true;
     }
     #endif
 
@@ -366,6 +359,9 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     #if MQTT_SUPPORTED == 1
+        // make sure the packet size is set correctly in the library
+        MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+
         custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttserver.c_str(), 40);
         custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttport.c_str(), 6);
         custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqtttopic.c_str(), 64);
@@ -386,8 +382,8 @@ void setup()
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    // Automatically connect using saved credentials,   //
-    // if connection fails, it starts an access point with the specified name ( "GrowattConfig")
+    // Automatically connect using saved credentials,
+    // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
     if (!res)
@@ -424,14 +420,15 @@ void setup()
     #endif
 
     httpServer.on("/status", SendJsonSite);
+    httpServer.on("/uistatus", SendUiJsonSite);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
-    httpServer.on("/setAccumulatedEnergy", HTTP_POST, vSetAccumulatedEnergy);
     httpServer.on("/", MainPage);
     #if ENABLE_WEB_DEBUG == 1
         httpServer.on("/debug", SendDebug);
     #endif
 
+    Inverter.InitProtocol();
     InverterReconnect();
 
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
@@ -440,6 +437,15 @@ void setup()
 
 void SendJsonSite(void)
 {
+    JsonString[0] = '\0';
+    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
+    httpServer.send(200, "application/json", JsonString);
+}
+
+void SendUiJsonSite(void)
+{
+    JsonString[0] = '\0';
+    Inverter.CreateUIJson(JsonString);
     httpServer.send(200, "application/json", JsonString);
 }
 
@@ -466,38 +472,6 @@ void SendPostSite(void)
         "<select name=\"registerType\"><option value=\"I\" selected>Input Register</option><option value=\"H\">Holding Register</option></select></br>"
         "<input type=\"submit\" value=\"Go\">"
         "</form>");
-}
-
-void vSetAccumulatedEnergy()
-{
-    if (httpServer.hasArg("AcE"))
-    {
-        // only react if AcE is transmitted
-        char* msg;
-        msg = JsonString;
-
-        if (lAccumulatedEnergy <= 0)
-        {
-            lAccumulatedEnergy = httpServer.arg("AcE").toInt() * 3600;
-            sprintf(msg, "Setting accumulated value to %d", httpServer.arg("AcE").toInt());
-        }
-        else
-        {
-            sprintf(msg, "Error: AccumulatedEnergy was not Zero or lower. Set to 0 first.");
-        }
-
-        if (httpServer.arg("AcE").toInt() == 0)
-        {
-            lAccumulatedEnergy = -1000 * 3600;
-            sprintf(msg, "Prepared to set AcE. You can change it as long as it is negative.");
-        }
-
-        httpServer.send(200, "text/plain", msg);
-    }
-    else
-    {
-        httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
-    }
 }
 
 void handlePostData()
@@ -615,7 +589,6 @@ void loop()
     #endif
 
     long now = millis();
-    long lTemp;
     char readoutSucceeded;
 
     if ((now - ButtonTimer) > BUTTON_TIMER)
@@ -695,11 +668,7 @@ void loop()
     // ------------------------------------------------------------
     if ((now - RefreshTimer) > REFRESH_TIMER)
     {
-        #if MQTT_SUPPORTED == 1
-        if (MqttClient.connected() && (WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
-        #else
-        if (1)
-        #endif
+        if ((WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
         {
             readoutSucceeded = 0;
             while ((u8RetryCounter) && !(readoutSucceeded))
@@ -707,22 +676,21 @@ void loop()
                 #if SIMULATE_INVERTER == 1
                 if (1) // do it always
                 #else
-                if (Inverter.UpdateData()) // get new data from inverter
+                if (Inverter.ReadData()) // get new data from inverter
                 #endif
                 {
-                    WEB_DEBUG_PRINT("UpdateData() successful")
+                    WEB_DEBUG_PRINT("ReadData() successful")
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
-                    CreateJson(JsonString);
+
+                    // Create JSON string
+                    JsonString[0] = '\0';
+                    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
+                    if (MqttClient.connected())
                         MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                     #endif
-
-                    // if we got data, calculate the accumulated energy
-                    lTemp = (now - RefreshTimer) * Inverter.GetAcPower(); // we now get an increment in milliWattSeconds
-                    lTemp /= 1000;                                        // WattSeconds
-                    lAccumulatedEnergy += lTemp;                          // WattSeconds
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
                     // leave while-loop
@@ -730,7 +698,7 @@ void loop()
                 }
                 else
                 {
-                    WEB_DEBUG_PRINT("UpdateData() NOT successful")
+                    WEB_DEBUG_PRINT("ReadData() NOT successful")
                     if (u8RetryCounter)
                     {
                         u8RetryCounter--;
@@ -738,8 +706,9 @@ void loop()
                     else
                     {
                         WEB_DEBUG_PRINT("Retry counter\n")
-                        sprintf(JsonString, "{\"Status\": \"Disconnected\" }");
+                        sprintf(JsonString, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
+                        if (MqttClient.connected())
                             MqttClient.publish(mqtttopic.c_str(), JsonString, true);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
@@ -764,60 +733,4 @@ void loop()
 
         RefreshTimer = now;
     }
-}
-
-void CreateJson(char *Buffer)
-{
-  Buffer[0] = 0; // Terminate first byte
-
-#if SIMULATE_INVERTER != 1
-  sprintf(Buffer, "{\r\n");
-  switch( Inverter.GetStatus() )
-  {
-    case GwStatusWaiting:
-      sprintf(Buffer, "%s  \"Status\": \"Waiting\",\r\n", Buffer);
-      break;
-    case GwStatusNormal:
-      sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n", Buffer);
-      break;
-    case GwStatusFault:
-      sprintf(Buffer, "%s  \"Status\": \"Fault\",\r\n", Buffer);
-      break;
-    default:
-      sprintf(Buffer, "%s  \"Status\": \"%d\",\r\n", Buffer, Inverter.GetStatus());
-  }
-
-  sprintf(Buffer, "%s  \"DcPower\": %.1f,\r\n",         Buffer, Inverter.GetDcPower());
-  sprintf(Buffer, "%s  \"DcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetDcVoltage());
-  sprintf(Buffer, "%s  \"DcInputCurrent\": %.1f,\r\n",  Buffer, Inverter.GetDcInputCurrent());
-  sprintf(Buffer, "%s  \"AcFreq\": %.3f,\r\n",          Buffer, Inverter.GetAcFrequency());
-  sprintf(Buffer, "%s  \"AcVoltage\": %.1f,\r\n",       Buffer, Inverter.GetAcVoltage());
-  sprintf(Buffer, "%s  \"AcPower\": %.1f,\r\n",         Buffer, Inverter.GetAcPower());
-  sprintf(Buffer, "%s  \"EnergyToday\": %.1f,\r\n",     Buffer, Inverter.GetEnergyToday());
-  sprintf(Buffer, "%s  \"EnergyTotal\": %.1f,\r\n",     Buffer, Inverter.GetEnergyTotal());
-  sprintf(Buffer, "%s  \"OperatingTime\": %u,\r\n",     Buffer, Inverter.GetOperatingTime());
-  sprintf(Buffer, "%s  \"Temperature\": %.1f,\r\n",     Buffer, Inverter.GetInverterTemperature());
-  sprintf(Buffer, "%s  \"AccumulatedEnergy\": %d,\r\n", Buffer, lAccumulatedEnergy / 3600);
-  sprintf(Buffer, "%s  \"Cnt\": %u,\r\n",               Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s  \"Mac\": \"%s\"\r\n",            Buffer, WiFi.macAddress().c_str());
-  sprintf(Buffer, "%s}\r\n", Buffer);
-#else
-  #warning simulating the inverter
-  sprintf(Buffer, "{\r\n");
-  sprintf(Buffer, "%s  \"Status\": \"Normal\",\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"DcPower\": \"230\",\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"DcVoltage\": 70.5,\r\n",        Buffer);
-  sprintf(Buffer, "%s  \"DcInputCurrent\": 8.5,\r\n",    Buffer);
-  sprintf(Buffer, "%s  \"AcFreq\": 50.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"AcVoltage\": 230.0,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"AcPower\": 0.00,\r\n",          Buffer);
-  sprintf(Buffer, "%s  \"EnergyToday\": 0.3,\r\n",       Buffer);
-  sprintf(Buffer, "%s  \"EnergyTotal\": 49.1,\r\n",      Buffer);
-  sprintf(Buffer, "%s  \"OperatingTime\": 123456,\r\n",  Buffer);
-  sprintf(Buffer, "%s  \"Temperature\": 21.12,\r\n",     Buffer);
-  sprintf(Buffer, "%s  \"AccumulatedEnergy\": 320,\r\n", Buffer);
-  sprintf(Buffer, "%s  \"Cnt\": %u,\r\n",                Buffer, u16PacketCnt);
-  sprintf(Buffer, "%s  \"Mac\": \"%s\"\r\n",             Buffer, WiFi.macAddress().c_str());
-  sprintf(Buffer, "%s}", Buffer);
-#endif // SIMULATE_INVERTER
 }
