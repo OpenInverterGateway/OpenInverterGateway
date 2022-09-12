@@ -11,6 +11,11 @@
 
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
+// Define the MQTT max packet size here. This only needs to be done for sake of
+// ArduinoIDE compatibility. PlatformIO sets the MQTT_MAX_PACKET_SIZE in platformio.ini
+#ifndef MQTT_MAX_PACKET_SIZE
+#define MQTT_MAX_PACKET_SIZE 2048
+#endif
 
 // Setting this define to 1 will ping the default gateway periodically
 // if the ping is not successful, the wifi connection will be reestablished
