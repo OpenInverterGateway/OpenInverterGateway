@@ -52,6 +52,7 @@ char acWebDebug[1024] = "";
 uint16_t u16WebMsgNo = 0;
 #define WEB_DEBUG_PRINT(s) {if( (strlen(acWebDebug)+strlen(s)+50) < sizeof(acWebDebug) ) sprintf(acWebDebug, "%s#%i: %s\n", acWebDebug, u16WebMsgNo++, s);}
 #else
+#undef WEB_DEBUG_PRINT
 #define WEB_DEBUG_PRINT(s) ;
 #endif
 
@@ -145,8 +146,6 @@ char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 // -------------------------------------------------------
 void WiFi_Reconnect()
 {
-    uint16_t cnt = 0;
-
     if (WiFi.status() != WL_CONNECTED)
     {
         digitalWrite(LED_GN, 0);
@@ -499,22 +498,22 @@ void handlePostData()
                 {
                     if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u16Tmp))
                     {
-                        sprintf(msg, "Read 16b Input register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                        sprintf(msg, "Read 16b Input register %ld with value %d", httpServer.arg("reg").toInt(), u16Tmp);
                     }
                     else
                     {
-                        sprintf(msg, "Read 16b Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                        sprintf(msg, "Read 16b Input register %ld impossible - not connected?", httpServer.arg("reg").toInt());
                     }
                 }
                 else
                 {
                     if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u32Tmp))
                     {
-                        sprintf(msg, "Read 32b Input register %d with value %d", httpServer.arg("reg").toInt(), u32Tmp);
+                        sprintf(msg, "Read 32b Input register %ld with value %d", httpServer.arg("reg").toInt(), u32Tmp);
                     }
                     else
                     {
-                        sprintf(msg, "Read 32b Input register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                        sprintf(msg, "Read 32b Input register %ld impossible - not connected?", httpServer.arg("reg").toInt());
                     }
                 }
             }
@@ -524,22 +523,22 @@ void handlePostData()
                 {
                     if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u16Tmp))
                     {
-                        sprintf(msg, "Read 16b Holding register %d with value %d", httpServer.arg("reg").toInt(), u16Tmp);
+                        sprintf(msg, "Read 16b Holding register %ld with value %d", httpServer.arg("reg").toInt(), u16Tmp);
                     }
                     else
                     {
-                        sprintf(msg, "Read 16b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                        sprintf(msg, "Read 16b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
                     }
                 }
                 else
                 {
                     if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u32Tmp))
                     {
-                        sprintf(msg, "Read 32b Holding register %d with value %d", httpServer.arg("reg").toInt(), u32Tmp);
+                        sprintf(msg, "Read 32b Holding register %ld with value %d", httpServer.arg("reg").toInt(), u32Tmp);
                     }
                     else
                     {
-                        sprintf(msg, "Read 32b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                        sprintf(msg, "Read 32b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
                     }
                 }
             }
@@ -552,11 +551,11 @@ void handlePostData()
                 {
                     if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
                     {
-                        sprintf(msg, "Wrote Holding Register %d to a value of %d!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+                        sprintf(msg, "Wrote Holding Register %ld to a value of %ld!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
                     }
                     else
                     {
-                        sprintf(msg, "Read 16b Holding register %d impossible - not connected?", httpServer.arg("reg").toInt());
+                        sprintf(msg, "Read 16b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
                     }
                 }
                 else
