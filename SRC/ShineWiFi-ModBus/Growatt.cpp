@@ -4,6 +4,9 @@
 #include "GrowattTypes.h"
 #include "Growatt.h"
 #include "Config.h"
+#ifndef __CONFIG_H__
+#error Please rename config.h.example to config.h
+#endif
 
 #if GROWATT_MODBUS_VERSION == 120
   #include "Growatt120.h"
