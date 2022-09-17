@@ -31,12 +31,18 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 // Rename the Config.h.example from the repo to Config.h and add all your config data to it
 // The Config.h has been added to the .gitignore, so that your secrets will be kept
 #include "Config.h"
+#ifndef __CONFIG_H__
+#error Please rename config.h.example to config.h
+#endif
+
 
 #ifdef ESP8266
 #include <ESP8266HTTPUpdateServer.h>
 #elif ESP32
 #include <ESPHTTPUpdateServer.h>
 #endif
+
+
 
 #ifdef ENABLE_DOUBLE_RESET
 #define ESP_DRD_USE_LITTLEFS    true
@@ -420,6 +426,7 @@ void setup()
 
     httpServer.on("/status", SendJsonSite);
     httpServer.on("/uistatus", SendUiJsonSite);
+    httpServer.on("/StartAp", StartConfigAccessPoint);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     httpServer.on("/", MainPage);
@@ -446,6 +453,14 @@ void SendUiJsonSite(void)
     JsonString[0] = '\0';
     Inverter.CreateUIJson(JsonString);
     httpServer.send(200, "application/json", JsonString);
+}
+
+void StartConfigAccessPoint(void)
+{
+    String Text;
+    Text = "Configuration access point started ...\r\nConnect to Wifi: \"" + String(HOSTNAME) + "\" with your password (default: \"growsolar\") and visit 192.168.4.1";
+    httpServer.send(200, "text/plain", Text);
+    StartedConfigAfterBoot = true;
 }
 
 #if ENABLE_WEB_DEBUG == 1

@@ -32,6 +32,7 @@ copies or substantial portions of the Software. -->
   <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
   <a href="./debug">Log</a> -
+  <a href="./StartAp">Start config access point</a> -
   <a href="./postCommunicationModbus">RW Modbus</a>
 
 </body>
