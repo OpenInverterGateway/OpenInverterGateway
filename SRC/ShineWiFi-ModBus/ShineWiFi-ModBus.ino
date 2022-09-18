@@ -458,7 +458,7 @@ void SendUiJsonSite(void)
 void StartConfigAccessPoint(void)
 {
     String Text;
-    Text = "Configuration access point started ...\r\nConnect to Wifi: \"" + String(HOSTNAME) + "\" with your password (default: \"growsolar\") and visit 192.168.4.1";
+    Text = "Configuration access point started ...\r\nConnect to Wifi: \"GrowattConfig\" with your password (default: \"growsolar\") and visit 192.168.4.1\r\nThe Stick will automatically go back to normal operation after " + String(CONFIG_PORTAL_MAX_TIME_SECONDS) + " seconds";
     httpServer.send(200, "text/plain", Text);
     StartedConfigAfterBoot = true;
 }
