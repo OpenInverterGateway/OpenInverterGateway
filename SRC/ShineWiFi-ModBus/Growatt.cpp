@@ -5,7 +5,7 @@
 #include "Growatt.h"
 #include "Config.h"
 #ifndef __CONFIG_H__
-#error Please rename config.h.example to config.h
+#error Please rename Config.h.example to Config.h
 #endif
 
 #if GROWATT_MODBUS_VERSION == 120
