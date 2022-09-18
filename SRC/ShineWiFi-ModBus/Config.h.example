@@ -1,3 +1,5 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
 // ---------------------------------------------------------------
 // Build configuration area start
 // ---------------------------------------------------------------
@@ -68,3 +70,5 @@
 #if PINGER_SUPPORTED == 1
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif
+
+#endif // __CONFIG_H__
