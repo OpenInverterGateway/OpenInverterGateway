@@ -2,7 +2,6 @@
 #define _GROWATT_1_20_H_
 
 #include "Arduino.h"
-
 #include "GrowattTypes.h"
 
 // Growatt modbus protocol version 1.20

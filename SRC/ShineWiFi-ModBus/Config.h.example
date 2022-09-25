@@ -71,4 +71,8 @@
 #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif
 
+#define LED_GN 0  // GPIO0
+#define LED_RT 2  // GPIO2
+#define LED_BL 16 // GPIO16
+
 #endif // __CONFIG_H__
