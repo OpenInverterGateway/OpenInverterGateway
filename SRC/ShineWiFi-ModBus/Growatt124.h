@@ -2,7 +2,6 @@
 #define _GROWATT_1_24_H_
 
 #include "Arduino.h"
-
 #include "GrowattTypes.h"
 
 // Growatt modbus protocol version 1.24 from 2020-08-04
