@@ -52,8 +52,11 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 #include "ShineWifi.h"
 #include "Growatt.h"
+#include "ShineMqtt.h"
 
 WiFiClient espClient;
+ShineMqtt shineMqtt(espClient);
+
 bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 #include <WiFiManager.h>
@@ -301,7 +304,7 @@ void setup()
     }
 
     #if MQTT_SUPPORTED == 1
-        MqttSetup(mqttConfig);
+        shineMqtt.mqttSetup(mqttConfig);
     #else
         setupMenu(false);
     #endif
@@ -575,9 +578,9 @@ void loop()
     WiFi_Reconnect();
 
     #if MQTT_SUPPORTED == 1
-        if (MqttReconnect())
+        if (shineMqtt.mqttReconnect())
         {
-            MqttClient.loop();
+            shineMqtt.loop();
         }
     #endif
 
@@ -628,7 +631,7 @@ void loop()
                     Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
-                    MqttPublish(JsonString);
+                    shineMqtt.mqttPublish(JsonString);
                     #endif
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
@@ -647,7 +650,7 @@ void loop()
                         WEB_DEBUG_PRINT("Retry counter\n")
                         sprintf(JsonString, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
-                            MqttPublish(JsonString);
+                            shineMqtt.mqttPublish(JsonString);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
                     }
@@ -657,7 +660,7 @@ void loop()
         }
 
         #if MQTT_SUPPORTED == 1
-        updateMqttLed();
+        shineMqtt.updateMqttLed();
         #endif
 
         #if PINGER_SUPPORTED == 1

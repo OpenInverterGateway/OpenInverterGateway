@@ -1,45 +1,30 @@
 #include "ShineMqtt.h"
 #if MQTT_SUPPORTED == 1
-
 #include "PubSubClient.h"
-String mqttserver = "";
-String mqttport = "";
-String mqtttopic = "";
-String mqttuser = "";
-String mqttpwd = "";
 
-PubSubClient MqttClient(espClient);
-
-long previousConnectTryMillis = 0;
-
-
-void MqttSetup(const MqttConfig &config)
+void ShineMqtt::mqttSetup(const MqttConfig &config)
 {
-    mqttserver = config.mqttserver;
-    mqttport = config.mqttport;
-    mqtttopic = config.mqtttopic;
-    mqttuser = config.mqttuser;
-    mqttpwd = config.mqttpwd;
+    this->mqttconfig = config;
 
-    uint16_t intPort = mqttport.toInt();
+    uint16_t intPort = config.mqttport.toInt();
     if (intPort == 0)
         intPort = 1883;
 
     #if ENABLE_DEBUG_OUTPUT == 1
         Serial.print(F("MqttServer: "));
-        Serial.println(mqttserver);
+        Serial.println(this->mqttconfig.mqttserver);
         Serial.print(F("MqttPort: "));
         Serial.println(intPort);
         Serial.print(F("MqttTopic: "));
-        Serial.println(mqtttopic);
+        Serial.println(this->mqttconfig.mqtttopic);
     #endif
 
     // make sure the packet size is set correctly in the library
-    MqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
-    MqttClient.setServer(mqttserver.c_str(), intPort);
+    this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
+    this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
 }
 
-String getId()
+String ShineMqtt::getId()
 {
     #ifdef ESP8266
         uint64_t id = ESP.getChipId();
@@ -54,9 +39,9 @@ String getId()
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
-bool MqttReconnect()
+bool ShineMqtt::mqttReconnect()
 {
-    if (mqttserver.length() == 0)
+    if (this->mqttconfig.mqttserver.length() == 0)
     {
         //No server configured
         return false;
@@ -65,22 +50,30 @@ bool MqttReconnect()
     if (WiFi.status() != WL_CONNECTED)
         return false;
 
-    if (MqttClient.connected())
+    if (this->mqttclient.connected())
         return true;
 
-    if (millis() - previousConnectTryMillis >= (5000))
+    if (millis() - this->previousConnectTryMillis >= (5000))
     {
         #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.print("MqttServer: "); Serial.println(mqttserver);
-            Serial.print("MqttUser: "); Serial.println(mqttuser);
-            Serial.print("MqttTopic: "); Serial.println(mqtttopic);
+            Serial.print("MqttServer: "); Serial.println(this->mqttconfig.mqttserver);
+            Serial.print("MqttUser: "); Serial.println(this->mqttconfig.mqttuser);
+            Serial.print("MqttTopic: "); Serial.println(this->mqttconfig.mqtttopic);
             Serial.print("Attempting MQTT connection...");
         #endif
 
         //Run only once every 5 seconds
-        previousConnectTryMillis = millis();
+        this->previousConnectTryMillis = millis();
         // Attempt to connect with last will
-        if (MqttClient.connect(getId().c_str(), mqttuser.c_str(), mqttpwd.c_str(), mqtttopic.c_str(), 1, 1, "{\"InverterStatus\": -1 }"))
+        if (this->mqttclient.connect(
+                getId().c_str(),
+                   this->mqttconfig.mqttuser.c_str(),
+                   this->mqttconfig.mqttpwd.c_str(),
+                   this->mqttconfig.mqtttopic.c_str(),
+                   1,
+                   1,
+                   "{\"InverterStatus\": -1 }")
+                   )
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.println("connected");
@@ -91,7 +84,7 @@ bool MqttReconnect()
         {
             #if ENABLE_DEBUG_OUTPUT == 1
                 Serial.print("failed, rc=");
-                Serial.print(MqttClient.state());
+                Serial.print(this->mqttclient.state());
                 Serial.println(" try again in 5 seconds");
             #endif
             WEB_DEBUG_PRINT("MQTT Connect failed")
@@ -101,17 +94,20 @@ bool MqttReconnect()
     return false;
 }
 
-void MqttPublish(const String& JsonString)
+void ShineMqtt::mqttPublish(const String& JsonString)
 {
-    if (MqttClient.connected())
-        MqttClient.publish(mqtttopic.c_str(), JsonString.c_str(), true);
+    if (this->mqttclient.connected())
+        this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(), JsonString.c_str(), true);
 }
 
-void updateMqttLed() {
-    if (!MqttClient.connected())
+void ShineMqtt::updateMqttLed() {
+    if (!this->mqttclient.connected())
         digitalWrite(LED_RT, 1);
     else
         digitalWrite(LED_RT, 0);
 }
 
+void ShineMqtt::loop() {
+    this->mqttclient.loop();
+}
 #endif
