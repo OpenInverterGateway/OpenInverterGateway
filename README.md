@@ -42,7 +42,7 @@ Potential features not implemented yet:
 * ShineWifi-T (untested, please give feedback)
 
 I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). As
-an ESP32 board the lolin32 is a good hardware choice. I guess almost all ESP8266 modules with added 9-Pin Serial port and level shifter will work with little soldering.
+an ESP32 board the lolin32 is a good hardware choice. I guess almost all ESP8266 modules with added 9-Pin Serial port and level shifter will work with little soldering. You can use [this](https://www.thingiverse.com/thing:5665148) part from thingyverse to build a custom case/connector for your DIY-stick.
 
 See the short decriptions to the devices in den directories with their pictures in /IMG/*
 
