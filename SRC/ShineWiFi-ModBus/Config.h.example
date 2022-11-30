@@ -23,6 +23,9 @@
 // if the ping is not successful, the wifi connection will be reestablished
 #define PINGER_SUPPORTED 0
 
+// Enable update over web
+#define UPDATE_SUPPORTED 1
+
 // Setting this define to 1 will enable the debug output via the serial port.
 // The serial port is the same used for the communication to the inverter.
 // Enabling this feature can cause problems with the inverter communication!
@@ -52,7 +55,7 @@
 // Define a condition for starting the Wifi Manager
 // On Growatt devices the Pushbutton is connected to the ADC Pin (A0) and pulled to GND when pressed
 #define AP_BUTTON_PRESSED ( analogRead(A0) < 50 )
-// For generic EPS8622 boards you can use a digital pin of your choice
+// For generic EPS8622 boards you can use a digital pin of your choice | IMPORTANT! Change the value or your device don't work properly or add to A0 to ground
 // #define AP_BUTTON_PRESSED ( digitalRead(1) == HIGH )
 // For boards without any button you can detect double resets with the Double reset detector by setting this to 1
 #define ENABLE_DOUBLE_RESET 0
@@ -68,7 +71,7 @@
 #define BUTTON_TIMER 500 //  0.5s default
 
 #if PINGER_SUPPORTED == 1
-#define GATEWAY_IP IPAddress(192, 168, 178, 1)
+    #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif
 
 #define LED_GN 0  // GPIO0

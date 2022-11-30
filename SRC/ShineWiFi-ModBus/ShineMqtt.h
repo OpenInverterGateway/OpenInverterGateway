@@ -4,7 +4,7 @@
 
 #if MQTT_SUPPORTED == 1
     #include "Arduino.h"
-    #include <ShineWifi.h>
+    #include "ShineWifi.h"
     #include <PubSubClient.h>
     #include <stdbool.h>
     #include "WebDebug.h"

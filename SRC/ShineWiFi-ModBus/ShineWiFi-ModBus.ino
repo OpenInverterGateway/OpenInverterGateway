@@ -8,7 +8,7 @@ Used Libs
   - WiFiManager         by tzapu           https://github.com/tzapu/WiFiManager
   - PubSubClient        by Nick O´Leary    https://github.com/knolleary/pubsubclient
   - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
-  - ModbusMaster        by Doc Walker      https://github.com/knolleary/pubsubclient
+  - ModbusMaster        by Doc Walker      https://github.com/4-20ma/ModbusMaster
   - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
@@ -26,24 +26,27 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #ifndef __CONFIG_H__
 #error Please rename config.h.example to config.h
 #endif
+
 #include "WebDebug.h"
 
-#ifdef ESP8266
-#include <ESP8266HTTPUpdateServer.h>
-#elif ESP32
-#include <ESPHTTPUpdateServer.h>
+
+#if UPDATE_SUPPORTED == 1
+    #ifdef ESP8266
+        #include <ESP8266HTTPUpdateServer.h>
+    #elif ESP32
+        #include <HTTPUpdateServer.h>
+    #endif
 #endif
 
-#ifdef ENABLE_DOUBLE_RESET
-#define ESP_DRD_USE_LITTLEFS    true
-#define ESP_DRD_USE_EEPROM      false
-#define DRD_TIMEOUT             10
-#define DRD_ADDRESS             0
-#include <ESP_DoubleResetDetector.h>
-DoubleResetDetector* drd;
+#if ENABLE_DOUBLE_RESET == 1
+    #define ESP_DRD_USE_LITTLEFS    true
+    #define ESP_DRD_USE_EEPROM      false
+    #define DRD_TIMEOUT             10
+    #define DRD_ADDRESS             0
+    #include <ESP_DoubleResetDetector.h>
+    DoubleResetDetector* drd;
 #endif
 
-#include "LittleFS.h"
 #include "ShineWifi.h"
 #include "Growatt.h"
 
@@ -52,11 +55,15 @@ bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 #include <WiFiManager.h>
 #include "Index.h"
-#include "ShineMqtt.h"
+
+#if MQTT_SUPPORTED == 1
+    #include "LittleFS.h"  // Adittionaly install if you use esp lib version < 2 https://github.com/lorol/LITTLEFS
+    #include "ShineMqtt.h"
+#endif
 
 #if PINGER_SUPPORTED == 1
-#include <Pinger.h>
-#include <PingerResponse.h>
+    #include <Pinger.h>
+    #include <PingerResponse.h>
 #endif
 
 byte btnPressed = 0;
@@ -70,31 +77,37 @@ uint16_t u16PacketCnt = 0;
 Pinger pinger;
 #endif
 
-Growatt      Inverter;
-#ifdef ESP8266
-ESP8266WebServer httpServer(80);
-#elif ESP32
-WebServer httpServer(80);
-#endif
-
-#ifdef ESP8266
-ESP8266HTTPUpdateServer httpUpdater;
-#elif ESP32
-ESPHTTPUpdateServer httpUpdater;
-#endif
+Growatt Inverter;
 WiFiManager wm;
-WiFiManagerParameter* custom_mqtt_server = NULL;
-WiFiManagerParameter* custom_mqtt_port = NULL;
-WiFiManagerParameter* custom_mqtt_topic = NULL;
-WiFiManagerParameter* custom_mqtt_user = NULL;
-WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-const static char* serverfile = "/mqtts";
-const static char* portfile = "/mqttp";
-const static char* topicfile = "/mqttt";
-const static char* userfile = "/mqttu";
-const static char* secretfile = "/mqttw";
+#ifdef ESP8266
+    ESP8266WebServer httpServer(80);
+#elif ESP32
+    WebServer httpServer(80);
+#endif
 
+
+#ifdef UPDATE
+    #ifdef ESP8266
+        ESP8266HTTPUpdateServer httpUpdater;
+    #elif ESP32
+        HTTPUpdateServer httpUpdater;
+    #endif
+#endif
+
+#if MQTT_SUPPORTED == 1
+    WiFiManagerParameter* custom_mqtt_server = NULL;
+    WiFiManagerParameter* custom_mqtt_port = NULL;
+    WiFiManagerParameter* custom_mqtt_topic = NULL;
+    WiFiManagerParameter* custom_mqtt_user = NULL;
+    WiFiManagerParameter* custom_mqtt_pwd = NULL;
+
+    const static char* serverfile = "/mqtts";
+    const static char* portfile = "/mqttp";
+    const static char* topicfile = "/mqttt";
+    const static char* userfile = "/mqttu";
+    const static char* secretfile = "/mqttw";
+#endif
 
 char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
@@ -153,183 +166,99 @@ void InverterReconnect(void)
     #endif
 }
 
+#if MQTT_SUPPORTED == 1
+    String load_from_file(const char* file_name, String defaultvalue) {
+        String result = "";
 
-String load_from_file(const char* file_name, String defaultvalue) {
-    String result = "";
+        File this_file = LittleFS.open(file_name, "r");
+        if (!this_file) { // failed to open the file, return defaultvalue
+            return defaultvalue;
+        }
 
-    File this_file = LittleFS.open(file_name, "r");
-    if (!this_file) { // failed to open the file, return defaultvalue
-        return defaultvalue;
+        while (this_file.available()) {
+            result += (char)this_file.read();
+        }
+
+        this_file.close();
+        return result;
     }
 
-    while (this_file.available()) {
-        result += (char)this_file.read();
+    bool write_to_file(const char* file_name, String contents) {
+        File this_file = LittleFS.open(file_name, "w");
+        if (!this_file) { // failed to open the file, return false
+            return false;
+        }
+
+        int bytesWritten = this_file.print(contents);
+
+        if (bytesWritten == 0) { // write failed
+            return false;
+        }
+
+        this_file.close();
+        return true;
     }
 
-    this_file.close();
-    return result;
-}
-
-bool write_to_file(const char* file_name, String contents) {
-    File this_file = LittleFS.open(file_name, "w");
-    if (!this_file) { // failed to open the file, return false
-        return false;
-    }
-
-    int bytesWritten = this_file.print(contents);
-
-    if (bytesWritten == 0) { // write failed
-        return false;
-    }
-
-    this_file.close();
-    return true;
-}
-
-void loadConfig(MqttConfig* config)
-{
-    config->mqttserver = load_from_file(serverfile, "10.1.2.3");
-    config->mqttport = load_from_file(portfile, "1883");
-    config->mqtttopic = load_from_file(topicfile, "energy/solar");
-    config->mqttuser = load_from_file(userfile, "");
-    config->mqttpwd = load_from_file(secretfile, "");
-}
-
-void saveConfig(MqttConfig* config)
-{
-    write_to_file(serverfile, config->mqttserver);
-    write_to_file(portfile, config->mqttport);
-    write_to_file(topicfile, config->mqtttopic);
-    write_to_file(userfile, config->mqttuser);
-    write_to_file(secretfile, config->mqttpwd);
-}
-
-void saveParamCallback()
-{
-    Serial.println("[CALLBACK] saveParamCallback fired");
-    MqttConfig config;
-
-    config.mqttserver = custom_mqtt_server->getValue();
-    config.mqttport = custom_mqtt_port->getValue();
-    config.mqtttopic = custom_mqtt_topic->getValue();
-    config.mqttuser = custom_mqtt_user->getValue();
-    config.mqttpwd = custom_mqtt_pwd->getValue();
-
-    saveConfig(&config);
-
-    ESP.restart();
-}
-
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
-
-void setup()
-{
-    #if ENABLE_DEBUG_OUTPUT == 1
-        Serial.begin(115200);
-        Serial.println(F("Setup()"));
-    #endif
-    WEB_DEBUG_PRINT("Setup()");
-
-    #ifdef ENABLE_DOUBLE_RESET
-    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
-    #endif
-
-    pinMode(LED_GN, OUTPUT);
-    pinMode(LED_RT, OUTPUT);
-    pinMode(LED_BL, OUTPUT);
-
-    #ifdef ESP8266
-    LittleFS.begin();
-    #elif ESP32
-    LittleFS.begin(true);
-    #endif
-
-    #ifdef ENABLE_DOUBLE_RESET
-    if (drd->detectDoubleReset()) {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Double reset detected"));
-        #endif
-        StartedConfigAfterBoot = true;
-    }
-    #endif
-
-    WiFi.hostname(HOSTNAME);
-    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-
-    MqttConfig mqttConfig;
-    #if MQTT_SUPPORTED == 1
-        SetupMqttWifiManagerMenu(mqttConfig);
-    #endif
-
-    digitalWrite(LED_BL, 1);
-    // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
-    wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    // Automatically connect using saved credentials,
-    // if connection fails, it starts an access point with the specified name ("GrowattConfig")
-    bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
-
-    if (!res)
+    void loadConfig(MqttConfig* config)
     {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Failed to connect"));
-        #endif
+        config->mqttserver = load_from_file(serverfile, "10.1.2.3");
+        config->mqttport = load_from_file(portfile, "1883");
+        config->mqtttopic = load_from_file(topicfile, "energy/solar");
+        config->mqttuser = load_from_file(userfile, "");
+        config->mqttpwd = load_from_file(secretfile, "");
+    }
+
+    void saveConfig(MqttConfig* config)
+    {
+        write_to_file(serverfile, config->mqttserver);
+        write_to_file(portfile, config->mqttport);
+        write_to_file(topicfile, config->mqtttopic);
+        write_to_file(userfile, config->mqttuser);
+        write_to_file(secretfile, config->mqttpwd);
+    }
+
+    void saveParamCallback()
+    {
+        Serial.println("[CALLBACK] saveParamCallback fired");
+        MqttConfig config;
+
+        config.mqttserver = custom_mqtt_server->getValue();
+        config.mqttport = custom_mqtt_port->getValue();
+        config.mqtttopic = custom_mqtt_topic->getValue();
+        config.mqttuser = custom_mqtt_user->getValue();
+        config.mqttpwd = custom_mqtt_pwd->getValue();
+
+        saveConfig(&config);
+
         ESP.restart();
     }
-    else
-    {
-        digitalWrite(LED_BL, 0);
-        #if ENABLE_DEBUG_OUTPUT == 1
-            //if you get here you have connected to the WiFi
-            Serial.println(F("connected...yeey :)"));
-        #endif
+    
+    void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
+
+            loadConfig(&mqttConfig);
+
+            custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttConfig.mqttserver.c_str(), 40);
+            custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttConfig.mqttport.c_str(), 6);
+            custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
+            custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
+            custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 40);
+
+            wm.addParameter(custom_mqtt_server);
+            wm.addParameter(custom_mqtt_port);
+            wm.addParameter(custom_mqtt_topic);
+            wm.addParameter(custom_mqtt_user);
+            wm.addParameter(custom_mqtt_pwd);
+            wm.setSaveParamsCallback(saveParamCallback);
+            
+            setupMenu(true);
     }
 
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        WiFi_Reconnect();
-    }
+#endif
 
-    #if MQTT_SUPPORTED == 1
-        MqttSetup(mqttConfig);
-    #endif
 
-    httpServer.on("/status", SendJsonSite);
-    httpServer.on("/uistatus", SendUiJsonSite);
-    httpServer.on("/StartAp", StartConfigAccessPoint);
-    httpServer.on("/postCommunicationModbus", SendPostSite);
-    httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
-    httpServer.on("/", MainPage);
-    #if ENABLE_WEB_DEBUG == 1
-        httpServer.on("/debug", SendDebug);
-    #endif
-
-    Inverter.InitProtocol();
-    InverterReconnect();
-
-    httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
-    httpServer.begin();
-}
-
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
-    loadConfig(&mqttConfig);
-
-    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttConfig.mqttserver.c_str(), 40);
-    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttConfig.mqttport.c_str(), 6);
-    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
-    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
-    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 40);
-
-    wm.addParameter(custom_mqtt_server);
-    wm.addParameter(custom_mqtt_port);
-    wm.addParameter(custom_mqtt_topic);
-    wm.addParameter(custom_mqtt_user);
-    wm.addParameter(custom_mqtt_pwd);
-    wm.setSaveParamsCallback(saveParamCallback);
-
-    std::vector<const char*> menu = { "wifi","wifinoscan","param","sep","erase","restart" };
-    wm.setMenu(menu); // custom menu, pass vector
-}
-
+// -------------------------------------------------------
+// Webserver
+// -------------------------------------------------------
 
 void SendJsonSite(void)
 {
@@ -354,10 +283,10 @@ void StartConfigAccessPoint(void)
 }
 
 #if ENABLE_WEB_DEBUG == 1
-void SendDebug(void)
-{
-    httpServer.send(200, "text/plain", acWebDebug);
-}
+    void SendDebug(void)
+    {
+        httpServer.send(200, "text/plain", acWebDebug);
+    }
 #endif
 
 void MainPage(void)
@@ -478,6 +407,125 @@ void handlePostData()
     }
 }
 
+
+
+/**
+ * @brief setup function
+ * 
+ */
+void setup()
+{
+    #if ENABLE_DEBUG_OUTPUT == 1
+        Serial.begin(115200);
+        Serial.println(F("Setup()"));
+    #endif
+    WEB_DEBUG_PRINT("Setup()");
+
+    pinMode(LED_GN, OUTPUT);
+    pinMode(LED_RT, OUTPUT);
+    pinMode(LED_BL, OUTPUT);
+
+    #if MQTT_SUPPORTED == 1
+        #ifdef ESP8266
+        LittleFS.begin();
+        #elif ESP32
+        LittleFS.begin(true); 
+        #endif
+    #endif
+
+    #if ENABLE_DOUBLE_RESET == 1
+    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+    if (drd->detectDoubleReset()) {
+        #if ENABLE_DEBUG_OUTPUT == 1
+            Serial.println(F("Double reset detected"));
+        #endif
+        StartedConfigAfterBoot = true;
+    }
+    #endif
+
+    WiFi.hostname(HOSTNAME);
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+    
+    #if MQTT_SUPPORTED == 1
+        MqttConfig mqttConfig;
+        SetupMqttWifiManagerMenu(mqttConfig);
+    #endif
+
+    digitalWrite(LED_BL, 1);
+    // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
+    wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
+    // Automatically connect using saved credentials,
+    // if connection fails, it starts an access point with the specified name ("GrowattConfig")
+
+    // dont start if we have wifi connections
+    bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
+
+    if (!res)
+    {
+        #if ENABLE_DEBUG_OUTPUT == 1
+            Serial.println(F("Failed to connect"));
+        #endif
+        ESP.restart();
+    }
+    else
+    {
+        digitalWrite(LED_BL, 0);
+        #if ENABLE_DEBUG_OUTPUT == 1
+            //if you get here you have connected to the WiFi
+            Serial.println(F("connected...yeey :)"));
+        #endif
+    }
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        WiFi_Reconnect();
+    }
+
+    #if MQTT_SUPPORTED == 1
+        MqttSetup(mqttConfig);
+    #else
+        setupMenu(false);
+    #endif
+
+    httpServer.on("/status", SendJsonSite);
+    httpServer.on("/uistatus", SendUiJsonSite);
+    httpServer.on("/StartAp", StartConfigAccessPoint);
+    httpServer.on("/postCommunicationModbus", SendPostSite);
+    httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
+    httpServer.on("/", MainPage);
+    #if ENABLE_WEB_DEBUG == 1
+        httpServer.on("/debug", SendDebug);
+    #endif
+
+    #ifdef UPDATE
+        httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+    #endif
+
+
+    Inverter.InitProtocol();
+    InverterReconnect();
+
+    httpServer.begin();
+}
+
+/**
+ * @brief create custom wifimanager menu entries
+ * 
+ * @param enableCustomParams enable custom params aka. mqtt settings
+ */
+void setupMenu(bool enableCustomParams){
+    std::vector<const char*> menu = { "wifi","wifinoscan"};
+    if(enableCustomParams){
+        menu.push_back("param");
+    }
+    menu.push_back("sep");
+    menu.push_back("erase");
+    menu.push_back("restart");
+    
+    wm.setMenu(menu); // custom menu, pass vector
+}
+
+
 // -------------------------------------------------------
 // Main loop
 // -------------------------------------------------------
@@ -490,8 +538,8 @@ void updateMqttLed();
 
 void loop()
 {
-    #ifdef ENABLE_DOUBLE_RESET
-    drd->loop();
+    #if ENABLE_DOUBLE_RESET == 1
+        drd->loop();
     #endif
 
     long now = millis();
