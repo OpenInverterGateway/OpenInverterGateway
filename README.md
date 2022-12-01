@@ -48,7 +48,7 @@ See the short descriptions to the devices in den directories with their pictures
 
 ## Supported Interters
 * Growatt 1000-3000S 
-* Growatt 600-3300TL-X (Protocol 120)
+* Growatt 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
 * SPH4-4000-10000KTL3 BH (Protocol 124)
 * And others ....
 
