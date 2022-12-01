@@ -1,5 +1,5 @@
 # Growatt_ShineWiFi
-Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build stick (ESP8266/ESP32).
+Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build sticks (ESP8266/ESP32).
 
 # How to install
 * Checkout this repo
@@ -34,19 +34,23 @@ Potential features not implemented yet:
 * Extend to support additional PV strings *done*
 * Since it is all Modbus, other imvertery could be added.
 
-
-## Supported devices
-* ShineWifi-S with Growatt 1000S connected to serial (Modbus over RS232 with level shifter)
-* ShineWifi-X with Growatt 600TL-X connectd to USB (USB-Serial Chip from Exar)
-* Wemos-D1 with Growatt 600TL-X connected to USB (USB-Serial Chip: CH340)
+## Supported sticks/microcontrollers
+* ShineWifi-S with a Growatt Inverter connected to serial (Modbus over RS232 with level shifter)
+* ShineWifi-X with a Growatt Inverter connectd to USB (USB-Serial Chip from Exar)
+* Wemos-D1 with a Growatt Inverter connected to USB (USB-Serial Chip: CH340)
 * NODEMCU V1 (ESP8266) with Growatt MIC 2000TL connected to to USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
 
 I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). As
-an ESP32 board the lolin32 is a good hardware choice. I guess almost all ESP8266 modules with added 9-Pin Serial port and level shifter will work with little soldering. You can use [this](https://www.thingiverse.com/thing:5665148) part from thingyverse to build a custom case/connector for your DIY-stick.
+an ESP32 board the lolin32 is a good hardware choice. I guess almost all ESP8266 modules with added 9-Pin Serial port and level shifter will work with little soldering.
 
-See the short decriptions to the devices in den directories with their pictures in /IMG/*
+See the short descriptions to the devices in den directories with their pictures in /IMG/*
 
+## Supported Interters
+* Growatt 1000-3000S 
+* Growatt 600-3300TL-X (Protocol 120)
+* SPH4-4000-10000KTL3 BH (Protocol 124)
+* And others ....
 
 ## Modbus Protocol Versions
 The documentation from Growatt on the Modbus interface is avaliable, search for "Growatt PV Inverter Modbus RS485 RTU Protocol" on Google.
@@ -169,7 +173,3 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 	* Ui is generated dynamically based on the JSON provided.
 	* Graph is now able to plot multiple values
 
-## 2022-11-30
-* Fix compiling bugs
-* Update Comments
-* Add more ifdefs to disable functions completely
