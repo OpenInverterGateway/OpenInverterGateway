@@ -339,9 +339,7 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     wm.addParameter(custom_mqtt_pwd);
     wm.setSaveParamsCallback(saveParamCallback);
 
-    setupMenu(true)
-    std::vector<const char*> menu = { "wifi","wifinoscan","param","sep","erase","restart" };
-    wm.setMenu(menu); // custom menu, pass vector
+    setupMenu(true);
 }
 #endif
 
