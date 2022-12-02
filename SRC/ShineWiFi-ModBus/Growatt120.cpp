@@ -4,7 +4,7 @@
 
 // Supported inverters:
 // - Growatt MIC 1000TL-X
-// - Growatt MOD 30kTL3-X
+// - Growatt MID 30kTL3-X
 
 // Should also work for the following series (with input register range 0~124):
 // - TL-X（MIN Type）

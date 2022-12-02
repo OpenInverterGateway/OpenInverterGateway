@@ -23,7 +23,7 @@ Implemented Features:
 * It supports basic access to arbitrary modbus data
 * It tries to autodected which protocol version to use
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
-* Currently Growatt v1.24 and 3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
+* Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards..
@@ -32,7 +32,7 @@ Not supported:
 Potential features not implemented yet:
 * Extend to support 3-Phase-AC inverters *done*
 * Extend to support additional PV strings *done*
-* Since it is all Modbus, other imvertery could be added.
+* Since it is all Modbus, other imverters could be added.
 
 ## Supported sticks/microcontrollers
 * ShineWifi-S with a Growatt Inverter connected to serial (Modbus over RS232 with level shifter)
@@ -48,8 +48,9 @@ See the short descriptions to the devices in den directories with their pictures
 
 ## Supported Interters
 * Growatt 1000-3000S 
-* Growatt 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
-* SPH4-4000-10000KTL3 BH (Protocol 124)
+* Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
+* Growatt MID 3-25ktl3-x (Protocol 124 via USB)
+* Growatt SPH 4000-10000KTL3 BH (Protocol 124)
 * And others ....
 
 ## Modbus Protocol Versions
