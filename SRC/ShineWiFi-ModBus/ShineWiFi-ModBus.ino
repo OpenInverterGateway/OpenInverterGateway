@@ -37,7 +37,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     #endif
 #endif
 
-#ifdef ENABLE_DOUBLE_RESET == 1
+#if ENABLE_DOUBLE_RESET == 1
     #define ESP_DRD_USE_LITTLEFS    true
     #define ESP_DRD_USE_EEPROM      false
     #define DRD_TIMEOUT             10
@@ -237,7 +237,7 @@ void setup()
     #endif
     WEB_DEBUG_PRINT("Setup()");
 
-    #ifdef ENABLE_DOUBLE_RESET == 1
+    #if ENABLE_DOUBLE_RESET == 1
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
 
@@ -316,7 +316,7 @@ void setup()
 
     Inverter.InitProtocol();
     InverterReconnect();
-    #ifdef UPDATE_SUPPORTED == 1
+    #if UPDATE_SUPPORTED == 1
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
     #endif
     httpServer.begin();
@@ -522,8 +522,8 @@ long WifiRetryTimer = 0;
 
 void loop()
 {
-    #ifdef ENABLE_DOUBLE_RESET
-    drd->loop();
+    #if ENABLE_DOUBLE_RESET
+        drd->loop();
     #endif
 
     long now = millis();
