@@ -253,7 +253,7 @@ void setup()
     #endif
     #endif
 
-    #ifdef ENABLE_DOUBLE_RESET
+    #if ENABLE_DOUBLE_RESET == 1
     if (drd->detectDoubleReset()) {
         #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println(F("Double reset detected"));
