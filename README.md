@@ -32,7 +32,7 @@ Not supported:
 Potential features not implemented yet:
 * Extend to support 3-Phase-AC inverters *done*
 * Extend to support additional PV strings *done*
-* Since it is all Modbus, other imverters could be added.
+* Since it is all Modbus, other inverters could be added.
 
 ## Supported sticks/microcontrollers
 * ShineWifi-S with a Growatt Inverter connected to serial (Modbus over RS232 with level shifter)
