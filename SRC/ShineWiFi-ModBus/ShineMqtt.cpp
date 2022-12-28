@@ -1,6 +1,7 @@
 #include "ShineMqtt.h"
-#include "PubSubClient.h"
+#if MQTT_SUPPORTED == 1
 
+#include "PubSubClient.h"
 String mqttserver = "";
 String mqttport = "";
 String mqtttopic = "";
@@ -11,7 +12,7 @@ PubSubClient MqttClient(espClient);
 
 long previousConnectTryMillis = 0;
 
-#if MQTT_SUPPORTED == 1
+
 void MqttSetup(const MqttConfig &config)
 {
     mqttserver = config.mqttserver;

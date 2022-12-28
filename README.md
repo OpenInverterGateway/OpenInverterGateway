@@ -39,6 +39,7 @@ Potential features not implemented yet:
 * ShineWifi-S with Growatt 1000S connected to serial (Modbus over RS232 with level shifter)
 * ShineWifi-X with Growatt 600TL-X connectd to USB (USB-Serial Chip from Exar)
 * Wemos-D1 with Growatt 600TL-X connected to USB (USB-Serial Chip: CH340)
+* NODEMCU V1 (ESP8266) with Growatt MIC 2000TL connected to to USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
 
 I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). As
@@ -168,3 +169,7 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 	* Ui is generated dynamically based on the JSON provided.
 	* Graph is now able to plot multiple values
 
+## 2022-11-30
+* Fix compiling bugs
+* Update Comments
+* Add more ifdefs to disable functions completely

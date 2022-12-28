@@ -8,7 +8,7 @@ Used Libs
   - WiFiManager         by tzapu           https://github.com/tzapu/WiFiManager
   - PubSubClient        by Nick O´Leary    https://github.com/knolleary/pubsubclient
   - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
-  - ModbusMaster        by Doc Walker      https://github.com/knolleary/pubsubclient
+  - ModbusMaster        by Doc Walker      https://github.com/4-20ma/ModbusMaster
   - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
@@ -26,24 +26,30 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #ifndef __CONFIG_H__
 #error Please rename config.h.example to config.h
 #endif
+
 #include "WebDebug.h"
 
-#ifdef ESP8266
-#include <ESP8266HTTPUpdateServer.h>
-#elif ESP32
-#include <ESPHTTPUpdateServer.h>
+#if UPDATE_SUPPORTED == 1
+    #ifdef ESP8266
+        #include <ESP8266HTTPUpdateServer.h>
+    #elif ESP32
+        #include <ESPHTTPUpdateServer.h>
+    #endif
 #endif
 
-#ifdef ENABLE_DOUBLE_RESET
-#define ESP_DRD_USE_LITTLEFS    true
-#define ESP_DRD_USE_EEPROM      false
-#define DRD_TIMEOUT             10
-#define DRD_ADDRESS             0
-#include <ESP_DoubleResetDetector.h>
-DoubleResetDetector* drd;
+#if ENABLE_DOUBLE_RESET == 1
+    #define ESP_DRD_USE_LITTLEFS    true
+    #define ESP_DRD_USE_EEPROM      false
+    #define DRD_TIMEOUT             10
+    #define DRD_ADDRESS             0
+    #include <ESP_DoubleResetDetector.h>
+    DoubleResetDetector* drd;
 #endif
 
-#include "LittleFS.h"
+#if MQTT_SUPPORTED == 1
+    #include "LittleFS.h"
+    #include "ShineMqtt.h"
+#endif
 #include "ShineWifi.h"
 #include "Growatt.h"
 
@@ -67,34 +73,35 @@ char u8RetryCounter = NUM_OF_RETRIES;
 const char* update_path = "/firmware";
 uint16_t u16PacketCnt = 0;
 #if PINGER_SUPPORTED == 1
-Pinger pinger;
+    Pinger pinger;
 #endif
 
-Growatt      Inverter;
+Growatt Inverter;
 #ifdef ESP8266
-ESP8266WebServer httpServer(80);
+    ESP8266WebServer httpServer(80);
 #elif ESP32
-WebServer httpServer(80);
+    WebServer httpServer(80);
 #endif
 
 #ifdef ESP8266
-ESP8266HTTPUpdateServer httpUpdater;
+    ESP8266HTTPUpdateServer httpUpdater;
 #elif ESP32
-ESPHTTPUpdateServer httpUpdater;
+    ESPHTTPUpdateServer httpUpdater;
 #endif
 WiFiManager wm;
-WiFiManagerParameter* custom_mqtt_server = NULL;
-WiFiManagerParameter* custom_mqtt_port = NULL;
-WiFiManagerParameter* custom_mqtt_topic = NULL;
-WiFiManagerParameter* custom_mqtt_user = NULL;
-WiFiManagerParameter* custom_mqtt_pwd = NULL;
+#if MQTT_SUPPORTED == 1
+    WiFiManagerParameter* custom_mqtt_server = NULL;
+    WiFiManagerParameter* custom_mqtt_port = NULL;
+    WiFiManagerParameter* custom_mqtt_topic = NULL;
+    WiFiManagerParameter* custom_mqtt_user = NULL;
+    WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-const static char* serverfile = "/mqtts";
-const static char* portfile = "/mqttp";
-const static char* topicfile = "/mqttt";
-const static char* userfile = "/mqttu";
-const static char* secretfile = "/mqttw";
-
+    const static char* serverfile = "/mqtts";
+    const static char* portfile = "/mqttp";
+    const static char* topicfile = "/mqttt";
+    const static char* userfile = "/mqttu";
+    const static char* secretfile = "/mqttw";
+#endif
 
 char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
@@ -153,7 +160,7 @@ void InverterReconnect(void)
     #endif
 }
 
-
+#if MQTT_SUPPORTED == 1
 String load_from_file(const char* file_name, String defaultvalue) {
     String result = "";
 
@@ -221,7 +228,7 @@ void saveParamCallback()
 }
 
 void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
-
+#endif
 void setup()
 {
     #if ENABLE_DEBUG_OUTPUT == 1
@@ -230,21 +237,23 @@ void setup()
     #endif
     WEB_DEBUG_PRINT("Setup()");
 
-    #ifdef ENABLE_DOUBLE_RESET
-    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+    #if ENABLE_DOUBLE_RESET == 1
+        drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
 
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
 
+    #if MQTT_SUPPORTED == 1
     #ifdef ESP8266
     LittleFS.begin();
     #elif ESP32
     LittleFS.begin(true);
     #endif
+    #endif
 
-    #ifdef ENABLE_DOUBLE_RESET
+    #if ENABLE_DOUBLE_RESET == 1
     if (drd->detectDoubleReset()) {
         #if ENABLE_DEBUG_OUTPUT == 1
             Serial.println(F("Double reset detected"));
@@ -256,8 +265,8 @@ void setup()
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-    MqttConfig mqttConfig;
     #if MQTT_SUPPORTED == 1
+        MqttConfig mqttConfig;
         SetupMqttWifiManagerMenu(mqttConfig);
     #endif
 
@@ -291,6 +300,8 @@ void setup()
 
     #if MQTT_SUPPORTED == 1
         MqttSetup(mqttConfig);
+    #else
+        setupMenu(false);
     #endif
 
     httpServer.on("/status", SendJsonSite);
@@ -305,11 +316,13 @@ void setup()
 
     Inverter.InitProtocol();
     InverterReconnect();
-
+    #if UPDATE_SUPPORTED == 1
     httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+    #endif
     httpServer.begin();
 }
 
+#if MQTT_SUPPORTED == 1
 void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     loadConfig(&mqttConfig);
 
@@ -326,7 +339,24 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     wm.addParameter(custom_mqtt_pwd);
     wm.setSaveParamsCallback(saveParamCallback);
 
-    std::vector<const char*> menu = { "wifi","wifinoscan","param","sep","erase","restart" };
+    setupMenu(true);
+}
+#endif
+
+/**
+ * @brief create custom wifimanager menu entries
+ * 
+ * @param enableCustomParams enable custom params aka. mqtt settings
+ */
+void setupMenu(bool enableCustomParams){
+    std::vector<const char*> menu = { "wifi","wifinoscan"};
+    if(enableCustomParams){
+        menu.push_back("param");
+    }
+    menu.push_back("sep");
+    menu.push_back("erase");
+    menu.push_back("restart");
+    
     wm.setMenu(menu); // custom menu, pass vector
 }
 
@@ -486,12 +516,14 @@ long LEDTimer = 0;
 long RefreshTimer = 0;
 long WifiRetryTimer = 0;
 
-void updateMqttLed();
+#if MQTT_SUPPORTED == 1
+    void updateMqttLed();
+#endif
 
 void loop()
 {
-    #ifdef ENABLE_DOUBLE_RESET
-    drd->loop();
+    #if ENABLE_DOUBLE_RESET
+        drd->loop();
     #endif
 
     long now = millis();
@@ -624,7 +656,7 @@ void loop()
 
         #if MQTT_SUPPORTED == 1
         updateMqttLed();
-#endif
+        #endif
 
         #if PINGER_SUPPORTED == 1
             //frequently check if gateway is reachable
@@ -635,4 +667,3 @@ void loop()
         RefreshTimer = now;
     }
 }
-
