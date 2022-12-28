@@ -33,7 +33,7 @@
 #define ENABLE_DEBUG_OUTPUT 1
 
 // Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
-#define ENABLE_WEB_DEBUG 0
+#define ENABLE_WEB_DEBUG 1
 
 // Setting this flag to 1 will simulate the inverter
 // This could be helpful if it is night and the inverter is not working or
