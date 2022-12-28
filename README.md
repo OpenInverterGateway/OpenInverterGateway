@@ -36,7 +36,7 @@ Potential features not implemented yet:
 
 ## Supported sticks/microcontrollers
 * ShineWifi-S with a Growatt Inverter connected to serial (Modbus over RS232 with level shifter)
-* ShineWifi-X with a Growatt Inverter connectd to USB (USB-Serial Chip from Exar)
+* ShineWifi-X with a Growatt Inverter connected to USB (USB-Serial Chip from Exar)
 * Wemos-D1 with a Growatt Inverter connected to USB (USB-Serial Chip: CH340)
 * NODEMCU V1 (ESP8266) with Growatt MIC 2000TL connected to to USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
