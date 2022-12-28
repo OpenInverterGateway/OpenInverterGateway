@@ -83,10 +83,12 @@ Growatt Inverter;
     WebServer httpServer(80);
 #endif
 
-#ifdef ESP8266
-    ESP8266HTTPUpdateServer httpUpdater;
-#elif ESP32
-    ESPHTTPUpdateServer httpUpdater;
+#if UPDATE_SUPPORTED == 1
+    #ifdef ESP8266
+        ESP8266HTTPUpdateServer httpUpdater;
+    #elif ESP32
+        ESPHTTPUpdateServer httpUpdater;
+    #endif
 #endif
 WiFiManager wm;
 #if MQTT_SUPPORTED == 1
