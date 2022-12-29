@@ -9,19 +9,28 @@
     #include <stdbool.h>
     #include "WebDebug.h"
 
-    extern PubSubClient MqttClient;
+typedef struct {
+    String mqttserver;
+    String mqttport;
+    String mqtttopic;
+    String mqttuser;
+    String mqttpwd ;
+} MqttConfig;
 
-    typedef struct {
-        String mqttserver;
-        String mqttport;
-        String mqtttopic;
-        String mqttuser;
-        String mqttpwd ;
-    } MqttConfig;
-
-    bool MqttReconnect();
-    void MqttSetup(const MqttConfig &config);
-    void MqttPublish(const String &JsonString);
-    void updateMqttLed();
+class ShineMqtt {
+    public:
+        ShineMqtt(WiFiClient& wc): wifiClient(wc), mqttclient(wifiClient) {};
+        void mqttSetup(const MqttConfig &config);
+        bool mqttReconnect();
+        void mqttPublish(const String &JsonString);
+        void updateMqttLed();
+        void loop();
+    private:
+        WiFiClient& wifiClient;
+        long previousConnectTryMillis = 0;
+        MqttConfig mqttconfig;
+        PubSubClient mqttclient;
+        static String getId();
+};
 #endif
 #endif
