@@ -92,7 +92,7 @@ To extract the current AC Power you have to add a sensor template.
       - sensor:
           - name: "Growatt inverter AC Power"
             unit_of_measurement: "W"
-            state: "{{ float(state_attr('sensor.growatt_inverter_1', 'OutputPower')) }}"
+            state: "{{ float(state_attr('sensor.growatt_inverter', 'OutputPower')) }}"
 
 ## Change log
 
