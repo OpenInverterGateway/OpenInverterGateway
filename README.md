@@ -69,33 +69,30 @@ For IoT applications the raw data can now read in JSON format (application/json)
 
 This will but the inverter on the energy dashboard.
 
-'''
-sensor:
-  - platform: mqtt
-    state_topic: "energy/solar/growatt/"
-    name: "Growatt inverter"
-    unit_of_measurement: "kWh"
-    value_template: '{{ float(value_json.TotalGenerateEnergy) | round(1)  }}'
-    json_attributes_topic: "energy/solar/growatt/"
-    device_class: energy
-    state_class: 'total_increasing'    
-    last_reset_topic: 'energy/solar/growatt/'
-    last_reset_value_template: '1970-01-01T00:00:00+00:00'
-    payload_available: 1
-    availability_mode: 'latest'
-    availability_topic: "energy/solar/growatt/"
-    availability_template: '{{ value_json.InverterStatus }}'
-'''
+    sensor:
+      - platform: mqtt
+        state_topic: "energy/solar/growatt/"
+        name: "Growatt inverter"
+        unit_of_measurement: "kWh"
+        value_template: '{{ float(value_json.TotalGenerateEnergy) | round(1)  }}'
+        json_attributes_topic: "energy/solar/growatt/"
+        device_class: energy
+        state_class: 'total_increasing'    
+        last_reset_topic: 'energy/solar/growatt/'
+        last_reset_value_template: '1970-01-01T00:00:00+00:00'
+        payload_available: 1
+        availability_mode: 'latest'
+        availability_topic: "energy/solar/growatt/"
+        availability_template: '{{ value_json.InverterStatus }}'
+
 
 To extract the current AC Power you have to add a sensor template.
 
-'''
-template:
-  - sensor:
-      - name: "Growatt inverter AC Power"
-        unit_of_measurement: "W"
-        state: "{{ float(state_attr('sensor.growatt_inverter_1', 'OutputPower')) }}"
-'''
+    template:
+      - sensor:
+          - name: "Growatt inverter AC Power"
+            unit_of_measurement: "W"
+            state: "{{ float(state_attr('sensor.growatt_inverter_1', 'OutputPower')) }}"
 
 ## Change log
 
