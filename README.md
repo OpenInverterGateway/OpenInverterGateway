@@ -21,7 +21,7 @@ Implemented Features:
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
 * It supports convenient OTA firmware update (`http://<ip>/firmware`)
 * It supports basic access to arbitrary modbus data
-* It tries to autodected which protocol version to use
+* It tries to autodected which stick type to use
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
 * Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 
@@ -67,7 +67,7 @@ For IoT applications the raw data can now read in JSON format (application/json)
 ## Homeassistant configuration
 
 
-This will but the inverter on the energy dashboard.
+This will put the inverter on the energy dashboard.
 
     sensor:
       - platform: mqtt
@@ -80,7 +80,7 @@ This will but the inverter on the energy dashboard.
         state_class: 'total_increasing'    
         last_reset_topic: 'energy/solar/growatt/'
         last_reset_value_template: '1970-01-01T00:00:00+00:00'
-        payload_available: 1
+        payload_available: 1 # you might need to adapt this
         availability_mode: 'latest'
         availability_topic: "energy/solar/growatt/"
         availability_template: '{{ value_json.InverterStatus }}'
