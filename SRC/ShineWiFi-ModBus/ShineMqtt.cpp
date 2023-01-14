@@ -28,8 +28,7 @@ String ShineMqtt::getId() {
 #elif ESP32
   uint64_t id = ESP.getEfuseMac();
 #endif
-
-  return String("Growatt" + id);
+  return "Growatt" + String(id & 0xffffffff);
 }
 
 // -------------------------------------------------------
