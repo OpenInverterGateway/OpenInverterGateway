@@ -27,7 +27,11 @@ class ShineMqtt {
   void loop();
 
  private:
+#ifdef MQTTS_ENABLED
+  WiFiClientSecure& wifiClient;
+#else
   WiFiClient& wifiClient;
+#endif
   long previousConnectTryMillis = 0;
   MqttConfig mqttconfig;
   PubSubClient mqttclient;
