@@ -54,8 +54,10 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include "Growatt.h"
 #include "ShineMqtt.h"
 
-WiFiClient espClient;
-ShineMqtt shineMqtt(espClient);
+#if MQTT_SUPPORTED == 1
+    WiFiClient espClient;
+    ShineMqtt shineMqtt(espClient);
+#endif
 
 bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
@@ -166,6 +168,13 @@ void InverterReconnect(void)
 }
 
 #if MQTT_SUPPORTED == 1
+String load_from_file(const char* file_name, String defaultvalue);
+bool write_to_file(const char* file_name, String contents);
+void loadConfig(MqttConfig* config);
+void saveConfig(MqttConfig* config);
+void saveParamCallback();
+void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
+
 String load_from_file(const char* file_name, String defaultvalue) {
     String result = "";
 
@@ -231,8 +240,6 @@ void saveParamCallback()
 
     ESP.restart();
 }
-
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
 #endif
 void setup()
 {
@@ -520,10 +527,6 @@ long ButtonTimer = 0;
 long LEDTimer = 0;
 long RefreshTimer = 0;
 long WifiRetryTimer = 0;
-
-#if MQTT_SUPPORTED == 1
-    void updateMqttLed();
-#endif
 
 void loop()
 {
