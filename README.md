@@ -26,31 +26,26 @@ Implemented Features:
 * Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 
 Not supported:
-* It does not make use the RTC or SPI Flash of these boards..
+* It does not make use the RTC or SPI Flash of these boards.
 * It does not communicate to Growatt Cloud at all.
 
-Potential features not implemented yet:
-* Extend to support 3-Phase-AC inverters *done*
-* Extend to support additional PV strings *done*
-* Since it is all Modbus, other inverters could be added.
-
 ## Supported sticks/microcontrollers
-* ShineWifi-S with a Growatt Inverter connected to serial (Modbus over RS232 with level shifter)
-* ShineWifi-X with a Growatt Inverter connected to USB (USB-Serial Chip from Exar)
-* Wemos-D1 with a Growatt Inverter connected to USB (USB-Serial Chip: CH340)
-* NODEMCU V1 (ESP8266) with Growatt MIC 2000TL connected to to USB (USB-Serial Chip: CH340)
+* ShineWifi-S with a Growatt Inverter connected via serial (Modbus over RS232 with level shifter)
+* ShineWifi-X with a Growatt Inverter connected via USB (USB-Serial Chip from Exar)
+* Wemos-D1 with a Growatt Inverter connected via USB (USB-Serial Chip: CH340)
+* NODEMCU V1 (ESP8266) with a Growatt Inverter connected via USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
+* Lolin32 (ESP32) with a Growatt Inverter connected via USB
 
-I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). As
-an ESP32 board the lolin32 is a good hardware choice. I guess almost all ESP8266 modules with added 9-Pin Serial port and level shifter will work with little soldering.
+I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). Almost all ESP8266 modules with added 9-Pin Serial port and level shifter should work with little soldering via Serial.
 
 See the short descriptions to the devices in den directories with their pictures in /IMG/*
 
-## Supported Interters
+## Supported Inverters
 * Growatt 1000-3000S 
 * Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
 * Growatt MID 3-25ktl3-x (Protocol 124 via USB)
-* Growatt SPH 4000-10000KTL3 BH (Protocol 124)
+* Growatt SPH 4000-10000KTL3 BH (Protocol 124 via Serial)
 * And others ....
 
 ## Modbus Protocol Versions
