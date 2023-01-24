@@ -24,7 +24,7 @@
 #define PINGER_SUPPORTED 0
 
 // Enable update over web
-#define UPDATE_SUPPORTED 1
+#define UPDATE_SUPPORTED 0
 
 // Setting this define to 1 will enable the debug output via the serial port.
 // The serial port is the same used for the communication to the inverter.
