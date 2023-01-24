@@ -24,7 +24,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 
 #include "Config.h"
 #ifndef __CONFIG_H__
-#error Please rename config.h.example to config.h
+#error Please rename Config.h.example to Config.h
 #endif
 
 #include "WebDebug.h"
@@ -55,7 +55,11 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include "ShineMqtt.h"
 
 #if MQTT_SUPPORTED == 1
-    WiFiClient espClient;
+    #ifdef MQTTS_ENABLED
+        WiFiClientSecure espClient;
+    #else
+        WiFiClient espClient;
+    #endif
     ShineMqtt shineMqtt(espClient);
 #endif
 
@@ -241,6 +245,7 @@ void saveParamCallback()
     ESP.restart();
 }
 #endif
+
 void setup()
 {
     #if ENABLE_DEBUG_OUTPUT == 1
@@ -311,6 +316,9 @@ void setup()
     }
 
     #if MQTT_SUPPORTED == 1
+        #ifdef MQTTS_ENABLED
+            espClient.setCACert(MQTTS_BROKER_CA_CERT);
+        #endif
         shineMqtt.mqttSetup(mqttConfig);
     #else
         setupMenu(false);
@@ -329,7 +337,7 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     #if UPDATE_SUPPORTED == 1
-    httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+        httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
     #endif
     httpServer.begin();
 }

@@ -52,3 +52,5 @@ If the total energy is 0.199 kWh before sunset, the totoal enrgy will be reset t
 	* Ui is generated dynamically based on the JSON provided.
 	* Graph is now able to plot multiple values
 
+## 2023-01-20 Update
+* Added tls support for esp32

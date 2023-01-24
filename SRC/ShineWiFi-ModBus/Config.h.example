@@ -35,6 +35,14 @@
 // Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
 #define ENABLE_WEB_DEBUG 1
 
+// Enable TLS connection from stick to broker. Make sure to update port and hostname to match the cert
+// of the mqtt broker as well. Change this CERT to your custom mqtt cert.
+#define MQTTS_BROKER_CA_CERT "-----BEGIN CERTIFICATE-----\n" \
+     "MIIDSjCCAjKgAwIBAgIQRK+wgNajJ7qJMDmGLvhAazANBgkqhkiG9w0BAQUFADA/\n" \
+     "....\n" \
+     "Ob8VZRzI9neWagqNdwvYkQsEjgfbKbYK7p2CNTUQ\n" \
+     "-----END CERTIFICATE-----\n"
+
 // Setting this flag to 1 will simulate the inverter
 // This could be helpful if it is night and the inverter is not working or
 // during development where the stick is not connected to the inverter
