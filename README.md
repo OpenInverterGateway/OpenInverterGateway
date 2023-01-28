@@ -2,13 +2,20 @@
 Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build sticks (ESP8266/ESP32).
 
 # How to install
+
+* Download a precompiled release from [here](https://github.com/otti/Growatt_ShineWiFi-S/releases)
+
+Or
+
 * Checkout this repo
 * Setup the IDE of your choice
     * **Recommended:** For platformio just open the project folder and choose the correct env for your hardware
     * For the original Arduino IDE follow the instruction in the main ino [file](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/ShineWiFi-ModBus.ino) (esp8266 only)
 * Rename and adapt [Config.h.example](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/Config.h.example) to Config.h with your compile time settings
-* Flash to an esp32/esp8266
-* For detailed flashing instructions see https://github.com/otti/Growatt_ShineWiFi-S/blob/master/Doc/
+
+After you obtained an image you want to flash:
+
+* Flash to an esp32/esp8266 ([details](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/Doc/)).
 * Connect to the setup wifi called GrowattConfig (PW: growsolar) and configure the firmware via the webinterface at http://192.168.4.1
 * If you need to reconfigure the stick later on you have to either press the ap button (configured in Config.h) or reset the stick twice within 10sec
 
