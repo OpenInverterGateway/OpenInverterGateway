@@ -13,7 +13,7 @@ Or
     * For the original Arduino IDE follow the instruction in the main ino [file](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/ShineWiFi-ModBus.ino) (esp8266 only)
 * Rename and adapt [Config.h.example](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/Config.h.example) to Config.h with your compile time settings
 
-After you downloaded/obtained an image you want to flash:
+After you obtained an image you want to flash:
 
 * Flash to an esp32/esp8266 ([details](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/Doc/)).
 * Connect to the setup wifi called GrowattConfig (PW: growsolar) and configure the firmware via the webinterface at http://192.168.4.1
