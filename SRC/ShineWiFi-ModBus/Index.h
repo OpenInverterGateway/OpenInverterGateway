@@ -27,7 +27,7 @@ copies or substantial portions of the Software. -->
   <h2>Growatt Inverter</h2>
   <div id="chart-power" class="container"></div>
 
-  <div id="DataCointainer"> </div>
+  <div id="DataContainer"></div>
 
   <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
@@ -88,7 +88,7 @@ setInterval(function ( ) {
         var i = 0;
 
         // clear data container just in case
-        container = document.getElementById("DataCointainer");
+        container = document.getElementById("DataContainer");
         container.innerHTML = "";
 
         for (var key in obj) {
@@ -103,7 +103,7 @@ setInterval(function ( ) {
           }
           // init data container
           var element = document.createElement("p");
-          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
+          element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
           element.setAttribute("id", key);
           container.appendChild(element);
         }
@@ -113,7 +113,7 @@ setInterval(function ( ) {
         for (var key in obj) {
           // update site data
           var element = document.getElementById(key);
-          element.innerHTML = key + ": " + obj[key][0] + " " + obj[key][1];
+          element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
           // update chart data
           if (obj[key][2] == true) {
             if (chartT.series[nameToId[key]].data.length <= 50) {
