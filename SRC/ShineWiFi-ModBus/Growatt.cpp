@@ -350,7 +350,7 @@ void Growatt::CreateUIJson(char* Buffer) {
                         _Protocol.InputRegisters[i].multiplier));
       }
       if (strcmp(_Protocol.InputRegisters[i].name, "InverterStatus") == 0) {
-        arr.add(statusStr[_Protocol.InputRegisters[i].unit+1]);  // use unit for status
+        arr.add(statusStr[_Protocol.InputRegisters[i].value]);  // use unit for status
       } else {
         arr.add(unitStr[_Protocol.InputRegisters[i].unit]);  // unit
       }
@@ -372,7 +372,7 @@ void Growatt::CreateUIJson(char* Buffer) {
                         _Protocol.HoldingRegisters[i].multiplier));
       }
       if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0) {
-        arr.add(statusStr[_Protocol.HoldingRegisters[i].unit+1]);  // use unit for status
+        arr.add(statusStr[_Protocol.HoldingRegisters[i].value]);  // use unit for status
       } else {
         arr.add(unitStr[_Protocol.HoldingRegisters[i].unit]);  // unit
       }
