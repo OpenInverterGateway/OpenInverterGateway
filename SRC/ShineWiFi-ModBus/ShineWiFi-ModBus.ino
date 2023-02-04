@@ -248,6 +248,15 @@ void saveParamCallback()
 
 void setup()
 {
+    //set static ip
+    #ifdef IP_ADDRESS
+        #ifdef IP_GATEWAY
+            #ifdef IP_SUBNET
+                wm.setSTAStaticIPConfig(IP_ADDRESS, IP_GATEWAY, IP_SUBNET); // set static ip,gw,sn
+            #endif
+        #endif
+    #endif
+
     #if ENABLE_DEBUG_OUTPUT == 1
         Serial.begin(115200);
         Serial.println(F("Setup()"));
