@@ -354,7 +354,7 @@ void Growatt::CreateUIJson(char* Buffer) {
       } else {
         arr.add(unitStr[_Protocol.InputRegisters[i].unit]);  // unit
       }
-      arr.add(_Protocol.InputRegisters[i].plot);           // should be plotted
+      arr.add(_Protocol.InputRegisters[i].plot); // should be plotted
     }
   }
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
