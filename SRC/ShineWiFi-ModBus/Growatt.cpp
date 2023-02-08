@@ -331,7 +331,9 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
 
 void Growatt::CreateUIJson(char* Buffer) {
   StaticJsonDocument<2048> doc;
-  const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "C"};
+  const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
+  const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
+  const int statusStrLength = sizeof(statusStr) / sizeof(char*);
 
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
@@ -348,8 +350,14 @@ void Growatt::CreateUIJson(char* Buffer) {
         arr.add(_round2(_Protocol.InputRegisters[i].value *
                         _Protocol.InputRegisters[i].multiplier));
       }
-      arr.add(unitStr[_Protocol.InputRegisters[i].unit]);  // unit
-      arr.add(_Protocol.InputRegisters[i].plot);           // should be plotted
+      if (strcmp(_Protocol.InputRegisters[i].name, "InverterStatus") == 0 &&
+          _Protocol.InputRegisters[i].value < statusStrLength) {
+        arr.add(statusStr[_Protocol.InputRegisters[i].value]);  // use unit for
+                                                                // status
+      } else {
+        arr.add(unitStr[_Protocol.InputRegisters[i].unit]);  // unit
+      }
+      arr.add(_Protocol.InputRegisters[i].plot);  // should be plotted
     }
   }
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
@@ -366,7 +374,13 @@ void Growatt::CreateUIJson(char* Buffer) {
         arr.add(_round2(_Protocol.HoldingRegisters[i].value *
                         _Protocol.HoldingRegisters[i].multiplier));
       }
-      arr.add(unitStr[_Protocol.HoldingRegisters[i].unit]);
+      if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0 &&
+          _Protocol.HoldingRegisters[i].value < statusStrLength) {
+        arr.add(statusStr[_Protocol.HoldingRegisters[i].value]);  // use unit
+                                                                  // for status
+      } else {
+        arr.add(unitStr[_Protocol.HoldingRegisters[i].unit]);  // unit
+      }
       arr.add(_Protocol.HoldingRegisters[i].plot);  // should be plotted
     }
   }
@@ -374,7 +388,7 @@ void Growatt::CreateUIJson(char* Buffer) {
 #warning simulating the inverter
   JsonArray arr = doc.createNestedArray("Status");
   arr.add(1);
-  arr.add("");
+  arr.add("(Normal Operation)");
   arr.add(false);
   arr = doc.createNestedArray("DcPower");
   arr.add(230);
