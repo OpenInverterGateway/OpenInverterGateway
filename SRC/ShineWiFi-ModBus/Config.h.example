@@ -60,12 +60,6 @@
 #define UPDATE_USER       "admin"
 #define UPDATE_PASSWORD   "admin"
 
-// WiFi Client IP
-//#define IP_ADDRESS IPAddress(192, 168, 0, 2)
-//#define IP_GATEWAY IPAddress(192, 168, 0, 1)
-//#define IP_SUBNET IPAddress(255, 255, 255, 0)
-//#define IP_DNS IPAddress(192, 168, 0, 1)
-
 // Define a condition for starting the Wifi Manager
 // On Growatt devices the Pushbutton is connected to the ADC Pin (A0) and pulled to GND when pressed
 #define AP_BUTTON_PRESSED ( analogRead(A0) < 50 )

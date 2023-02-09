@@ -294,18 +294,9 @@ void setup()
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
-    //set static ip
-    #ifdef IP_ADDRESS
-        #ifdef IP_GATEWAY
-            #ifdef IP_SUBNET
-                #ifdef IP_DNS
-                    wm.setSTAStaticIPConfig(IP_ADDRESS, IP_GATEWAY, IP_SUBNET, IP_DNS); // set static ip,gw,sn,dns
-                #else
-                    wm.setSTAStaticIPConfig(IP_ADDRESS, IP_GATEWAY, IP_SUBNET); // set static ip,gw,sn
-                #endif
-            #endif
-        #endif
-    #endif
+    // Enable Setting IP from WiFi Manager
+    wm.setShowStaticFields(true);
+    wm.setShowDnsFields(true);
 
     if (!res)
     {
