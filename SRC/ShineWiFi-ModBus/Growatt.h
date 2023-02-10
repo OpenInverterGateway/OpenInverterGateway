@@ -2,6 +2,7 @@
 #define _GROWATT_H_
 
 #include "GrowattTypes.h"
+#include <ArduinoJson.h>
 
 class Growatt {
  public:
@@ -32,6 +33,7 @@ class Growatt {
 
   eDevice_t _InitModbusCommunication();
   static double _round2(double value);
+  void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc);
 };
 
 #endif  // _GROWATT_H_

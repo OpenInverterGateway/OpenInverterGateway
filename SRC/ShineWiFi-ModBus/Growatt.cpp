@@ -112,7 +112,8 @@ bool Growatt::ReadInputRegisters() {
           // 13
           registerAddress = _Protocol.InputRegisters[j].address -
                             _Protocol.InputReadFragments[i].StartAddress;
-          if (_Protocol.InputRegisters[j].size == SIZE_16BIT) {
+          if (_Protocol.InputRegisters[j].size == SIZE_16BIT ||
+              _Protocol.InputRegisters[j].size == SIZE_16BIT_S) {
             _Protocol.InputRegisters[j].value =
                 Modbus.getResponseBuffer(registerAddress);
           } else {
@@ -152,7 +153,8 @@ bool Growatt::ReadHoldingRegisters() {
             break;
           registerAddress = _Protocol.HoldingRegisters[j].address -
                             _Protocol.HoldingReadFragments[i].StartAddress;
-          if (_Protocol.HoldingRegisters[j].size == SIZE_16BIT) {
+          if (_Protocol.HoldingRegisters[j].size == SIZE_16BIT ||
+              _Protocol.HoldingRegisters[j].size == SIZE_16BIT_S) {
             _Protocol.HoldingRegisters[j].value =
                 Modbus.getResponseBuffer(registerAddress);
           } else {
@@ -283,34 +285,35 @@ double Growatt::_round2(double value) {
   return (int)(value * 100 + 0.5) / 100.0;
 }
 
+void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
+  char* name = reg->name;
+  RegisterSize_t size = reg->size;
+  float mult = reg->multiplier;
+  uint32_t value = reg->value;
+
+  switch (size) {
+    case SIZE_16BIT_S:
+      (*doc)[name] = (mult == (int)mult) ? (int16_t)value * mult
+                                         : _round2((int16_t)value * mult);
+      break;
+    case SIZE_32BIT_S:
+      (*doc)[name] = (mult == (int)mult) ? (int32_t)value * mult
+                                         : _round2((int32_t)value * mult);
+      break;
+    default:
+      (*doc)[name] = (mult == (int)mult) ? value * mult : _round2(value * mult);
+  }
+}
+
 void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
   StaticJsonDocument<2048> doc;
 
 #if SIMULATE_INVERTER != 1
-  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
-    if (_Protocol.InputRegisters[i].multiplier ==
-        (int)_Protocol.InputRegisters[i].multiplier) {
-      doc[_Protocol.InputRegisters[i].name] =
-          _Protocol.InputRegisters[i].value *
-          _Protocol.InputRegisters[i].multiplier;
-    } else {
-      doc[_Protocol.InputRegisters[i].name] =
-          _round2(_Protocol.InputRegisters[i].value *
-                  _Protocol.InputRegisters[i].multiplier);
-    }
-  }
-  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
-    if (_Protocol.HoldingRegisters[i].multiplier ==
-        (int)_Protocol.HoldingRegisters[i].multiplier) {
-      doc[_Protocol.HoldingRegisters[i].name] =
-          _Protocol.HoldingRegisters[i].value *
-          _Protocol.HoldingRegisters[i].multiplier;
-    } else {
-      doc[_Protocol.HoldingRegisters[i].name] =
-          _round2(_Protocol.HoldingRegisters[i].value *
-                  _Protocol.HoldingRegisters[i].multiplier);
-    }
-  }
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++)
+    JSONAddReg(&_Protocol.InputRegisters[i], &doc);
+
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
+    JSONAddReg(&_Protocol.HoldingRegisters[i], &doc);
 #else
 #warning simulating the inverter
   doc["Status"] = 1;
