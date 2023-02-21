@@ -114,7 +114,7 @@ WiFiManager wm;
     const static char* secretfile = "/mqttw";
 #endif
 
-char JsonString[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
+char JSONChars[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
 // -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
@@ -383,16 +383,16 @@ void setupMenu(bool enableCustomParams){
 
 void SendJsonSite(void)
 {
-    JsonString[0] = '\0';
-    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
-    httpServer.send(200, "application/json", JsonString);
+    JSONChars[0] = '\0';
+    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str());
+    httpServer.send(200, "application/json", JSONChars);
 }
 
 void SendUiJsonSite(void)
 {
-    JsonString[0] = '\0';
-    Inverter.CreateUIJson(JsonString);
-    httpServer.send(200, "application/json", JsonString);
+    JSONChars[0] = '\0';
+    Inverter.CreateUIJson(JSONChars);
+    httpServer.send(200, "application/json", JSONChars);
 }
 
 void StartConfigAccessPoint(void)
@@ -426,7 +426,7 @@ void handlePostData()
     uint16_t u16Tmp;
     uint32_t u32Tmp;
 
-    msg = JsonString;
+    msg = JSONChars;
     msg[0] = 0;
 
     if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
@@ -630,11 +630,11 @@ void loop()
                     u8RetryCounter = NUM_OF_RETRIES;
 
                     // Create JSON string
-                    JsonString[0] = '\0';
-                    Inverter.CreateJson(JsonString, WiFi.macAddress().c_str());
+                    JSONChars[0] = '\0';
+                    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str());
 
                     #if MQTT_SUPPORTED == 1
-                    shineMqtt.mqttPublish(JsonString);
+                    shineMqtt.mqttPublish(JSONChars);
                     #endif
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
@@ -651,9 +651,9 @@ void loop()
                     else
                     {
                         WEB_DEBUG_PRINT("Retry counter\n")
-                        sprintf(JsonString, "{\"InverterStatus\": -1 }");
+                        sprintf(JSONChars, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
-                            shineMqtt.mqttPublish(JsonString);
+                            shineMqtt.mqttPublish(JSONChars);
                         #endif
                         digitalWrite(LED_RT, 1); // set red led in case of error
                     }

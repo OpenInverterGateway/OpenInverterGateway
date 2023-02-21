@@ -44,6 +44,8 @@ typedef enum {
 typedef enum {
   SIZE_16BIT,
   SIZE_32BIT,
+  SIZE_16BIT_S,
+  SIZE_32BIT_S,
 } RegisterSize_t;
 
 typedef struct {
