@@ -52,7 +52,6 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 #include "ShineWifi.h"
 #include "Growatt.h"
-#include "ShineMqtt.h"
 
 #if MQTT_SUPPORTED == 1
     #ifdef MQTTS_ENABLED
@@ -67,7 +66,6 @@ bool StartedConfigAfterBoot = false;
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 #include <WiFiManager.h>
 #include "Index.h"
-#include "ShineMqtt.h"
 
 #if PINGER_SUPPORTED == 1
 #include <Pinger.h>
