@@ -1,5 +1,5 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#ifndef _SHINE_CONFIG_H_
+#define _SHINE_CONFIG_H_
 // ---------------------------------------------------------------
 // Build configuration area start
 // ---------------------------------------------------------------
@@ -87,4 +87,4 @@
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
-#endif // __CONFIG_H__
+#endif

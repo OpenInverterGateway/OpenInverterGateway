@@ -1,5 +1,5 @@
-#ifndef _GROWATT_H_
-#define _GROWATT_H_
+#ifndef _SHINE_GROWATT_H_
+#define _SHINE_GROWATT_H_
 
 #include "GrowattTypes.h"
 #include <ArduinoJson.h>
@@ -36,4 +36,4 @@ class Growatt {
   void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc);
 };
 
-#endif  // _GROWATT_H_
+#endif

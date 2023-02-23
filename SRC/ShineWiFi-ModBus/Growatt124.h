@@ -1,5 +1,5 @@
-#ifndef _GROWATT_1_24_H_
-#define _GROWATT_1_24_H_
+#ifndef _SHINE_GROWATT_124_H_
+#define _SHINE_GROWATT_124_H_
 
 #include "Arduino.h"
 #include "GrowattTypes.h"

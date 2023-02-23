@@ -1,5 +1,5 @@
-#ifndef _SHINEW_IFI_MQTT_H
-#define _SHINEW_IFI_MQTT_H
+#ifndef _SHINE_SHINE_MQTT_H
+#define _SHINE_SHINE_MQTT_H
 #include "Config.h"
 
 #if MQTT_SUPPORTED == 1

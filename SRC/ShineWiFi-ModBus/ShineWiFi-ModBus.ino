@@ -23,7 +23,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 */
 
 #include "Config.h"
-#ifndef __CONFIG_H__
+#ifndef _SHINE_CONFIG_H_
 #error Please rename Config.h.example to Config.h
 #endif
 

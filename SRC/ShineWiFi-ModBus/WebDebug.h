@@ -1,5 +1,5 @@
-#ifndef GROWATT_SHINEWIFI_S_WEBDEBUG_H
-#define GROWATT_SHINEWIFI_S_WEBDEBUG_H
+#ifndef _SHINE_WEB_DEBUG_H_
+#define _SHINE_WEB_DEBUG_H_
 
 #if ENABLE_WEB_DEBUG == 1
 extern char acWebDebug[1024];
