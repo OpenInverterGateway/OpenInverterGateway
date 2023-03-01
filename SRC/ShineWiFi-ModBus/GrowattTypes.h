@@ -1,5 +1,5 @@
-#ifndef _GROWATT_TYPES_H_
-#define _GROWATT_TYPES_H_
+#ifndef _SHINE_GROWATT_TYPES_H_
+#define _SHINE_GROWATT_TYPES_H_
 
 typedef enum {
   Undef_stick = 0,

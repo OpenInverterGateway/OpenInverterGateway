@@ -4,7 +4,7 @@
 #include "GrowattTypes.h"
 #include "Growatt.h"
 #include "Config.h"
-#ifndef __CONFIG_H__
+#ifndef _SHINE_CONFIG_H_
 #error Please rename Config.h.example to Config.h
 #endif
 

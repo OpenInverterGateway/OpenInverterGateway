@@ -23,11 +23,15 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 */
 
 #include "Config.h"
-#ifndef __CONFIG_H__
+#ifndef _SHINE_CONFIG_H_
 #error Please rename Config.h.example to Config.h
 #endif
 
 #include "WebDebug.h"
+#include "ShineWifi.h"
+#include <WiFiManager.h>
+#include "Index.h"
+#include "Growatt.h"
 
 #if UPDATE_SUPPORTED == 1
     #ifdef ESP8266
@@ -35,6 +39,11 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     #elif ESP32
         #include <ESPHTTPUpdateServer.h>
     #endif
+#endif
+
+#if PINGER_SUPPORTED == 1
+    #include <Pinger.h>
+    #include <PingerResponse.h>
 #endif
 
 #if ENABLE_DOUBLE_RESET == 1
@@ -50,9 +59,6 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     #include "LittleFS.h"
     #include "ShineMqtt.h"
 #endif
-#include "ShineWifi.h"
-#include "Growatt.h"
-#include "ShineMqtt.h"
 
 #if MQTT_SUPPORTED == 1
     #ifdef MQTTS_ENABLED
@@ -63,29 +69,19 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     ShineMqtt shineMqtt(espClient);
 #endif
 
+Growatt Inverter;
 bool StartedConfigAfterBoot = false;
-#define CONFIG_PORTAL_MAX_TIME_SECONDS 300
-#include <WiFiManager.h>
-#include "Index.h"
-#include "ShineMqtt.h"
-
-#if PINGER_SUPPORTED == 1
-#include <Pinger.h>
-#include <PingerResponse.h>
-#endif
 
 byte btnPressed = 0;
 
 #define NUM_OF_RETRIES 5
 char u8RetryCounter = NUM_OF_RETRIES;
 
-const char* update_path = "/firmware";
 uint16_t u16PacketCnt = 0;
 #if PINGER_SUPPORTED == 1
     Pinger pinger;
 #endif
 
-Growatt Inverter;
 #ifdef ESP8266
     ESP8266WebServer httpServer(80);
 #elif ESP32
@@ -93,12 +89,15 @@ Growatt Inverter;
 #endif
 
 #if UPDATE_SUPPORTED == 1
+    const char* update_path = "/firmware";
+    
     #ifdef ESP8266
         ESP8266HTTPUpdateServer httpUpdater;
     #elif ESP32
         ESPHTTPUpdateServer httpUpdater;
     #endif
 #endif
+
 WiFiManager wm;
 #if MQTT_SUPPORTED == 1
     WiFiManagerParameter* custom_mqtt_server = NULL;
@@ -113,6 +112,8 @@ WiFiManager wm;
     const static char* userfile = "/mqttu";
     const static char* secretfile = "/mqttw";
 #endif
+
+#define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 
 char JSONChars[MQTT_MAX_PACKET_SIZE] = "{\"InverterStatus\": -1 }";
 
