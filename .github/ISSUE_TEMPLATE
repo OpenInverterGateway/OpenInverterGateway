@@ -8,7 +8,12 @@ What Stick type are you using?
 - Shine S
 - Lolin32
 - Nodemcu32
-- Other      
+- Other 
+
+Which Inverter are you using?
+- MIC-1000-TL-X
+- SPH-3000 BL-UP
+- ....
 
 # Log output
 Please copy and paste any relevant log output from /debug and the serial console (You have to compile the firmware with the relevant settings in Config.h to get the output).
