@@ -146,7 +146,7 @@ void WiFi_Reconnect()
             Serial.println(HOSTNAME);
         #endif
 
-        WEB_DEBUG_PRINT("WiFi reconnected")
+        DEBUG_PRINT("WiFi reconnected")
 
         digitalWrite(LED_RT, 1);
     }
@@ -164,11 +164,11 @@ void InverterReconnect(void)
 
     #if ENABLE_WEB_DEBUG == 1
         if (Inverter.GetWiFiStickType() == ShineWiFi_S)
-            WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
+            DEBUG_PRINT("ShineWiFi-S (Serial) found")
         else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
-            WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
+            DEBUG_PRINT("ShineWiFi-X (USB) found")
         else
-            WEB_DEBUG_PRINT("Error: Unknown Shine Stick")
+            DEBUG_PRINT("Error: Unknown Shine Stick")
     #endif
 }
 
@@ -253,7 +253,7 @@ void setup()
         Serial.begin(115200);
         Serial.println(F("Setup()"));
     #endif
-    WEB_DEBUG_PRINT("Setup()");
+    DEBUG_PRINT("Setup()");
 
     #if ENABLE_DOUBLE_RESET == 1
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
@@ -341,6 +341,11 @@ void setup()
         httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
     #endif
     httpServer.begin();
+
+#if ENABLE_REMOTE_DEBUG == 1
+    Debug.begin(HOSTNAME);
+    Debug.setResetCmdEnabled(true);
+#endif
 }
 
 #if MQTT_SUPPORTED == 1
@@ -535,6 +540,10 @@ void loop()
         drd->loop();
     #endif
 
+    #if ENABLE_REMOTE_DEBUG == 1
+        Debug.handle();
+    #endif
+
     long now = millis();
     char readoutSucceeded;
 
@@ -626,7 +635,7 @@ void loop()
                 if (Inverter.ReadData()) // get new data from inverter
                 #endif
                 {
-                    WEB_DEBUG_PRINT("ReadData() successful")
+                    DEBUG_PRINT("ReadData() successful")
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
 
@@ -644,14 +653,14 @@ void loop()
                 }
                 else
                 {
-                    WEB_DEBUG_PRINT("ReadData() NOT successful")
+                    DEBUG_PRINT("ReadData() NOT successful")
                     if (u8RetryCounter)
                     {
                         u8RetryCounter--;
                     }
                     else
                     {
-                        WEB_DEBUG_PRINT("Retry counter\n")
+                        DEBUG_PRINT("Retry counter\n")
                         sprintf(JSONChars, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
                             shineMqtt.mqttPublish(JSONChars);
