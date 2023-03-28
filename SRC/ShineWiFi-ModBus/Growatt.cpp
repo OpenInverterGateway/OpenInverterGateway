@@ -95,16 +95,18 @@ bool Growatt::ReadInputRegisters() {
 
   // read each fragment separately
   for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
-    #ifdef ENABLE_REMOTE_DEBUG
-    rdebugD("read segment %d from 0x%08x length %d: \n", i,      _Protocol.InputReadFragments[i].StartAddress, _Protocol.InputReadFragments[i].FragmentSize);
-    #endif
+#ifdef ENABLE_REMOTE_DEBUG
+    rdebugD("read segment %d from 0x%08x length %d: \n", i,
+            _Protocol.InputReadFragments[i].StartAddress,
+            _Protocol.InputReadFragments[i].FragmentSize);
+#endif
     res =
         Modbus.readInputRegisters(_Protocol.InputReadFragments[i].StartAddress,
                                   _Protocol.InputReadFragments[i].FragmentSize);
     if (res == Modbus.ku8MBSuccess) {
-      #ifdef ENABLE_REMOTE_DEBUG
+#ifdef ENABLE_REMOTE_DEBUG
       rdebugD("ok");
-      #endif
+#endif
       for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
         // make sure the register we try to read is in the fragment
         if (_Protocol.InputRegisters[j].address >=
@@ -128,15 +130,16 @@ bool Growatt::ReadInputRegisters() {
                 (Modbus.getResponseBuffer(registerAddress) << 16) +
                 Modbus.getResponseBuffer(registerAddress + 1);
           }
-          #ifdef ENABLE_REMOTE_DEBUG
-          rdebugD("%d: 0x%08x - %d\n", j, _Protocol.InputRegisters[j].value, _Protocol.InputRegisters[j].value);
-          #endif
+#ifdef ENABLE_REMOTE_DEBUG
+          rdebugD("%d: 0x%08x - %d\n", j, _Protocol.InputRegisters[j].value,
+                  _Protocol.InputRegisters[j].value);
+#endif
         }
       }
     } else {
-      #ifdef ENABLE_REMOTE_DEBUG
+#ifdef ENABLE_REMOTE_DEBUG
       rdebugV("failed 0x%02x\n", res);
-      #endif
+#endif
       return false;
     }
   }

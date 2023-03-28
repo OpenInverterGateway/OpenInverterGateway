@@ -19,7 +19,7 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
 #if ENABLE_REMOTE_DEBUG == 1
   debugV("MqttServer: %s", this->mqttconfig.mqttserver);
   debugV("MqttPort: %d", intPort);
-  debugV("MqttTopic: %s",this->mqttconfig.mqtttopic);
+  debugV("MqttTopic: %s", this->mqttconfig.mqtttopic);
 #endif
   // make sure the packet size is set correctly in the library
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
