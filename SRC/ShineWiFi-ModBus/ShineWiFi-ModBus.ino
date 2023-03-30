@@ -444,7 +444,24 @@ void StartConfigAccessPoint(void) {
 }
 
 #ifdef ENABLE_WEB_DEBUG
-void SendDebug(void) { httpServer.send(200, "text/plain", "TODO"); }
+void SendDebug(void) {
+  String Text;
+  Text = R"=====(
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Growatt Inverter Debug Page</title>
+    <iframe src="http://)=====" +
+         WiFi.localIP().toString() + R"=====(:8080/" title="DEBUG Window" width=80% height=80%>
+    </iframe>
+  </head>
+</html>
+)=====";
+
+  httpServer.send(200, "text/html", Text);
+}
 #endif
 
 void MainPage(void) { httpServer.send(200, "text/html", MAIN_page); }
