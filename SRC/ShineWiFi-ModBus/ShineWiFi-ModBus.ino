@@ -133,14 +133,11 @@ void WiFi_Reconnect() {
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(200);
-#ifdef ENABLE_DEBUG_OUTPUT
       Log.print("x");
-#endif
       digitalWrite(LED_RT,
                    !digitalRead(LED_RT));  // toggle red led on WiFi (re)connect
     }
 
-#ifdef ENABLE_DEBUG_OUTPUT
     Log.println("");
     // todo: use Log
     WiFi.printDiag(Serial);
@@ -148,7 +145,6 @@ void WiFi_Reconnect() {
     Log.println(WiFi.localIP());
     Log.print("Hostname: ");
     Log.println(HOSTNAME);
-#endif
 
     Log.println("WiFi reconnected");
 
@@ -259,10 +255,26 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 
 #ifdef ENABLE_DEBUG_OUTPUT
 #ifdef TODO
+currently not working because the LogStream.cpp is missing
 #include <LogStream.h>
 LogStream serial1Log;
 #endif
 #endif
+
+#ifdef SYSLOG_HOST
+#include <SyslogStream.h>
+SyslogStream syslogStream = SyslogStream();
+#endif
+
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+todo
+#include <MqttlogStream.h>
+// EthernetClient client;
+WiFiClient client;
+MqttStream mqttStream = MqttStream(&client);
+char topic[128] = "log/foo";
+#endif
+
 
 void setup() {
 #ifdef ENABLE_DEBUG_OUTPUT
@@ -274,6 +286,19 @@ void setup() {
 #endif
 #ifdef ENABLE_WEB_DEBUG
   Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+#endif
+#ifdef SYSLOG_HOST
+  syslogStream.setDestination(SYSLOG_HOST.toString().c_str());
+  syslogStream.setRaw(false); // wether or not the syslog server is a modern(ish) unix.
+#ifdef SYSLOG_PORT
+  syslogStream.setPort(SYSLOG_PORT);
+#endif
+  Log.addPrintStream(std::make_shared<SyslogStream>(syslogStream));
+#endif
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+  mqttStream.setServer(MQTT_HOST);
+  mqttStream.setTopic(topic);
+  Log.addPrintStream(std::make_shared<MqttStream>(mqttStream));
 #endif
 
   Log.println("Setup()");
@@ -296,9 +321,7 @@ void setup() {
 
 #if ENABLE_DOUBLE_RESET == 1
   if (drd->detectDoubleReset()) {
-#if ENABLE_DEBUG_OUTPUT == 1
     Log.println(F("Double reset detected"));
-#endif
     StartedConfigAfterBoot = true;
   }
 #endif
@@ -336,16 +359,12 @@ void setup() {
                             APPassword);  // password protected wificonfig ap
 
   if (!res) {
-#ifdef ENABLE_DEBUG_OUTPUT
     Log.println(F("Failed to connect"));
-#endif
     ESP.restart();
   } else {
     digitalWrite(LED_BL, 0);
-#ifdef ENABLE_DEBUG_OUTPUT
     // if you get here you have connected to the WiFi
     Log.println(F("connected...yeey :)"));
-#endif
   }
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -578,16 +597,12 @@ void loop() {
 
     if (AP_BUTTON_PRESSED) {
       if (btnPressed > 5) {
-#ifdef ENABLE_DEBUG_OUTPUT
         Log.println("Handle press");
-#endif
         StartedConfigAfterBoot = true;
       } else {
         btnPressed++;
       }
-#ifdef ENABLE_DEBUG_OUTPUT
       Log.print("Btn pressed");
-#endif
     } else {
       btnPressed = 0;
     }
@@ -596,9 +611,7 @@ void loop() {
   if (StartedConfigAfterBoot == true) {
     digitalWrite(LED_BL, 1);
     httpServer.stop();
-#ifdef ENABLE_DEBUG_OUTPUT
     Log.println("Config after boot started");
-#endif
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
     wm.startConfigPortal("GrowattConfig", APPassword);
     digitalWrite(LED_BL, 0);
