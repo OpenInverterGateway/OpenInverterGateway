@@ -8,14 +8,12 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   uint16_t intPort = config.mqttport.toInt();
   if (intPort == 0) intPort = 1883;
 
-#if ENABLE_DEBUG_OUTPUT == 1
-  Serial.print(F("MqttServer: "));
-  Serial.println(this->mqttconfig.mqttserver);
-  Serial.print(F("MqttPort: "));
-  Serial.println(intPort);
-  Serial.print(F("MqttTopic: "));
-  Serial.println(this->mqttconfig.mqtttopic);
-#endif
+  Log.print(F("MqttServer: "));
+  Log.println(this->mqttconfig.mqttserver);
+  Log.print(F("MqttPort: "));
+  Log.println(intPort);
+  Log.print(F("MqttTopic: "));
+  Log.println(this->mqttconfig.mqtttopic);
 
   // make sure the packet size is set correctly in the library
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
@@ -45,15 +43,13 @@ bool ShineMqtt::mqttReconnect() {
   if (this->mqttclient.connected()) return true;
 
   if (millis() - this->previousConnectTryMillis >= (5000)) {
-#if ENABLE_DEBUG_OUTPUT == 1
-    Serial.print("MqttServer: ");
-    Serial.println(this->mqttconfig.mqttserver);
-    Serial.print("MqttUser: ");
-    Serial.println(this->mqttconfig.mqttuser);
-    Serial.print("MqttTopic: ");
-    Serial.println(this->mqttconfig.mqtttopic);
-    Serial.print("Attempting MQTT connection...");
-#endif
+    Log.print("MqttServer: ");
+    Log.println(this->mqttconfig.mqttserver.c_str());
+    Log.print("MqttUser: ");
+    Log.println(this->mqttconfig.mqttuser.c_str());
+    Log.print("MqttTopic: ");
+    Log.println(this->mqttconfig.mqtttopic.c_str());
+    Log.print("Attempting MQTT connection...");
 
     // Run only once every 5 seconds
     this->previousConnectTryMillis = millis();
@@ -63,17 +59,13 @@ bool ShineMqtt::mqttReconnect() {
                                  this->mqttconfig.mqttpwd.c_str(),
                                  this->mqttconfig.mqtttopic.c_str(), 1, 1,
                                  "{\"InverterStatus\": -1 }")) {
-#if ENABLE_DEBUG_OUTPUT == 1
-      Serial.println("connected");
+      Log.println("connected");
       return true;
-#endif
     } else {
-#if ENABLE_DEBUG_OUTPUT == 1
-      Serial.print("failed, rc=");
-      Serial.print(this->mqttclient.state());
-      Serial.println(" try again in 5 seconds");
-#endif
-      WEB_DEBUG_PRINT("MQTT Connect failed")
+      Log.print("failed, rc=");
+      Log.print(this->mqttclient.state());
+      Log.println(" try again in 5 seconds");
+      Log.println("MQTT Connect failed");
       previousConnectTryMillis = millis();
     }
   }
@@ -81,9 +73,13 @@ bool ShineMqtt::mqttReconnect() {
 }
 
 void ShineMqtt::mqttPublish(const String& JsonString) {
-  if (this->mqttclient.connected())
-    this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
-                             JsonString.c_str(), true);
+  Log.print("publish MQTT message... ");
+  if (this->mqttclient.connected()) {
+    bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
+                                        JsonString.c_str(), true);
+    Log.println(res ? "succeed" : "failed");
+  } else
+    Log.println("not connected");
 }
 
 void ShineMqtt::updateMqttLed() {
