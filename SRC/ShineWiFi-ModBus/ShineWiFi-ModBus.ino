@@ -133,20 +133,21 @@ void WiFi_Reconnect() {
 
     while (WiFi.status() != WL_CONNECTED) {
       delay(200);
-#if ENABLE_DEBUG_OUTPUT == 1
-      Serial.print("x");
+#ifdef ENABLE_DEBUG_OUTPUT
+      Log.print("x");
 #endif
       digitalWrite(LED_RT,
                    !digitalRead(LED_RT));  // toggle red led on WiFi (re)connect
     }
 
-#if ENABLE_DEBUG_OUTPUT == 1
-    Serial.println("");
+#ifdef ENABLE_DEBUG_OUTPUT
+    Log.println("");
+    // todo: use Log
     WiFi.printDiag(Serial);
-    Serial.print("local IP:");
-    Serial.println(WiFi.localIP());
-    Serial.print("Hostname: ");
-    Serial.println(HOSTNAME);
+    Log.print("local IP:");
+    Log.println(WiFi.localIP());
+    Log.print("Hostname: ");
+    Log.println(HOSTNAME);
 #endif
 
     Log.println("WiFi reconnected");
@@ -257,12 +258,14 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 #endif
 
 #ifdef ENABLE_DEBUG_OUTPUT
+#ifdef TODO
 #include <LogStream.h>
 LogStream serial1Log;
 #endif
+#endif
 
 void setup() {
-#if ENABLE_DEBUG_OUTPUT == 1
+#ifdef ENABLE_DEBUG_OUTPUT
   Serial.begin(115200);
 #endif
   MDNS.begin("my-webby-name");
@@ -304,11 +307,11 @@ void setup() {
   WiFi.mode(WIFI_STA);  // explicitly set mode, esp defaults to STA+AP
 
 #ifdef ENABLE_DEBUG_OUTPUT
+#ifdef TODO
+  serial1Log = LogStream(Serial1);
   Log.addPrintStream(std::make_shared<LogStream>(serial1Log));
-  Log.addPrintStream(std::make_shared<LogStream>(serial2Log));
-
   serial1Log.begin(Serial1);
-  serial2Log.begin(Serial2);
+#endif
 #endif
 
   // Set up mDNS to make our serial-2-telnet and http service visible and easy
@@ -333,15 +336,15 @@ void setup() {
                             APPassword);  // password protected wificonfig ap
 
   if (!res) {
-#if ENABLE_DEBUG_OUTPUT == 1
-    Serial.println(F("Failed to connect"));
+#ifdef ENABLE_DEBUG_OUTPUT
+    Log.println(F("Failed to connect"));
 #endif
     ESP.restart();
   } else {
     digitalWrite(LED_BL, 0);
-#if ENABLE_DEBUG_OUTPUT == 1
+#ifdef ENABLE_DEBUG_OUTPUT
     // if you get here you have connected to the WiFi
-    Serial.println(F("connected...yeey :)"));
+    Log.println(F("connected...yeey :)"));
 #endif
   }
 
@@ -575,15 +578,15 @@ void loop() {
 
     if (AP_BUTTON_PRESSED) {
       if (btnPressed > 5) {
-#if ENABLE_DEBUG_OUTPUT == 1
-        Serial.println("Handle press");
+#ifdef ENABLE_DEBUG_OUTPUT
+        Log.println("Handle press");
 #endif
         StartedConfigAfterBoot = true;
       } else {
         btnPressed++;
       }
-#if ENABLE_DEBUG_OUTPUT == 1
-      Serial.print("Btn pressed");
+#ifdef ENABLE_DEBUG_OUTPUT
+      Log.print("Btn pressed");
 #endif
     } else {
       btnPressed = 0;
@@ -593,8 +596,8 @@ void loop() {
   if (StartedConfigAfterBoot == true) {
     digitalWrite(LED_BL, 1);
     httpServer.stop();
-#if ENABLE_DEBUG_OUTPUT == 1
-    Serial.println("Config after boot started");
+#ifdef ENABLE_DEBUG_OUTPUT
+    Log.println("Config after boot started");
 #endif
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
     wm.startConfigPortal("GrowattConfig", APPassword);
