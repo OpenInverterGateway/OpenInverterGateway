@@ -281,27 +281,34 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
   return false;
 }
 
-double Growatt::_round2(double value) {
-  return (int)(value * 100 + 0.5) / 100.0;
+double Growatt::roundByResolution(const double& value,
+                                  const float& resolution) {
+  int res = 1 / resolution;
+  return int32_t(value * res + 0.5) / res;
 }
 
 void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
   char* name = reg->name;
   RegisterSize_t size = reg->size;
-  float mult = reg->multiplier;
-  uint32_t value = reg->value;
+  const float& mult = reg->multiplier;
+  const uint32_t& value = reg->value;
+  const float& resolution = reg->resolution;
 
   switch (size) {
     case SIZE_16BIT_S:
-      (*doc)[name] = (mult == (int)mult) ? (int16_t)value * mult
-                                         : _round2((int16_t)value * mult);
+      (*doc)[name] = (mult == (int)mult)
+                         ? (int16_t)value * mult
+                         : roundByResolution((int16_t)value * mult, resolution);
       break;
     case SIZE_32BIT_S:
-      (*doc)[name] = (mult == (int)mult) ? (int32_t)value * mult
-                                         : _round2((int32_t)value * mult);
+      (*doc)[name] = (mult == (int)mult)
+                         ? (int32_t)value * mult
+                         : roundByResolution((int32_t)value * mult, resolution);
       break;
     default:
-      (*doc)[name] = (mult == (int)mult) ? value * mult : _round2(value * mult);
+      (*doc)[name] = (mult == (int)mult)
+                         ? value * mult
+                         : roundByResolution(value * mult, resolution);
   }
 }
 
@@ -354,8 +361,9 @@ void Growatt::CreateUIJson(char* Buffer) {
         arr.add(_Protocol.InputRegisters[i].value *
                 _Protocol.InputRegisters[i].multiplier);
       } else {
-        arr.add(_round2(_Protocol.InputRegisters[i].value *
-                        _Protocol.InputRegisters[i].multiplier));
+        arr.add(roundByResolution(_Protocol.InputRegisters[i].value *
+                                      _Protocol.InputRegisters[i].multiplier,
+                                  _Protocol.InputRegisters[i].resolution));
       }
       if (strcmp(_Protocol.InputRegisters[i].name, "InverterStatus") == 0 &&
           _Protocol.InputRegisters[i].value < statusStrLength) {
@@ -378,8 +386,9 @@ void Growatt::CreateUIJson(char* Buffer) {
         arr.add(_Protocol.HoldingRegisters[i].value *
                 _Protocol.HoldingRegisters[i].multiplier);
       } else {
-        arr.add(_round2(_Protocol.HoldingRegisters[i].value *
-                        _Protocol.HoldingRegisters[i].multiplier));
+        arr.add(roundByResolution(_Protocol.HoldingRegisters[i].value *
+                                      _Protocol.HoldingRegisters[i].multiplier,
+                                  _Protocol.InputRegisters[i].resolution));
       }
       if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0 &&
           _Protocol.HoldingRegisters[i].value < statusStrLength) {
