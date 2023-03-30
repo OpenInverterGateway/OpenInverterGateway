@@ -253,7 +253,7 @@ TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 
 #ifdef ENABLE_WEB_DEBUG
 #include <WebSerialStream.h>
-WebSerialStream webSerialStream = WebSerialStream();
+WebSerialStream webSerialStream = WebSerialStream(8080);
 #endif
 
 #ifdef ENABLE_DEBUG_OUTPUT
