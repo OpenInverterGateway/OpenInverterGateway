@@ -54,6 +54,7 @@ typedef struct {
   RegisterSize_t size;
   char name[64];
   float multiplier;
+  float resolution;
   RegisterUnit_t unit;
   bool frontend;
   bool plot;

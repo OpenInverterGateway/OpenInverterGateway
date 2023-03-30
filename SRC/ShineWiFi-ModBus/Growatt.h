@@ -32,7 +32,7 @@ class Growatt {
   uint32_t _PacketCnt;
 
   eDevice_t _InitModbusCommunication();
-  static double _round2(double value);
+  double roundByResolution(const double& value, const float& resolution);
   void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc);
 };
 
