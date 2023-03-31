@@ -72,6 +72,11 @@ WiFiClientSecure espClient;
 WiFiClient espClient;
 #endif
 ShineMqtt shineMqtt(espClient);
+#ifdef ENABLE_MQTT_DEBUG
+#include <MqttlogStream.h>
+MqttStream mqttStream = MqttStream(&espClient);
+#endif
+
 #endif
 
 Growatt Inverter;
@@ -108,12 +113,18 @@ WiFiManager wm;
 WiFiManagerParameter* custom_mqtt_server = NULL;
 WiFiManagerParameter* custom_mqtt_port = NULL;
 WiFiManagerParameter* custom_mqtt_topic = NULL;
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+WiFiManagerParameter* custom_mqtt_debugtopic = NULL;
+#endif
 WiFiManagerParameter* custom_mqtt_user = NULL;
 WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
 const static char* serverfile = "/mqtts";
 const static char* portfile = "/mqttp";
 const static char* topicfile = "/mqttt";
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+const static char* debugtopicfile = "/mqttd";
+#endif
 const static char* userfile = "/mqttu";
 const static char* secretfile = "/mqttw";
 #endif
@@ -215,6 +226,9 @@ void loadConfig(MqttConfig* config) {
   config->mqttserver = load_from_file(serverfile, "10.1.2.3");
   config->mqttport = load_from_file(portfile, "1883");
   config->mqtttopic = load_from_file(topicfile, "energy/solar");
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+  config->mqttdebugtopic = load_from_file(debugtopicfile, "energy/solar_debug");
+#endif
   config->mqttuser = load_from_file(userfile, "");
   config->mqttpwd = load_from_file(secretfile, "");
 }
@@ -223,6 +237,9 @@ void saveConfig(MqttConfig* config) {
   write_to_file(serverfile, config->mqttserver);
   write_to_file(portfile, config->mqttport);
   write_to_file(topicfile, config->mqtttopic);
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+  write_to_file(debugtopicfile, config->mqttdebugtopic);
+#endif
   write_to_file(userfile, config->mqttuser);
   write_to_file(secretfile, config->mqttpwd);
 }
@@ -234,6 +251,9 @@ void saveParamCallback() {
   config.mqttserver = custom_mqtt_server->getValue();
   config.mqttport = custom_mqtt_port->getValue();
   config.mqtttopic = custom_mqtt_topic->getValue();
+#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
+  config.mqttdebugtopic = custom_mqtt_debugtopic->getValue();
+#endif
   config.mqttuser = custom_mqtt_user->getValue();
   config.mqttpwd = custom_mqtt_pwd->getValue();
 
@@ -266,16 +286,6 @@ LogStream serial1Log;
 SyslogStream syslogStream = SyslogStream();
 #endif
 
-#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
-todo
-#include <MqttlogStream.h>
-// EthernetClient client;
-WiFiClient client;
-MqttStream mqttStream = MqttStream(&client);
-char topic[128] = "log/foo";
-#endif
-
-
 void setup() {
 #ifdef ENABLE_DEBUG_OUTPUT
   Serial.begin(115200);
@@ -294,11 +304,6 @@ void setup() {
   syslogStream.setPort(SYSLOG_PORT);
 #endif
   Log.addPrintStream(std::make_shared<SyslogStream>(syslogStream));
-#endif
-#if defined(MQTT_SUPPORTED) && defined(ENABLE_MQTT_DEBUG)
-  mqttStream.setServer(MQTT_HOST);
-  mqttStream.setTopic(topic);
-  Log.addPrintStream(std::make_shared<MqttStream>(mqttStream));
 #endif
 
   Log.println("Setup()");
@@ -374,6 +379,11 @@ void setup() {
 #if MQTT_SUPPORTED == 1
 #ifdef MQTTS_ENABLED
   espClient.setCACert(MQTTS_BROKER_CA_CERT);
+#endif
+#ifdef ENABLE_MQTT_DEBUG
+  mqttStream.setServer(mqttConfig.mqttserver.c_str());
+  mqttStream.setTopic(mqttConfig.mqttdebugtopic.c_str());
+  Log.addPrintStream(std::make_shared<MqttStream>(mqttStream));
 #endif
   shineMqtt.mqttSetup(mqttConfig);
 #else
