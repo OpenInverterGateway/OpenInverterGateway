@@ -23,7 +23,7 @@ class Growatt {
   bool ReadHoldingReg(uint16_t adr, uint32_t* result);
   bool ReadHoldingReg(uint16_t adr, uint16_t* result);
   bool WriteHoldingReg(uint16_t adr, uint16_t value);
-  void CreateJson(char* Buffer, const char* MacAddress);
+  void CreateJson(char* Buffer, const char* MacAddress, const char* chipID);
   void CreateUIJson(char* Buffer);
 
  private:

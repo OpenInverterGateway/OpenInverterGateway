@@ -305,7 +305,7 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
   }
 }
 
-void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
+void Growatt::CreateJson(char* Buffer, const char* MacAddress, const char* chipID) {
   StaticJsonDocument<2048> doc;
 
 #if SIMULATE_INVERTER != 1
@@ -332,6 +332,7 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
   doc["EnergyToday"] = 0.3;
 #endif  // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
+  doc["ChipID"] = chipID;
   doc["Cnt"] = _PacketCnt;
   serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }

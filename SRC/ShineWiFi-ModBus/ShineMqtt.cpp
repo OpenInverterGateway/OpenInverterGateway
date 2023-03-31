@@ -1,4 +1,15 @@
 #include "ShineMqtt.h"
+
+String getChipId() {
+#ifdef ESP8266
+  uint64_t id = ESP.getChipId();
+#elif ESP32
+  uint64_t id = ESP.getEfuseMac();
+#endif
+  return "Growatt" + String(id & 0xffffffff);
+}
+
+
 #if MQTT_SUPPORTED == 1
 #include "PubSubClient.h"
 
@@ -22,14 +33,6 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
 }
 
-String ShineMqtt::getId() {
-#ifdef ESP8266
-  uint64_t id = ESP.getChipId();
-#elif ESP32
-  uint64_t id = ESP.getEfuseMac();
-#endif
-  return "Growatt" + String(id & 0xffffffff);
-}
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
@@ -58,7 +61,7 @@ bool ShineMqtt::mqttReconnect() {
     // Run only once every 5 seconds
     this->previousConnectTryMillis = millis();
     // Attempt to connect with last will
-    if (this->mqttclient.connect(getId().c_str(),
+    if (this->mqttclient.connect(getChipId().c_str(),
                                  this->mqttconfig.mqttuser.c_str(),
                                  this->mqttconfig.mqttpwd.c_str(),
                                  this->mqttconfig.mqtttopic.c_str(), 1, 1,

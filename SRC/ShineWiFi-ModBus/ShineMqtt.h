@@ -2,8 +2,10 @@
 #define _SHINE_SHINE_MQTT_H
 #include "Config.h"
 
-#if MQTT_SUPPORTED == 1
 #include <Arduino.h>
+String getChipId();
+
+#if MQTT_SUPPORTED == 1
 #include "ShineWifi.h"
 #include <PubSubClient.h>
 #include <stdbool.h>
@@ -31,7 +33,6 @@ class ShineMqtt {
   long previousConnectTryMillis = 0;
   MqttConfig mqttconfig;
   PubSubClient mqttclient;
-  static String getId();
 };
 #endif
 #endif

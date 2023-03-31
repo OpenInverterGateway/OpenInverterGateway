@@ -385,7 +385,7 @@ void setupMenu(bool enableCustomParams){
 void SendJsonSite(void)
 {
     JSONChars[0] = '\0';
-    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str());
+    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str(), getChipId().c_str());
     httpServer.send(200, "application/json", JSONChars);
 }
 
@@ -632,7 +632,7 @@ void loop()
 
                     // Create JSON string
                     JSONChars[0] = '\0';
-                    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str());
+                    Inverter.CreateJson(JSONChars, WiFi.macAddress().c_str(), getChipId().c_str());
 
                     #if MQTT_SUPPORTED == 1
                     shineMqtt.mqttPublish(JSONChars);
