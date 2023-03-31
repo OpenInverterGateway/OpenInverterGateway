@@ -1,5 +1,4 @@
-#ifndef _SHINE_GROWATT_124_H_
-#define _SHINE_GROWATT_124_H_
+#pragma once
 
 #include "Arduino.h"
 #include "GrowattTypes.h"
@@ -61,5 +60,3 @@ typedef enum {
 } eP124InputRegisters_t;
 
 void init_growatt124(sProtocolDefinition_t &Protocol);
-
-#endif  // _GROWATT_1_24_H_

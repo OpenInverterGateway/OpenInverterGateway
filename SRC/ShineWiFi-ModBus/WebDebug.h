@@ -1,5 +1,4 @@
-#ifndef _SHINE_WEB_DEBUG_H_
-#define _SHINE_WEB_DEBUG_H_
+#pragma once
 
 #if ENABLE_WEB_DEBUG == 1
 extern char acWebDebug[1024];
@@ -12,6 +11,4 @@ extern uint16_t u16WebMsgNo;
 #else
 #undef WEB_DEBUG_PRINT
 #define WEB_DEBUG_PRINT(s) ;
-#endif
-
 #endif
