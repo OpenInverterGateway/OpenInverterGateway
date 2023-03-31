@@ -13,6 +13,9 @@ typedef struct {
   String mqttserver;
   String mqttport;
   String mqtttopic;
+#ifdef ENABLE_MQTT_DEBUG
+  String mqttdebugtopic;
+#endif
   String mqttuser;
   String mqttpwd;
 } MqttConfig;
