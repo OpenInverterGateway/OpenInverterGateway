@@ -305,7 +305,8 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
   }
 }
 
-void Growatt::CreateJson(char* Buffer, const char* MacAddress, const char* chipID) {
+void Growatt::CreateJson(char* Buffer, const char* MacAddress,
+                         const char* chipID) {
   StaticJsonDocument<2048> doc;
 
 #if SIMULATE_INVERTER != 1

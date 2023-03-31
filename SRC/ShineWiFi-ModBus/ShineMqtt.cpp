@@ -9,7 +9,6 @@ String getChipId() {
   return "Growatt" + String(id & 0xffffffff);
 }
 
-
 #if MQTT_SUPPORTED == 1
 #include "PubSubClient.h"
 
@@ -32,7 +31,6 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
   this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
 }
-
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
