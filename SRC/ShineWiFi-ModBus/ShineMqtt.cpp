@@ -65,8 +65,8 @@ bool ShineMqtt::mqttReconnect() {
                                  "{\"InverterStatus\": -1 }")) {
 #if ENABLE_DEBUG_OUTPUT == 1
       Serial.println("connected");
-      return true;
 #endif
+      return true;
     } else {
 #if ENABLE_DEBUG_OUTPUT == 1
       Serial.print("failed, rc=");
