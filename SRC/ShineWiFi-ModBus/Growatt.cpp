@@ -1,5 +1,6 @@
 #include <ModbusMaster.h>
 #include <ArduinoJson.h>
+#include <TLog.h>
 
 #include "GrowattTypes.h"
 #include "Growatt.h"

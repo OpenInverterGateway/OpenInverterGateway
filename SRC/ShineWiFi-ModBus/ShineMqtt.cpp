@@ -1,5 +1,6 @@
 #include "ShineMqtt.h"
 #if MQTT_SUPPORTED == 1
+#include <TLog.h>
 #include "PubSubClient.h"
 
 void ShineMqtt::mqttSetup(const MqttConfig& config) {

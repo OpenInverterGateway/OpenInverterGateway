@@ -7,7 +7,6 @@
 #include "ShineWifi.h"
 #include <PubSubClient.h>
 #include <stdbool.h>
-#include "WebDebug.h"
 
 typedef struct {
   String mqttserver;
