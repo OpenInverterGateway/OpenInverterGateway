@@ -61,11 +61,6 @@
 #define UPDATE_USER       "admin"
 #define UPDATE_PASSWORD   "admin"
 
-// Define a condition for starting the Wifi Manager
-// On Growatt devices the Pushbutton is connected to the ADC Pin (A0) and pulled to GND when pressed
-#define AP_BUTTON_PRESSED ( analogRead(A0) < 50 )
-// For generic EPS8622 boards you can use a digital pin of your choice | IMPORTANT! Change the value or your device will not work properly or connect A0 to ground
-// #define AP_BUTTON_PRESSED ( digitalRead(1) == HIGH )
 // For boards without any button you can detect double resets with the Double reset detector by setting this to 1
 #define ENABLE_DOUBLE_RESET 0
 

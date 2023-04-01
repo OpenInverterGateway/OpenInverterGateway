@@ -307,7 +307,7 @@ void setup()
         digitalWrite(LED_BL, 0);
         #if ENABLE_DEBUG_OUTPUT == 1
             //if you get here you have connected to the WiFi
-            Serial.println(F("connected...yeey :)"));
+            Serial.println(F("WIFI connected...yeey :)"));
         #endif
     }
 
