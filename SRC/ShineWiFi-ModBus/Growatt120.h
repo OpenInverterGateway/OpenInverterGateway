@@ -1,5 +1,4 @@
-#ifndef _SHINE_GROWATT_120_H_
-#define _SHINE_GROWATT_120_H_
+#pragma once
 
 #include "Arduino.h"
 #include "GrowattTypes.h"
@@ -88,5 +87,3 @@ typedef enum {
 } eP120HoldingRegisters_t;
 
 void init_growatt120(sProtocolDefinition_t &Protocol);
-
-#endif  // _GROWATT_1_20_H_

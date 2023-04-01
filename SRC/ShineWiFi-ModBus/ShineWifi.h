@@ -1,5 +1,4 @@
-#ifndef _SHINE_SHINE_WIFI_H_
-#define _SHINE_SHINE_WIFI_H_
+#pragma once
 
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
@@ -20,6 +19,4 @@
 extern WiFiClientSecure espClient;
 #else
 extern WiFiClient espClient;
-#endif
-
 #endif

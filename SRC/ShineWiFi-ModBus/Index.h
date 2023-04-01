@@ -1,5 +1,5 @@
-#ifndef _SHINE_INDEX_H_
-#define _SHINE_INDEX_H_
+#pragma once
+
 const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE HTML><html>
 <!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
@@ -174,4 +174,3 @@ copies or substantial portions of the Software. -->
 </body>
 </html>
 )=====";
-#endif

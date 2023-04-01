@@ -1,6 +1,4 @@
-#ifndef _SHINE_GROWATT_H_
-#define _SHINE_GROWATT_H_
-
+#pragma once
 #include "GrowattTypes.h"
 #include <ArduinoJson.h>
 
@@ -35,5 +33,3 @@ class Growatt {
   double roundByResolution(const double& value, const float& resolution);
   void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc);
 };
-
-#endif

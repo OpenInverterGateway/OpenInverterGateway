@@ -1,5 +1,5 @@
-#ifndef _SHINE_SHINE_MQTT_H
-#define _SHINE_SHINE_MQTT_H
+#pragma once
+
 #include "Config.h"
 
 #if MQTT_SUPPORTED == 1
@@ -33,5 +33,4 @@ class ShineMqtt {
   PubSubClient mqttclient;
   static String getId();
 };
-#endif
 #endif
