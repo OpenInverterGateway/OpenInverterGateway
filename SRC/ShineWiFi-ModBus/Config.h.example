@@ -38,10 +38,12 @@
 // define this will enable Remote Debug
 // #define ENABLE_TELNET_DEBUG
 // define this for syslog logging
+// not tested!!!
 // #define SYSLOG_HOST IPAddress(192, 168, 178, 1)
 // define syslog port if not default
 // #define SYSLOG_PORT 444
 // define this to send debug messages to mqtt
+// not tested!!!
 // #define ENABLE_MQTT_DEBUG
 
 // Enable TLS connection from stick to broker. Make sure to update port and hostname to match the cert
