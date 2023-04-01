@@ -47,12 +47,14 @@ Not supported:
 
 I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). Almost all ESP8266 modules with added 9-Pin Serial port and level shifter should work with little soldering via Serial.
 
-See the short descriptions to the devices in den directories with their pictures in /IMG/*
+See the short descriptions to the devices (including some pictures) in the "Doc" directory.
 
 ## Supported Inverters
 * Growatt 1000-3000S 
 * Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
 * Growatt MID 3-25ktl3-x (Protocol 124 via USB)
+* Growatt MOD 6000 (Protocol 120 via USB)
+* Growatt MID 25/30ktl3-x (Protocol 120 via USB)
 * Growatt SPH 4000-10000KTL3 BH (Protocol 124 via Serial)
 * And others ....
 
