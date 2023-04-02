@@ -72,7 +72,9 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
 
+#ifdef AP_BUTTON_PRESSED
 byte btnPressed = 0;
+#endif
 
 #define NUM_OF_RETRIES 5
 char u8RetryCounter = NUM_OF_RETRIES;
@@ -307,7 +309,7 @@ void setup()
         digitalWrite(LED_BL, 0);
         #if ENABLE_DEBUG_OUTPUT == 1
             //if you get here you have connected to the WiFi
-            Serial.println(F("connected...yeey :)"));
+            Serial.println(F("WIFI connected...yeey :)"));
         #endif
     }
 
@@ -538,6 +540,7 @@ void loop()
     long now = millis();
     char readoutSucceeded;
 
+#ifdef AP_BUTTON_PRESSED
     if ((now - ButtonTimer) > BUTTON_TIMER)
     {
         ButtonTimer = now;
@@ -564,6 +567,7 @@ void loop()
             btnPressed = 0;
         }
     }
+#endif
 
     if (StartedConfigAfterBoot == true)
     {
