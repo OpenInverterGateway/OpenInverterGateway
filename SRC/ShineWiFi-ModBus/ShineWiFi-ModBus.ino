@@ -256,28 +256,30 @@ TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 WebSerialStream webSerialStream = WebSerialStream(8080);
 #endif
 
-#ifdef ENABLE_DEBUG_OUTPUT
-#ifdef TODO
-currently not working because the LogStream.cpp is missing
+#ifdef ENABLE_SERIAL_DEBUG
 #include <LogStream.h>
+
+// fix linker issue
+LogStream::LogStream()
+{}
+
 LogStream serial1Log;
-#endif
 #endif
 
 void setup()
 {
-#ifdef ENABLE_DEBUG_OUTPUT
-        Serial.begin(115200);
+#ifdef ENABLE_SERIAL_DEBUG
+    Serial.begin(115200);
 #endif
-  MDNS.begin("my-webby-name");
+    MDNS.begin(HOSTNAME);
 #ifdef ENABLE_TELNET_DEBUG
-  Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
+    Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
 #endif
 #ifdef ENABLE_WEB_DEBUG
-  Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+    Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
 #endif
 
-  Log.println("Setup()");
+    Log.println("Setup()");
 
     #if ENABLE_DOUBLE_RESET == 1
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
@@ -305,12 +307,10 @@ void setup()
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-#ifdef ENABLE_DEBUG_OUTPUT
-#ifdef TODO
+#ifdef ENABLE_SERIAL_DEBUG
   serial1Log = LogStream(Serial1);
   Log.addPrintStream(std::make_shared<LogStream>(serial1Log));
   serial1Log.begin(Serial1);
-#endif
 #endif
 
   Log.begin();
