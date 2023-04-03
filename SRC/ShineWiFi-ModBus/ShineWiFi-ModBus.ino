@@ -74,7 +74,9 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
 
+#ifdef AP_BUTTON_PRESSED
 byte btnPressed = 0;
+#endif
 
 #define NUM_OF_RETRIES 5
 char u8RetryCounter = NUM_OF_RETRIES;
@@ -324,14 +326,17 @@ void setup()
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
-  if (!res) {
-    Log.println(F("Failed to connect"));
-    ESP.restart();
-  } else {
-    digitalWrite(LED_BL, 0);
-    // if you get here you have connected to the WiFi
-    Log.println(F("connected...yeey :)"));
-  }
+    if (!res)
+    {
+        Log.println(F("Failed to connect"));
+        ESP.restart();
+    }
+    else
+    {
+        digitalWrite(LED_BL, 0);
+        //if you get here you have connected to the WiFi
+        Log.println(F("WIFI connected...yeey :)"));
+    }
 
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -575,6 +580,7 @@ void loop()
     long now = millis();
     char readoutSucceeded;
 
+#ifdef AP_BUTTON_PRESSED
     if ((now - ButtonTimer) > BUTTON_TIMER)
     {
         ButtonTimer = now;
@@ -597,6 +603,7 @@ void loop()
             btnPressed = 0;
         }
     }
+#endif
 
     if (StartedConfigAfterBoot == true)
     {

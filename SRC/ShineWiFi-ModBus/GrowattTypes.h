@@ -1,5 +1,4 @@
-#ifndef _SHINE_GROWATT_TYPES_H_
-#define _SHINE_GROWATT_TYPES_H_
+#pragma once
 
 typedef enum {
   Undef_stick = 0,
@@ -77,5 +76,3 @@ typedef struct {
   sGrowattReadFragment_t InputReadFragments[10];
   sGrowattReadFragment_t HoldingReadFragments[10];
 } sProtocolDefinition_t;
-
-#endif  // _GROWATT_TYPES_H_

@@ -1,5 +1,4 @@
-#ifndef _SHINE_GROWATT_SPF_H_
-#define _SHINE_GROWATT_SPF_H_
+#pragma once
 
 #include "Arduino.h"
 #include "GrowattTypes.h"
@@ -38,5 +37,3 @@ typedef enum {
 } eSPFInputRegisters_t;
 
 void init_growattSPF(sProtocolDefinition_t &Protocol);
-
-#endif  // _GROWATT_SPF_H_
