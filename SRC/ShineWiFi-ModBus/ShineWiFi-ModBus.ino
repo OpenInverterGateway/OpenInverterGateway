@@ -353,7 +353,7 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttConfig.mqttport.c_str(), 6);
     custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
     custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
-    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 40);
+    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 64);
 
     wm.addParameter(custom_mqtt_server);
     wm.addParameter(custom_mqtt_port);
