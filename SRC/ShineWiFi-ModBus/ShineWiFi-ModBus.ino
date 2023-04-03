@@ -259,11 +259,7 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 #ifdef ENABLE_SERIAL_DEBUG
 #include <LogStream.h>
 
-// fix linker issue
-LogStream::LogStream()
-{}
-
-LogStream serial1Log;
+LogStream serial1Log = LogStream(Serial1);
 #endif
 
 void setup()
@@ -308,7 +304,6 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
 #ifdef ENABLE_SERIAL_DEBUG
-  serial1Log = LogStream(Serial1);
   Log.addPrintStream(std::make_shared<LogStream>(serial1Log));
   serial1Log.begin(Serial1);
 #endif
