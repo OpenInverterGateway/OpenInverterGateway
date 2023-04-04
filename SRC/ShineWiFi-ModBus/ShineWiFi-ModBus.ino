@@ -231,7 +231,7 @@ void saveConfig(MqttConfig* config)
 
 void saveParamCallback()
 {
-    Serial.println("[CALLBACK] saveParamCallback fired");
+    Log.println("[CALLBACK] saveParamCallback fired");
     MqttConfig config;
 
     config.mqttserver = custom_mqtt_server->getValue();
@@ -267,7 +267,9 @@ LogStream serial1Log = LogStream(Serial1);
 void setup()
 {
 #ifdef ENABLE_SERIAL_DEBUG
-    Serial.begin(115200);
+    // Serial.begin(115200);
+#else
+    Log.disableSerial(true);
 #endif
     MDNS.begin(HOSTNAME);
 #ifdef ENABLE_TELNET_DEBUG
