@@ -313,7 +313,7 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
 }
 
 void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
-  StaticJsonDocument<2048> doc;
+  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
 
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
@@ -344,7 +344,7 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
 }
 
 void Growatt::CreateUIJson(char* Buffer) {
-  StaticJsonDocument<2048> doc;
+  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
   const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
