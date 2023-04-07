@@ -15,8 +15,7 @@ copies or substantial portions of the Software. -->
     <meta charset='utf-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Growatt Inverter</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.2.1/dist/chart.umd.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.1/chart.umd.min.js" integrity="sha512-GCiwmzA0bNGVsp1otzTJ4LWQT2jjGJENLGyLlerlzckNI30moi2EQT0AfRI7fLYYYDKR+7hnuh35r3y1uJzugw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
         body {
@@ -37,12 +36,8 @@ copies or substantial portions of the Software. -->
 <body>
     <h2>Growatt Inverter</h2>
 
-    <div>
-        <canvas id="powerChart"></canvas>
-    </div>
+    <div><canvas id="powerChart"></canvas></div>
     <div id="DataContainer"></div>
-
-    <br>
 
   <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
@@ -80,11 +75,11 @@ copies or substantial portions of the Software. -->
     function namedColor(index) {
         return NAMED_COLORS[index % NAMED_COLORS.length];
     }
+
     const powerchartData = {
         labels: [],
         datasets: [],
     };
-
 
     let powerchart = new Chart(powerchartelement, {
         type: 'line',
@@ -98,27 +93,20 @@ copies or substantial portions of the Software. -->
         }
     });
 
-
     setInterval(function () {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState == 4 && this.status == 200) {
-
                 // add data fields to the main page
                 var obj = JSON.parse(this.responseText);
-
                 // Add Date to chart x Axis
                 let date = new Date();
                 powerchartData.labels.push(date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-
                 if (initialised == false) {
-
                     initialised = true;
-
                     // clear data view container just in case
                     container = document.getElementById("DataContainer");
                     container.innerHTML = "";
-
                     // Add Data Lables to chart
                     for (var key in obj) {
                         if (obj[key][2] == true) {
@@ -129,7 +117,6 @@ copies or substantial portions of the Software. -->
                                 borderColor: namedColor(powerchart.data.datasets.length),
                                 tension: 0.1
                             };
-
                             powerchartData.datasets.push(newDataset);
                             powerchart.update();
                         }
@@ -139,10 +126,7 @@ copies or substantial portions of the Software. -->
                         element.setAttribute("id", key);
                         container.appendChild(element);
                     }
-
-
                 } else {
-
                     // Update Data in chart
                     for (var key in obj) {
                         // find dataset in array
@@ -150,31 +134,24 @@ copies or substantial portions of the Software. -->
                             for (var dset in powerchartData.datasets) {
                                 let leb = powerchartData.datasets[dset].label;
                                 if (leb == key) {
-                                    console.log("find : " + leb + " with data: " + String(obj[key][0]));
                                     powerchartData.datasets[dset].data.push(obj[key][0]);
                                 }
-
                             }
                         }
                         // update data view
                         var element = document.getElementById(key);
                         element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
-
                         powerchart.update();
                     }
                 }
-
             }
         }
         xhttp.open("GET", "./uistatus", true);
         xhttp.send();
     }, 5000);
-
 </script>
-
 </html>
 )=====";
-
 
 const char SendPostSite_page[] PROGMEM = R"=====(
 <!DOCTYPE HTML><html>
