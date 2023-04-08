@@ -135,19 +135,18 @@ void WiFi_Reconnect()
         while (WiFi.status() != WL_CONNECTED)
         {
             delay(200);
-            Log.print("x");
+            Log.print(F("x"));
             digitalWrite(LED_RT, !digitalRead(LED_RT)); // toggle red led on WiFi (re)connect
         }
 
-        Log.println("");
         // todo: use Log
         WiFi.printDiag(Serial);
-        Log.print("local IP:");
+        Log.print(F("local IP:"));
         Log.println(WiFi.localIP());
-        Log.print("Hostname: ");
+        Log.print(F("Hostname: "));
         Log.println(HOSTNAME);
 
-        Log.println("WiFi reconnected");
+        Log.println(F("WiFi reconnected"));
 
         digitalWrite(LED_RT, 1);
     }
@@ -163,12 +162,12 @@ void InverterReconnect(void)
     // Baudrate will be set here, depending on the version of the stick
     Inverter.begin(Serial);
 
-  if (Inverter.GetWiFiStickType() == ShineWiFi_S)
-    Log.println("ShineWiFi-S (Serial) found");
-  else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
-    Log.println("ShineWiFi-X (USB) found");
-  else
-    Log.println("Error: Unknown Shine Stick");
+    if (Inverter.GetWiFiStickType() == ShineWiFi_S)
+        Log.println(F("ShineWiFi-S (Serial) found"));
+    else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
+        Log.println(F("ShineWiFi-X (USB) found"));
+    else
+        Log.println(F("Error: Unknown Shine Stick"));
 }
 
 #if MQTT_SUPPORTED == 1
@@ -231,7 +230,7 @@ void saveConfig(MqttConfig* config)
 
 void saveParamCallback()
 {
-    Log.println("[CALLBACK] saveParamCallback fired");
+    Log.println(F("[CALLBACK] saveParamCallback fired"));
     MqttConfig config;
 
     config.mqttserver = custom_mqtt_server->getValue();
@@ -256,18 +255,11 @@ TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 WebSerialStream webSerialStream = WebSerialStream(8080);
 #endif
 
-#ifdef ENABLE_SERIAL_DEBUG
-/*
-#include <LogStream.h>
-
-LogStream serial1Log = LogStream(Serial1);
-*/
-#endif
-
 void setup()
 {
 #ifdef ENABLE_SERIAL_DEBUG
-    // Serial.begin(115200);
+    Serial.begin(115200);
+    Log.disableSerial(false);
 #else
     Log.disableSerial(true);
 #endif
@@ -307,14 +299,7 @@ void setup()
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
-#ifdef ENABLE_SERIAL_DEBUG
-/*
-  Log.addPrintStream(std::make_shared<LogStream>(serial1Log));
-  serial1Log.begin(Serial1);
-  */
-#endif
-
-  Log.begin();
+    Log.begin();
     #if MQTT_SUPPORTED == 1
         MqttConfig mqttConfig;
         SetupMqttWifiManagerMenu(mqttConfig);
@@ -434,22 +419,8 @@ void StartConfigAccessPoint(void)
 
 #ifdef ENABLE_WEB_DEBUG
 void SendDebug(void) {
-  String Text;
-  Text = R"=====(
-<!DOCTYPE HTML>
-<html>
-  <head>
-    <meta charset='utf-8'>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Growatt Inverter Debug Page</title>
-    <iframe src="http://)=====" +
-         WiFi.localIP().toString() + R"=====(:8080/" title="DEBUG Window" width=80% height=80%>
-    </iframe>
-  </head>
-</html>
-)=====";
-
-  httpServer.send(200, "text/html", Text);
+    httpServer.sendHeader("Location", "http://" + WiFi.localIP().toString() + ":8080/", true);
+    httpServer.send ( 302, "text/plain", "");
 }
 #endif
 
@@ -475,7 +446,7 @@ void handlePostData()
     if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
     {
         // If the POST request doesn't have data
-        httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
+        httpServer.send(400, F("text/plain"), "400: Invalid Request"); // The request is invalid, so send HTTP status 400
         return;
     }
     else
@@ -590,14 +561,14 @@ void loop()
         {
             if (btnPressed > 5)
             {
-                Log.println("Handle press");
+                Log.println(F("Handle press"));
                 StartedConfigAfterBoot = true;
             }
             else
             {
                 btnPressed++;
             }
-        Log.print("Btn pressed");
+            Log.print(F("Btn pressed"));
         }
         else
         {
@@ -610,7 +581,7 @@ void loop()
     {
         digitalWrite(LED_BL, 1);
         httpServer.stop();
-        Log.println("Config after boot started");
+        Log.println(F("Config after boot started"));
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
         wm.startConfigPortal("GrowattConfig", APPassword);
         digitalWrite(LED_BL, 0);
@@ -665,7 +636,7 @@ void loop()
                 if (Inverter.ReadData()) // get new data from inverter
                 #endif
                 {
-                    Log.println("ReadData() successful");
+                    Log.println(F("ReadData() successful"));
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
 
@@ -683,14 +654,14 @@ void loop()
                 }
                 else
                 {
-                    Log.println("ReadData() NOT successful");
+                    Log.println(F("ReadData() NOT successful"));
                     if (u8RetryCounter)
                     {
                         u8RetryCounter--;
                     }
                     else
                     {
-                        Log.println("Retry counter\n");
+                        Log.println(F("Retry counter"));
                         sprintf(JSONChars, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
                             shineMqtt.mqttPublish(JSONChars);
