@@ -1,37 +1,43 @@
 #pragma once
 
 const char MAIN_page[] PROGMEM = R"=====(
-<!DOCTYPE HTML><html>
+<!DOCTYPE HTML>
+<html>
+
 <!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files.
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software. -->
-<head>
-  <meta charset='utf-8'>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Growatt Inverter</title>
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <style>
-    body {
-      min-width: 310px;
-      max-width: 800px;
-      height: 400px;
-      margin: 0 auto;
-    }
-    h2 {
-      font-family: Arial;
-      font-size: 2.5rem;
-      text-align: center;
-      }
-  </style>
-</head>
-<body>
-  <h2>Growatt Inverter</h2>
-  <div id="chart-power" class="container"></div>
 
-  <div id="DataContainer"></div>
+<head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Growatt Inverter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.1/chart.umd.min.js" integrity="sha512-GCiwmzA0bNGVsp1otzTJ4LWQT2jjGJENLGyLlerlzckNI30moi2EQT0AfRI7fLYYYDKR+7hnuh35r3y1uJzugw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        body {
+            min-width: 310px;
+            max-width: 800px;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-family: Arial;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Growatt Inverter</h2>
+
+    <div><canvas id="powerChart"></canvas></div>
+    <div id="DataContainer"></div>
 
   <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
@@ -41,99 +47,108 @@ copies or substantial portions of the Software. -->
   <a href="./postCommunicationModbus">RW Modbus</a>
 
 </body>
+
 <script>
+    let initialised = false;
+    const powerchartelement = document.getElementById('powerChart');
 
-const d = new Date();
-let diff = d.getTimezoneOffset();
-let initialised = false;
-let nameToId = {};
-
-Highcharts.setOptions({
-time: {
-timezoneOffset: diff
-}
-});
-
-var chartT = new Highcharts.Chart({
-  chart:{ renderTo : 'chart-power' },
-  title: { text: 'Inverter Data' },
-  series: [],
-  plotOptions: {
-    line: { animation: false,
-      dataLabels: { enabled: true }
-    },
-  },
-  xAxis: { type: 'datetime',
-    dateTimeLabelFormats: { second: '%H:%M:%S' }
-  },
-  credits: {
-    enabled: false
-  },
-  legend: {
-    align: 'left',
-    verticalAlign: 'top',
-    borderWidth: 0,
-  },
-  tooltip: {
-    shared: true,
-    crosshairs: true,
-  }
-});
-
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-
-      // add data fields to the main page
-      var obj = JSON.parse(this.responseText);
-
-      // init the UI if not already done
-      if (initialised == false) {
-        var i = 0;
-
-        // clear data container just in case
-        container = document.getElementById("DataContainer");
-        container.innerHTML = "";
-
-        for (var key in obj) {
-          // init chart
-          if (obj[key][2] == true) {
-            chartT.addSeries({
-              name: key + " [" + obj[key][1] + "]",
-              data: []
-            });
-            nameToId[key] = i;
-            i++;
-          }
-          // init data container
-          var element = document.createElement("p");
-          element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
-          element.setAttribute("id", key);
-          container.appendChild(element);
-        }
-        initialised = true;
-      } else {
-        let x = (new Date()).getTime();
-        for (var key in obj) {
-          // update site data
-          var element = document.getElementById(key);
-          element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
-          // update chart data
-          if (obj[key][2] == true) {
-            if (chartT.series[nameToId[key]].data.length <= 50) {
-              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, false, true);
-            } else {
-              chartT.series[nameToId[key]].addPoint([x, obj[key][0]], true, true, true);
-            }
-          }
-        }
-      }
+    const CHART_COLORS = {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(201, 203, 207)'
     };
-  }
-  xhttp.open("GET", "./uistatus", true);
-  xhttp.send();
-}, 5000 ) ;
+
+    const NAMED_COLORS = [
+        CHART_COLORS.red,
+        CHART_COLORS.orange,
+        CHART_COLORS.yellow,
+        CHART_COLORS.green,
+        CHART_COLORS.blue,
+        CHART_COLORS.purple,
+        CHART_COLORS.grey,
+    ];
+
+    function namedColor(index) {
+        return NAMED_COLORS[index % NAMED_COLORS.length];
+    }
+
+    const powerchartData = {
+        labels: [],
+        datasets: [],
+    };
+
+    let powerchart = new Chart(powerchartelement, {
+        type: 'line',
+        data: powerchartData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    setInterval(function () {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                // add data fields to the main page
+                var obj = JSON.parse(this.responseText);
+                // Add Date to chart x Axis
+                let date = new Date();
+                powerchartData.labels.push(date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                if (initialised == false) {
+                    initialised = true;
+                    // clear data view container just in case
+                    container = document.getElementById("DataContainer");
+                    container.innerHTML = "";
+                    // Add Data Lables to chart
+                    for (var key in obj) {
+                        if (obj[key][2] == true) {
+                            const newDataset = {
+                                label: key,
+                                data: [obj[key][0]],
+                                fill: false,
+                                borderColor: namedColor(powerchart.data.datasets.length),
+                                tension: 0.1
+                            };
+                            powerchartData.datasets.push(newDataset);
+                            powerchart.update();
+                        }
+                        // init dataview
+                        var element = document.createElement("p");
+                        element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
+                        element.setAttribute("id", key);
+                        container.appendChild(element);
+                    }
+                } else {
+                    // Update Data in chart
+                    for (var key in obj) {
+                        // find dataset in array
+                        if (obj[key][2] == true) {
+                            for (var dset in powerchartData.datasets) {
+                                let leb = powerchartData.datasets[dset].label;
+                                if (leb == key) {
+                                    powerchartData.datasets[dset].data.push(obj[key][0]);
+                                }
+                            }
+                        }
+                        // update data view
+                        var element = document.getElementById(key);
+                        element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
+                        powerchart.update();
+                    }
+                }
+            }
+        }
+        xhttp.open("GET", "./uistatus", true);
+        xhttp.send();
+    }, 5000);
 </script>
 </html>
 )=====";
