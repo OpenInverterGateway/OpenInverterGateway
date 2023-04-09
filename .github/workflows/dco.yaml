@@ -1,9 +1,7 @@
 name: DCO
 on:
   pull_request:
-  push:
-    branches:
-      - master
+
 jobs:
   check:
     runs-on: ubuntu-latest
