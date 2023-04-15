@@ -29,9 +29,10 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 
 #include "WebDebug.h"
 #include "ShineWifi.h"
-#include <WiFiManager.h>
 #include "Index.h"
 #include "Growatt.h"
+#include <Preferences.h>
+#include <WiFiManager.h>
 
 #if UPDATE_SUPPORTED == 1
     #ifdef ESP8266
@@ -69,6 +70,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     ShineMqtt shineMqtt(espClient);
 #endif
 
+Preferences prefs;
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
 
@@ -175,61 +177,27 @@ void InverterReconnect(void)
 }
 
 #if MQTT_SUPPORTED == 1
-String load_from_file(const char* file_name, String defaultvalue);
-bool write_to_file(const char* file_name, String contents);
 void loadConfig(MqttConfig* config);
 void saveConfig(MqttConfig* config);
 void saveParamCallback();
 void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
 
-String load_from_file(const char* file_name, String defaultvalue) {
-    String result = "";
-
-    File this_file = LittleFS.open(file_name, "r");
-    if (!this_file) { // failed to open the file, return defaultvalue
-        return defaultvalue;
-    }
-
-    while (this_file.available()) {
-        result += (char)this_file.read();
-    }
-
-    this_file.close();
-    return result;
-}
-
-bool write_to_file(const char* file_name, String contents) {
-    File this_file = LittleFS.open(file_name, "w");
-    if (!this_file) { // failed to open the file, return false
-        return false;
-    }
-
-    int bytesWritten = this_file.print(contents);
-
-    if (bytesWritten == 0) { // write failed
-        return false;
-    }
-
-    this_file.close();
-    return true;
-}
-
 void loadConfig(MqttConfig* config)
 {
-    config->mqttserver = load_from_file(serverfile, "10.1.2.3");
-    config->mqttport = load_from_file(portfile, "1883");
-    config->mqtttopic = load_from_file(topicfile, "energy/solar");
-    config->mqttuser = load_from_file(userfile, "");
-    config->mqttpwd = load_from_file(secretfile, "");
+    config->mqttserver = prefs.getString(serverfile, "10.1.2.3");
+    config->mqttport = prefs.getString(portfile, "1883");
+    config->mqtttopic = prefs.getString(topicfile, "energy/solar");
+    config->mqttuser = prefs.getString(userfile, "");
+    config->mqttpwd = prefs.getString(secretfile, "");
 }
 
 void saveConfig(MqttConfig* config)
 {
-    write_to_file(serverfile, config->mqttserver);
-    write_to_file(portfile, config->mqttport);
-    write_to_file(topicfile, config->mqtttopic);
-    write_to_file(userfile, config->mqttuser);
-    write_to_file(secretfile, config->mqttpwd);
+    prefs.putString(serverfile, config->mqttserver);
+    prefs.putString(portfile, config->mqttport);
+    prefs.putString(topicfile, config->mqtttopic);
+    prefs.putString(userfile, config->mqttuser);
+    prefs.putString(secretfile, config->mqttpwd);
 }
 
 void saveParamCallback()
@@ -267,7 +235,7 @@ void setup()
 
     #if MQTT_SUPPORTED == 1
     #ifdef ESP8266
-    LittleFS.begin();
+    prefs.begin("ShineWifi");
     #elif ESP32
     LittleFS.begin(true);
     #endif
