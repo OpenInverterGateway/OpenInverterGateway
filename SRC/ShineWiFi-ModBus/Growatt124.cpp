@@ -135,7 +135,7 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
       1037,    0,    SIZE_32BIT, "INVPowerToLocalLoadTotal", 0.1, 0.1,
       POWER_W, true, false};  // #40
   Protocol.InputRegisters[P124_BATTERY_TEMPERATURE] = sGrowattModbusReg_t{
-      1040,        0,    SIZE_16BIT, "BatteryTemperature", 0.1, 0.1,
+      1040,        0,    SIZE_16BIT, "BatteryTemperature", 1, 1,
       TEMPERATURE, true, true};  // #41
   Protocol.InputRegisters[P124_BATTERY_STATE] = sGrowattModbusReg_t{
       1041, 0, SIZE_16BIT, "BatteryState", 1, 1, NONE, true, false};  // #42
