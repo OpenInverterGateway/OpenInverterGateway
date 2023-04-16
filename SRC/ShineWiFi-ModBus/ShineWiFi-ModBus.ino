@@ -57,7 +57,6 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 
 #if MQTT_SUPPORTED == 1
-    #include "LittleFS.h"
     #include "ShineMqtt.h"
 #endif
 
@@ -202,7 +201,7 @@ void saveConfig(MqttConfig* config)
 
 void saveParamCallback()
 {
-    Serial.println("[CALLBACK] saveParamCallback fired");
+    Serial.println(F("[CALLBACK] saveParamCallback fired"));
     MqttConfig config;
 
     config.mqttserver = custom_mqtt_server->getValue();
@@ -212,6 +211,8 @@ void saveParamCallback()
     config.mqttpwd = custom_mqtt_pwd->getValue();
 
     saveConfig(&config);
+
+    Serial.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
 
     ESP.restart();
 }
@@ -234,11 +235,7 @@ void setup()
     pinMode(LED_BL, OUTPUT);
 
     #if MQTT_SUPPORTED == 1
-    #ifdef ESP8266
     prefs.begin("ShineWifi");
-    #elif ESP32
-    LittleFS.begin(true);
-    #endif
     #endif
 
     #if ENABLE_DOUBLE_RESET == 1
