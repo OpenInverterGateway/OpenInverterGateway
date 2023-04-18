@@ -283,8 +283,8 @@ bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
 
 double Growatt::roundByResolution(const double& value,
                                   const float& resolution) {
-  int res = 1 / resolution;
-  return int32_t(value * res + 0.5) / (double)res;
+  double res = 1 / resolution;
+  return int32_t(value * res + 0.5) / res;
 }
 
 void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
