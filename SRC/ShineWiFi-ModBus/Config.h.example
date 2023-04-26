@@ -1,5 +1,6 @@
-#ifndef _SHINE_CONFIG_H_
+#pragma once
 #define _SHINE_CONFIG_H_
+
 // ---------------------------------------------------------------
 // Build configuration area start
 // ---------------------------------------------------------------
@@ -89,4 +90,8 @@
 #define LED_RT 2  // GPIO2
 #define LED_BL 16 // GPIO16
 
+// Add support for the AP button on the normal Shine Stick. You can 
+// redefine AP_BUTTON_PRESSED to whatever condition you like for your stick.
+#if ENABLE_AP_BUTTON == 1
+    #define AP_BUTTON_PRESSED analogRead(A0)<50
 #endif
