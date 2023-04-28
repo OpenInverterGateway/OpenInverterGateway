@@ -10,6 +10,7 @@ Used Libs
   - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
   - ModbusMaster        by Doc Walker      https://github.com/4-20ma/ModbusMaster
   - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
+  - Preferences         by vshymanskyy     https://github.com/vshymanskyy/Preferences
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
 or download them from github (Sketch -> Include Library -> Add .ZIP Library)
