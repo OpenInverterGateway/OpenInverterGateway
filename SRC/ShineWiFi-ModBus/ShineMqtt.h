@@ -15,6 +15,7 @@ typedef struct {
   String mqtttopic;
   String mqttuser;
   String mqttpwd;
+  String mqttlwt;
 } MqttConfig;
 
 class ShineMqtt {

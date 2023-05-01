@@ -109,12 +109,14 @@ WiFiManager wm;
     WiFiManagerParameter* custom_mqtt_topic = NULL;
     WiFiManagerParameter* custom_mqtt_user = NULL;
     WiFiManagerParameter* custom_mqtt_pwd = NULL;
+    WiFiManagerParameter* custom_mqtt_lwt = NULL;
 
     const static char* serverfile = "/mqtts";
     const static char* portfile = "/mqttp";
     const static char* topicfile = "/mqttt";
     const static char* userfile = "/mqttu";
     const static char* secretfile = "/mqttw";
+    const static char* lwtfile = "/mqttl";
 #endif
 
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
@@ -189,6 +191,7 @@ void loadConfig(MqttConfig* config)
     config->mqtttopic = prefs.getString(topicfile, "energy/solar");
     config->mqttuser = prefs.getString(userfile, "");
     config->mqttpwd = prefs.getString(secretfile, "");
+    config->mqttlwt = prefs.getString(lwtfile, "energy/solar/LWT");
 }
 
 void saveConfig(MqttConfig* config)
@@ -198,6 +201,7 @@ void saveConfig(MqttConfig* config)
     prefs.putString(topicfile, config->mqtttopic);
     prefs.putString(userfile, config->mqttuser);
     prefs.putString(secretfile, config->mqttpwd);
+    prefs.putString(lwtfile, config->mqttlwt);
 }
 
 void saveParamCallback()
@@ -210,6 +214,7 @@ void saveParamCallback()
     config.mqtttopic = custom_mqtt_topic->getValue();
     config.mqttuser = custom_mqtt_user->getValue();
     config.mqttpwd = custom_mqtt_pwd->getValue();
+    config.mqttlwt = custom_mqtt_lwt->getValue();
 
     saveConfig(&config);
 
@@ -320,12 +325,14 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
     custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
     custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 64);
+    custom_mqtt_lwt = new WiFiManagerParameter("LWT", "mqtt LWT", mqttConfig.mqttlwt.c_str(), 64);
 
     wm.addParameter(custom_mqtt_server);
     wm.addParameter(custom_mqtt_port);
     wm.addParameter(custom_mqtt_topic);
     wm.addParameter(custom_mqtt_user);
     wm.addParameter(custom_mqtt_pwd);
+    wm.addParameter(custom_mqtt_lwt);
     wm.setSaveParamsCallback(saveParamCallback);
 
     setupMenu(true);

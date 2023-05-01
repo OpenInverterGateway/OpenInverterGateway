@@ -2,6 +2,9 @@
 #if MQTT_SUPPORTED == 1
 #include "PubSubClient.h"
 
+#define MQTT_LWT_OFFLINE "offline"
+#define MQTT_LWT_ONLINE "online"
+
 void ShineMqtt::mqttSetup(const MqttConfig& config) {
   this->mqttconfig = config;
 
@@ -15,6 +18,8 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   Serial.println(intPort);
   Serial.print(F("MqttTopic: "));
   Serial.println(this->mqttconfig.mqtttopic);
+  Serial.print("MqttLWT: ");
+  Serial.println(this->mqttconfig.mqttlwt);
 #endif
 
   // make sure the packet size is set correctly in the library
@@ -28,7 +33,7 @@ String ShineMqtt::getId() {
 #elif ESP32
   uint64_t id = ESP.getEfuseMac();
 #endif
-  return "Growatt" + String(id & 0xffffffff);
+  return "Growatt" + (id & 0xffffffff);
 }
 
 // -------------------------------------------------------
@@ -52,6 +57,8 @@ bool ShineMqtt::mqttReconnect() {
     Serial.println(this->mqttconfig.mqttuser);
     Serial.print("MqttTopic: ");
     Serial.println(this->mqttconfig.mqtttopic);
+    Serial.print("MqttLWT: ");
+    Serial.println(this->mqttconfig.mqttlwt);
     Serial.print("Attempting MQTT connection...");
 #endif
 
@@ -61,8 +68,8 @@ bool ShineMqtt::mqttReconnect() {
     if (this->mqttclient.connect(getId().c_str(),
                                  this->mqttconfig.mqttuser.c_str(),
                                  this->mqttconfig.mqttpwd.c_str(),
-                                 this->mqttconfig.mqtttopic.c_str(), 1, 1,
-                                 "{\"InverterStatus\": -1 }")) {
+                                 this->mqttconfig.mqttlwt.c_str(), 1, 1,
+                                 MQTT_LWT_OFFLINE)) {
 #if ENABLE_DEBUG_OUTPUT == 1
       Serial.println("connected");
 #endif
@@ -87,10 +94,13 @@ void ShineMqtt::mqttPublish(const String& JsonString) {
 }
 
 void ShineMqtt::updateMqttLed() {
-  if (!this->mqttclient.connected())
+  if (!this->mqttclient.connected()) {
     digitalWrite(LED_RT, 1);
-  else
+    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_OFFLINE, true);
+  } else {
     digitalWrite(LED_RT, 0);
+    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
+  }
 }
 
 void ShineMqtt::loop() { this->mqttclient.loop(); }
