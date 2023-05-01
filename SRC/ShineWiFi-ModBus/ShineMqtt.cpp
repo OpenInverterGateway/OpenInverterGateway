@@ -96,7 +96,6 @@ void ShineMqtt::mqttPublish(const String& JsonString) {
 void ShineMqtt::updateMqttLed() {
   if (!this->mqttclient.connected()) {
     digitalWrite(LED_RT, 1);
-    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_OFFLINE, true);
   } else {
     digitalWrite(LED_RT, 0);
     this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
