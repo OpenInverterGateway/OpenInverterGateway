@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config.h"
+#include "StickConfig.h"
 
 #if MQTT_SUPPORTED == 1
 #include <Arduino.h>
@@ -8,18 +9,10 @@
 #include <PubSubClient.h>
 #include <stdbool.h>
 
-typedef struct {
-  String mqttserver;
-  String mqttport;
-  String mqtttopic;
-  String mqttuser;
-  String mqttpwd;
-} MqttConfig;
-
 class ShineMqtt {
  public:
   ShineMqtt(WiFiClient& wc) : wifiClient(wc), mqttclient(wifiClient){};
-  void mqttSetup(const MqttConfig& config);
+  void mqttSetup(const StickConfig& config);
   bool mqttReconnect();
   void mqttPublish(const String& JsonString);
   void updateMqttLed();
@@ -28,7 +21,7 @@ class ShineMqtt {
  private:
   WiFiClient& wifiClient;
   long previousConnectTryMillis = 0;
-  MqttConfig mqttconfig;
+  StickConfig mqttconfig;
   PubSubClient mqttclient;
   static String getId();
 };

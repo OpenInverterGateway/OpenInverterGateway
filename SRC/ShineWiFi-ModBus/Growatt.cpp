@@ -52,14 +52,14 @@ void Growatt::begin(Stream& serial) {
    * @brief Set up communication with the inverter
    * @param serial The serial interface
    */
-  uint8_t res;
-
 #if SIMULATE_INVERTER == 1
   _eDevice = SIMULATE_DEVICE;
 #else
   // init communication with the inverter
   Serial.begin(9600);
   Modbus.begin(1, serial);
+
+  uint8_t res;
   res = Modbus.readInputRegisters(0, 1);
   if (res == Modbus.ku8MBSuccess) {
     _eDevice = ShineWiFi_S;  // Serial

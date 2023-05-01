@@ -172,12 +172,12 @@ void InverterReconnect(void)
 }
 
 #if MQTT_SUPPORTED == 1
-void loadConfig(MqttConfig* config);
-void saveConfig(MqttConfig* config);
+void loadConfig(StickConfig* config);
+void saveConfig(StickConfig* config);
 void saveParamCallback();
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
+void SetupWifiManagerStickConfigMenu(StickConfig &mqttConfig);
 
-void loadConfig(MqttConfig* config)
+void loadConfig(StickConfig* config)
 {
     config->mqttserver = prefs.getString(serverfile, "10.1.2.3");
     config->mqttport = prefs.getString(portfile, "1883");
@@ -186,7 +186,7 @@ void loadConfig(MqttConfig* config)
     config->mqttpwd = prefs.getString(secretfile, "");
 }
 
-void saveConfig(MqttConfig* config)
+void saveConfig(StickConfig* config)
 {
     prefs.putString(serverfile, config->mqttserver);
     prefs.putString(portfile, config->mqttport);
@@ -198,7 +198,7 @@ void saveConfig(MqttConfig* config)
 void saveParamCallback()
 {
     Log.println(F("[CALLBACK] saveParamCallback fired"));
-    MqttConfig config;
+    StickConfig config;
 
     config.mqttserver = custom_mqtt_server->getValue();
     config.mqttport = custom_mqtt_port->getValue();
@@ -265,10 +265,8 @@ void setup()
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     Log.begin();
-    #if MQTT_SUPPORTED == 1
-        MqttConfig mqttConfig;
-        SetupMqttWifiManagerMenu(mqttConfig);
-    #endif
+    StickConfig stickConfig;
+    SetupWifiManagerStickConfigMenu(stickConfig);
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
@@ -298,9 +296,7 @@ void setup()
         #ifdef MQTTS_ENABLED
             espClient.setCACert(MQTTS_BROKER_CA_CERT);
         #endif
-        shineMqtt.mqttSetup(mqttConfig);
-    #else
-        setupMenu(false);
+        shineMqtt.mqttSetup(stickConfig);
     #endif
 
     httpServer.on("/status", SendJsonSite);
@@ -321,37 +317,37 @@ void setup()
     httpServer.begin();
 }
 
-#if MQTT_SUPPORTED == 1
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
-    loadConfig(&mqttConfig);
+void SetupWifiManagerStickConfigMenu(StickConfig &stickConfig) {
+    loadConfig(&stickConfig);
 
-    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttConfig.mqttserver.c_str(), 40);
-    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttConfig.mqttport.c_str(), 6);
-    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
-    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
-    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 64);
+    #if MQTT_SUPPORTED == 1
+    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", stickConfig.mqttserver.c_str(), 40);
+    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", stickConfig.mqttport.c_str(), 6);
+    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", stickConfig.mqtttopic.c_str(), 64);
+    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", stickConfig.mqttuser.c_str(), 40);
+    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", stickConfig.mqttpwd.c_str(), 64);
 
     wm.addParameter(custom_mqtt_server);
     wm.addParameter(custom_mqtt_port);
     wm.addParameter(custom_mqtt_topic);
     wm.addParameter(custom_mqtt_user);
     wm.addParameter(custom_mqtt_pwd);
+    #endif
+
     wm.setSaveParamsCallback(saveParamCallback);
 
-    setupMenu(true);
+    setupMenu();
 }
-#endif
+
 
 /**
  * @brief create custom wifimanager menu entries
  * 
  * @param enableCustomParams enable custom params aka. mqtt settings
  */
-void setupMenu(bool enableCustomParams){
+void setupMenu() {
     std::vector<const char*> menu = { "wifi","wifinoscan"};
-    if(enableCustomParams){
-        menu.push_back("param");
-    }
+    menu.push_back("param");
     menu.push_back("sep");
     menu.push_back("erase");
     menu.push_back("restart");

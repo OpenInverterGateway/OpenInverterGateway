@@ -3,7 +3,7 @@
 #include <TLog.h>
 #include "PubSubClient.h"
 
-void ShineMqtt::mqttSetup(const MqttConfig& config) {
+void ShineMqtt::mqttSetup(const StickConfig& config) {
   this->mqttconfig = config;
 
   uint16_t intPort = config.mqttport.toInt();
