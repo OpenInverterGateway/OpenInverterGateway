@@ -10,7 +10,7 @@ Used Libs
   - DoubleResetDetector by Khai Hoang             https://github.com/khoih-prog/ESP_DoubleResetDetector
   - ModbusMaster        by Doc Walker             https://github.com/4-20ma/ModbusMaster
   - ArduinoJson         by Benoit Blanchon        https://github.com/bblanchon/ArduinoJson
-
+  - Preferences         by vshymanskyy            https://github.com/vshymanskyy/Preferences
   - TeeLog              by Dirk-Willem van Gulik  https://github.com/dirkx/tee-log.git
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
