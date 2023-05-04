@@ -32,6 +32,7 @@ Implemented Features:
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
 * Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 * TLS support for esp32
+* Debugging via Web and Telnet
 
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards.
@@ -99,6 +100,12 @@ To extract the current AC Power you have to add a sensor template.
           - name: "Growatt inverter AC Power"
             unit_of_measurement: "W"
             state: "{{ float(state_attr('sensor.growatt_inverter', 'OutputPower')) }}"
+
+## Debugging
+
+If you turned on `ENABLE_WEB_DEBUG` in the Config.h (see Config.h.example) there is a debug site under `http://<ip>/debug`. You can turn on `ENABLE_TELNET_DEBUG` to get the debug messages via a telnet client. `telnet <ip>`
+
+To enable even more messages, take a look to `DEBUG_MODBUS_OUTPUT`.
 
 ## Change log
 
