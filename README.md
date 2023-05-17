@@ -74,22 +74,54 @@ For IoT applications the raw data can now read in JSON format (application/json)
 
 This will put the inverter on the energy dashboard.
      
-     mqtt:
-        sensor:
-          - state_topic: "energy/solar"
-            unique_id: "growatt_wr_total_production"
-            name: "Growatt.TotalGenerateEnergy"
-            unit_of_measurement: "kWh"
-            value_template: "{{ float(value_json.TotalGenerateEnergy) | round(1) }}"
-            device_class: energy
-            state_class: total_increasing
-            json_attributes_topic: "energy/solar"
-            last_reset_topic: "energy/solar"
-            last_reset_value_template: "1970-01-01T00:00:00+00:00"
-            payload_available: "1"
-            availability_mode: latest
-            availability_topic: "energy/solar"
-            availability_template: "{{ value_json.InverterStatus }}"
+mqtt:
+  sensor:
+    - state_topic: "energy/solar"
+      unique_id: "growatt_wr_total_production"
+      name: "growatt_wr_total_production.TotalGenerateEnergy"
+      unit_of_measurement: "kWh"
+      value_template: "{{ float(value_json.EnergyTotal) | round(1) }}"
+      device_class: energy
+      state_class: total_increasing
+      json_attributes_topic: "energy/solar"
+      payload_available: "1"
+      availability_mode: latest
+      availability_topic: "energy/solar"
+      availability_template: "{{ value_json.InverterStatus }}"
+
+template:
+  - sensor:
+    - name: "growatt_wr_total_production.PV1EnergyTotal"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV1EnergyTotal')) | round(1) }}"
+    - name: "growatt_wr_total_production.PV2EnergyTotal"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV2EnergyTotal')) | round(1) }}"
+    - name: "growatt_wr_total_production.PV3EnergyTotal"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV3EnergyTotal')) | round(1) }}"
+
+    - name: "growatt_wr_total_production.PV1InputPower"
+      unit_of_measurement: "W"
+      device_class: energy
+      state_class: measurement
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV1InputPower')) }}"
+    - name: "growatt_wr_total_production.PV2InputPower"
+      unit_of_measurement: "W"
+      device_class: energy
+      state_class: measurement
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV2InputPower')) }}"
+    - name: "growatt_wr_total_production.PV3InputPower"
+      unit_of_measurement: "W"
+      device_class: energy
+      state_class: measurement
+      state: "{{ float(state_attr('sensor.growatt_wr_total_production_totalgenerateenergy', 'PV3InputPower')) }}"
 
 
 To extract the current AC Power you have to add a sensor template.
