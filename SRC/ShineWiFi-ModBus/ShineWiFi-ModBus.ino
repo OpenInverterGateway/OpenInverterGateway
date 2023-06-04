@@ -5,12 +5,13 @@ Add ESP8266 compiler to arduino IDE
   - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
 
 Used Libs
-  - WiFiManager         by tzapu           https://github.com/tzapu/WiFiManager
-  - PubSubClient        by Nick O´Leary    https://github.com/knolleary/pubsubclient
-  - DoubleResetDetector by Khai Hoang      https://github.com/khoih-prog/ESP_DoubleResetDetector
-  - ModbusMaster        by Doc Walker      https://github.com/4-20ma/ModbusMaster
-  - ArduinoJson         by Benoit Blanchon https://github.com/bblanchon/ArduinoJson
-  - Preferences         by vshymanskyy     https://github.com/vshymanskyy/Preferences
+  - WiFiManager         by tzapu                  https://github.com/tzapu/WiFiManager
+  - PubSubClient        by Nick O´Leary           https://github.com/knolleary/pubsubclient
+  - DoubleResetDetector by Khai Hoang             https://github.com/khoih-prog/ESP_DoubleResetDetector
+  - ModbusMaster        by Doc Walker             https://github.com/4-20ma/ModbusMaster
+  - ArduinoJson         by Benoit Blanchon        https://github.com/bblanchon/ArduinoJson
+  - Preferences         by vshymanskyy            https://github.com/vshymanskyy/Preferences
+  - TeeLog              by Dirk-Willem van Gulik  https://github.com/dirkx/tee-log.git
 
 To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
 or download them from github (Sketch -> Include Library -> Add .ZIP Library)
@@ -28,8 +29,8 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #error Please rename Config.h.example to Config.h
 #endif
 
-#include "WebDebug.h"
 #include "ShineWifi.h"
+#include <TLog.h>
 #include "Index.h"
 #include "Growatt.h"
 #include <Preferences.h>
@@ -135,22 +136,18 @@ void WiFi_Reconnect()
         while (WiFi.status() != WL_CONNECTED)
         {
             delay(200);
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.print("x");
-            #endif
+            Log.print(F("x"));
             digitalWrite(LED_RT, !digitalRead(LED_RT)); // toggle red led on WiFi (re)connect
         }
 
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println("");
-            WiFi.printDiag(Serial);
-            Serial.print("local IP:");
-            Serial.println(WiFi.localIP());
-            Serial.print("Hostname: ");
-            Serial.println(HOSTNAME);
-        #endif
+        // todo: use Log
+        WiFi.printDiag(Serial);
+        Log.print(F("local IP:"));
+        Log.println(WiFi.localIP());
+        Log.print(F("Hostname: "));
+        Log.println(HOSTNAME);
 
-        WEB_DEBUG_PRINT("WiFi reconnected")
+        Log.println(F("WiFi reconnected"));
 
         digitalWrite(LED_RT, 1);
     }
@@ -166,14 +163,12 @@ void InverterReconnect(void)
     // Baudrate will be set here, depending on the version of the stick
     Inverter.begin(Serial);
 
-    #if ENABLE_WEB_DEBUG == 1
-        if (Inverter.GetWiFiStickType() == ShineWiFi_S)
-            WEB_DEBUG_PRINT("ShineWiFi-S (Serial) found")
-        else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
-            WEB_DEBUG_PRINT("ShineWiFi-X (USB) found")
-        else
-            WEB_DEBUG_PRINT("Error: Unknown Shine Stick")
-    #endif
+    if (Inverter.GetWiFiStickType() == ShineWiFi_S)
+        Log.println(F("ShineWiFi-S (Serial) found"));
+    else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
+        Log.println(F("ShineWiFi-X (USB) found"));
+    else
+        Log.println(F("Error: Unknown Shine Stick"));
 }
 
 #if MQTT_SUPPORTED == 1
@@ -202,7 +197,7 @@ void saveConfig(MqttConfig* config)
 
 void saveParamCallback()
 {
-    Serial.println(F("[CALLBACK] saveParamCallback fired"));
+    Log.println(F("[CALLBACK] saveParamCallback fired"));
     MqttConfig config;
 
     config.mqttserver = custom_mqtt_server->getValue();
@@ -219,13 +214,33 @@ void saveParamCallback()
 }
 #endif
 
+#ifdef ENABLE_TELNET_DEBUG
+#include <TelnetSerialStream.h>
+TelnetSerialStream telnetSerialStream = TelnetSerialStream();
+#endif
+
+#ifdef ENABLE_WEB_DEBUG
+#include <WebSerialStream.h>
+WebSerialStream webSerialStream = WebSerialStream(8080);
+#endif
+
 void setup()
 {
-    #if ENABLE_DEBUG_OUTPUT == 1
-        Serial.begin(115200);
-        Serial.println(F("Setup()"));
-    #endif
-    WEB_DEBUG_PRINT("Setup()");
+#ifdef ENABLE_SERIAL_DEBUG
+    Serial.begin(115200);
+    Log.disableSerial(false);
+#else
+    Log.disableSerial(true);
+#endif
+    MDNS.begin(HOSTNAME);
+#ifdef ENABLE_TELNET_DEBUG
+    Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
+#endif
+#ifdef ENABLE_WEB_DEBUG
+    Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+#endif
+
+    Log.println("Setup()");
 
     #if ENABLE_DOUBLE_RESET == 1
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
@@ -241,9 +256,7 @@ void setup()
 
     #if ENABLE_DOUBLE_RESET == 1
     if (drd->detectDoubleReset()) {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Double reset detected"));
-        #endif
+    Log.println(F("Double reset detected"));
         StartedConfigAfterBoot = true;
     }
     #endif
@@ -251,6 +264,7 @@ void setup()
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
+    Log.begin();
     #if MQTT_SUPPORTED == 1
         MqttConfig mqttConfig;
         SetupMqttWifiManagerMenu(mqttConfig);
@@ -265,18 +279,14 @@ void setup()
 
     if (!res)
     {
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println(F("Failed to connect"));
-        #endif
+        Log.println(F("Failed to connect"));
         ESP.restart();
     }
     else
     {
         digitalWrite(LED_BL, 0);
-        #if ENABLE_DEBUG_OUTPUT == 1
-            //if you get here you have connected to the WiFi
-            Serial.println(F("WIFI connected...yeey :)"));
-        #endif
+        //if you get here you have connected to the WiFi
+        Log.println(F("WIFI connected...yeey :)"));
     }
 
     while (WiFi.status() != WL_CONNECTED)
@@ -299,7 +309,7 @@ void setup()
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     httpServer.on("/", MainPage);
-    #if ENABLE_WEB_DEBUG == 1
+    #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", SendDebug);
     #endif
 
@@ -372,10 +382,10 @@ void StartConfigAccessPoint(void)
     StartedConfigAfterBoot = true;
 }
 
-#if ENABLE_WEB_DEBUG == 1
-void SendDebug(void)
-{
-    httpServer.send(200, "text/plain", acWebDebug);
+#ifdef ENABLE_WEB_DEBUG
+void SendDebug(void) {
+    httpServer.sendHeader("Location", "http://" + WiFi.localIP().toString() + ":8080/", true);
+    httpServer.send ( 302, "text/plain", "");
 }
 #endif
 
@@ -401,7 +411,7 @@ void handlePostData()
     if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
     {
         // If the POST request doesn't have data
-        httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
+        httpServer.send(400, F("text/plain"), "400: Invalid Request"); // The request is invalid, so send HTTP status 400
         return;
     }
     else
@@ -503,6 +513,7 @@ void loop()
         drd->loop();
     #endif
 
+    Log.loop();
     long now = millis();
     char readoutSucceeded;
 
@@ -515,18 +526,14 @@ void loop()
         {
             if (btnPressed > 5)
             {
-                #if ENABLE_DEBUG_OUTPUT == 1
-                    Serial.println("Handle press");
-                #endif
+                Log.println(F("Handle press"));
                 StartedConfigAfterBoot = true;
             }
             else
             {
                 btnPressed++;
             }
-            #if ENABLE_DEBUG_OUTPUT == 1
-                Serial.print("Btn pressed");
-            #endif
+            Log.print(F("Btn pressed"));
         }
         else
         {
@@ -539,9 +546,7 @@ void loop()
     {
         digitalWrite(LED_BL, 1);
         httpServer.stop();
-        #if ENABLE_DEBUG_OUTPUT == 1
-            Serial.println("Config after boot started");
-        #endif
+        Log.println(F("Config after boot started"));
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
         wm.startConfigPortal("GrowattConfig", APPassword);
         digitalWrite(LED_BL, 0);
@@ -596,7 +601,7 @@ void loop()
                 if (Inverter.ReadData()) // get new data from inverter
                 #endif
                 {
-                    WEB_DEBUG_PRINT("ReadData() successful")
+                    Log.println(F("ReadData() successful"));
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
 
@@ -614,14 +619,14 @@ void loop()
                 }
                 else
                 {
-                    WEB_DEBUG_PRINT("ReadData() NOT successful")
+                    Log.println(F("ReadData() NOT successful"));
                     if (u8RetryCounter)
                     {
                         u8RetryCounter--;
                     }
                     else
                     {
-                        WEB_DEBUG_PRINT("Retry counter\n")
+                        Log.println(F("Retry counter"));
                         sprintf(JSONChars, "{\"InverterStatus\": -1 }");
                         #if MQTT_SUPPORTED == 1
                             shineMqtt.mqttPublish(JSONChars);

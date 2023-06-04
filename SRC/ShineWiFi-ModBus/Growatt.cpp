@@ -1,5 +1,6 @@
 #include <ModbusMaster.h>
 #include <ArduinoJson.h>
+#include <TLog.h>
 
 #include "GrowattTypes.h"
 #include "Growatt.h"
@@ -94,10 +95,18 @@ bool Growatt::ReadInputRegisters() {
 
   // read each fragment separately
   for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
+#ifdef DEBUG_MODBUS_OUTPUT
+    Log.printf("Modbus: read Segment from 0x%02X with len: %d ...",
+               _Protocol.InputReadFragments[i].StartAddress,
+               _Protocol.InputReadFragments[i].FragmentSize);
+#endif
     res =
         Modbus.readInputRegisters(_Protocol.InputReadFragments[i].StartAddress,
                                   _Protocol.InputReadFragments[i].FragmentSize);
     if (res == Modbus.ku8MBSuccess) {
+#ifdef DEBUG_MODBUS_OUTPUT
+      Log.println(F("ok"));
+#endif
       for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
         // make sure the register we try to read is in the fragment
         if (_Protocol.InputRegisters[j].address >=
@@ -124,6 +133,9 @@ bool Growatt::ReadInputRegisters() {
         }
       }
     } else {
+#ifdef DEBUG_MODBUS_OUTPUT
+      Log.println(F("failed"));
+#endif
       return false;
     }
   }
