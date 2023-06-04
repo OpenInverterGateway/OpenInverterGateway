@@ -37,12 +37,13 @@ jobs:
       run: |
         cp "SRC/ShineWiFi-ModBus/Config.h.example" "SRC/ShineWiFi-ModBus/Config.h"
     - name: Run PlatformIO
-      run: pio run -e ShineWifiX -e lolin32 -e nodemcu-32s -e d1
+      run: pio run -e ShineWifiX -e ShineWifiS -e lolin32 -e nodemcu-32s -e d1
     - name: Adjust firmware filename
       run: |
         mkdir release
         mv .pio/build/lolin32/firmware.bin release/firmware-lolin32.bin
         mv .pio/build/ShineWifiX/firmware.bin release/firmware-ShineWifiX.bin
+        mv .pio/build/ShineWifiS/firmware.bin release/firmware-ShineWifiS.bin
         mv .pio/build/nodemcu-32s/firmware.bin release/firmware-nodemcu-32s.bin
         mv .pio/build/d1/firmware.bin release/firmware-d1.bin
     - name: Release
