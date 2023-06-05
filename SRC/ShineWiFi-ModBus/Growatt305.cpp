@@ -6,7 +6,7 @@ void init_growatt305(sProtocolDefinition_t &Protocol) {
   // definition of input registers
   Protocol.InputRegisterCount = 12;
   // address, value, size, name, multiplier, unit, frontend, plot
-  // FEAGMENT 1: BEGIN
+  // FRAGMENT 1: BEGIN
   Protocol.InputRegisters[P305_I_STATUS] = sGrowattModbusReg_t{
       0, 0, SIZE_16BIT, "InverterStatus", 1, 1, NONE, true, false};  // #1
   Protocol.InputRegisters[P305_DC_POWER] = sGrowattModbusReg_t{

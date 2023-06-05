@@ -6,9 +6,9 @@
 // one read!
 void init_growatt124(sProtocolDefinition_t &Protocol) {
   // definition of input registers
-  Protocol.InputRegisterCount = 52;
+  Protocol.InputRegisterCount = 54;
   // address, value, size, name, multiplier, unit, frontend, plot
-  // FEAGMENT 1: BEGIN
+  // FRAGMENT 1: BEGIN
   Protocol.InputRegisters[P124_I_STATUS] = sGrowattModbusReg_t{
       0, 0, SIZE_16BIT, "InverterStatus", 1, 1, NONE, true, false};  // #1
   Protocol.InputRegisters[P124_INPUT_POWER] = sGrowattModbusReg_t{
@@ -64,9 +64,9 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
   Protocol.InputRegisters[P124_PAC3] = sGrowattModbusReg_t{
       48, 0,     SIZE_32BIT, "L3ThreePhaseGridOutputPower", 0.1, 0.1,
       VA, false, false};  // #19
-  // FEAGMENT 1: END
+  // FRAGMENT 1: END
 
-  // FEAGMENT 2: BEGIN
+  // FRAGMENT 2: BEGIN
   Protocol.InputRegisters[P124_EAC_TODAY] = sGrowattModbusReg_t{
       53,        0,    SIZE_32BIT, "TodayGenerateEnergy", 0.1, 0.1,
       POWER_KWH, true, false};  // #20
@@ -102,9 +102,9 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
   Protocol.InputRegisters[P124_TEMP3] = sGrowattModbusReg_t{
       95,          0,     SIZE_16BIT, "BoostTemperature", 0.1, 0.1,
       TEMPERATURE, false, false};  // #30
-  // FEAGMENT 2: END
+  // FRAGMENT 2: END
 
-  // FEAGMENT 3: BEGIN
+  // FRAGMENT 3: BEGIN
   Protocol.InputRegisters[P124_PDISCHARGE] =
       sGrowattModbusReg_t{1009,    0,    SIZE_32BIT, "DischargePower", 0.1, 0.1,
                           POWER_W, true, true};  // #31
@@ -170,12 +170,22 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
   Protocol.InputRegisters[P124_ETOLOCALLOAD_TOTAL] = sGrowattModbusReg_t{
       1062,      0,    SIZE_32BIT, "LocalLoadEnergyTotal", 0.1, 0.1,
       POWER_KWH, true, false};  // #52
-  // FEAGMENT 3: END
+  // FRAGMENT 3: END
 
-  Protocol.InputFragmentCount = 3;
+  // FRAGMENT 4: START
+  Protocol.InputRegisters[P124_ACCHARGE_TODAY] = sGrowattModbusReg_t{
+      1124,      0,    SIZE_32BIT, "ACChargeEnergyToday", 0.1, 0.1,
+      POWER_KWH, true, false};  // #53
+  Protocol.InputRegisters[P124_ACCHARGE_TOTAL] = sGrowattModbusReg_t{
+      1126,      0,    SIZE_32BIT, "ACChargeEnergyTotal", 0.1, 0.1,
+      POWER_KWH, true, false};  // #54
+  // FRAGMENT 4: END
+
+  Protocol.InputFragmentCount = 4;
   Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 50};
   Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 43};
   Protocol.InputReadFragments[2] = sGrowattReadFragment_t{1009, 55};
+  Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1124, 4};
 
   Protocol.HoldingRegisterCount = 0;
   Protocol.HoldingFragmentCount = 0;
