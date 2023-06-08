@@ -141,7 +141,7 @@ void WiFi_Reconnect()
         }
 
         // todo: use Log
-        WiFi.printDiag(Serial);
+            WiFi.printDiag(Serial);
         Log.print(F("local IP:"));
         Log.println(WiFi.localIP());
         Log.print(F("Hostname: "));
@@ -163,11 +163,11 @@ void InverterReconnect(void)
     // Baudrate will be set here, depending on the version of the stick
     Inverter.begin(Serial);
 
-    if (Inverter.GetWiFiStickType() == ShineWiFi_S)
+        if (Inverter.GetWiFiStickType() == ShineWiFi_S)
         Log.println(F("ShineWiFi-S (Serial) found"));
-    else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
+        else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
         Log.println(F("ShineWiFi-X (USB) found"));
-    else
+        else
         Log.println(F("Error: Unknown Shine Stick"));
 }
 
@@ -227,11 +227,11 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 void setup()
 {
 #ifdef ENABLE_SERIAL_DEBUG
-    Serial.begin(115200);
+        Serial.begin(115200);
     Log.disableSerial(false);
 #else
     Log.disableSerial(true);
-#endif
+    #endif
     MDNS.begin(HOSTNAME);
 #ifdef ENABLE_TELNET_DEBUG
     Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
@@ -285,7 +285,7 @@ void setup()
     else
     {
         digitalWrite(LED_BL, 0);
-        //if you get here you have connected to the WiFi
+            //if you get here you have connected to the WiFi
         Log.println(F("WIFI connected...yeey :)"));
     }
 
@@ -308,6 +308,7 @@ void setup()
     httpServer.on("/StartAp", StartConfigAccessPoint);
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
+    httpServer.on("/postQueryModbus", HTTP_POST, handlePostQuery);
     httpServer.on("/", MainPage);
     #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", SendDebug);
@@ -498,6 +499,110 @@ void handlePostData()
         return;
     }
 }
+
+void handlePostQuery()
+{
+    char* msg;
+    uint16_t u16Tmp;
+    uint32_t u32Tmp;
+
+    msg = JSONChars;
+    msg[0] = 0;
+
+    if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
+    {
+        // If the POST request doesn't have data
+        httpServer.send(400, "text/plain", "400: Invalid Request"); // The request is invalid, so send HTTP status 400
+        return;
+    }
+    else
+    {
+        if (httpServer.arg("operation") == "R")
+        {
+            if (httpServer.arg("registerType") == "I")
+            {
+                if (httpServer.arg("type") == "16b")
+                {
+                    if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                    {
+                        sprintf(msg, "%d", u16Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Input register %ld impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+                else
+                {
+                    if (Inverter.ReadInputReg(httpServer.arg("reg").toInt(), &u32Tmp))
+                    {
+                        sprintf(msg, "%d", u32Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 32b Input register %ld impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+            }
+            else
+            {
+                if (httpServer.arg("type") == "16b")
+                {
+                    if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u16Tmp))
+                    {
+                        sprintf(msg, "%d",u16Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+                else
+                {
+                    if (Inverter.ReadHoldingReg(httpServer.arg("reg").toInt(), &u32Tmp))
+                    {
+                        sprintf(msg, "%d", u32Tmp);
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 32b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (httpServer.arg("registerType") == "H")
+            {
+                if (httpServer.arg("type") == "16b")
+                {
+                    if (Inverter.WriteHoldingReg(httpServer.arg("reg").toInt(), httpServer.arg("val").toInt()))
+                    {
+                        sprintf(msg, "Wrote Holding Register %ld to a value of %ld!", httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+                    }
+                    else
+                    {
+                        sprintf(msg, "Read 16b Holding register %ld impossible - not connected?", httpServer.arg("reg").toInt());
+                    }
+                }
+                else
+                {
+                    sprintf(msg, "Writing to double (32b) registers not supported");
+                }
+            }
+            else
+            {
+                sprintf(msg, "It is not possible to write into Input Registers");
+            }
+        }
+        httpServer.send(200, "text/plain", msg);
+        return;
+    }
+}
+
+
+
+
 
 // -------------------------------------------------------
 // Main loop

@@ -13,3 +13,5 @@ SRC/ShineWiFi-ModBus/Config.h
 # VisualStudioCode
 .vscode/*
 *.code-workspace
+SRC/ShineWiFi-ModBus/build/esp8266.esp8266.generic/ShineWiFi-ModBus.ino.elf
+SRC/ShineWiFi-ModBus/build/esp8266.esp8266.generic/ShineWiFi-ModBus.ino.map
