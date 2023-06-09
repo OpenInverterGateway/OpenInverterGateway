@@ -20,7 +20,7 @@ To open the stick's housing, push in the two plastic retention tongues, and pull
 
 ### Electrical build
 
-The PCB is equipped with the follwing major functional parts
+The PCB is equipped with the following major functional parts
 
 * USB-to-Serial Converter
 * Linear voltage regulator
@@ -87,12 +87,12 @@ Modbus Protocol description v1.05 dated 2018 seems to be applicable.
 It uses Modbus command 0x03 (Read Input Registers) for all the volatile information (i.e voltages, power, ...)  
 It uses Modbus command 0x04 (Read Holding Registers) for static information (i.e. capabilities, firmware version, ...)
 
-Note: at the inverter, this modbus interface at 115200Bd seems to be simultaneously useable to the RS485-based Modbus interface of the communication connector directly at the inverter at 9600Bd.
+Note: at the inverter, this modbus interface at 115200Bd seems to be simultaneously usable to the RS485-based Modbus interface of the communication connector directly at the inverter at 9600Bd.
 
 
 ### Loading Firmware
 
-Initial loding of Firmware to the stick is very easy:
+Initial loading of Firmware to the stick is very easy:
 
 Remove the stick's PCB from the housing.
 Temporarily  connect the header's Pins GPIO0 and GND while powering-on (plugging in) the stick.
@@ -102,6 +102,6 @@ Upload of the compiled binary of the firmware. (using arduino-ide, esptool or av
 I have used a male dupont-wire pushed in place while plugging into my USB-extension cord.
 
 
-Updating an installed firware is very easy using OTA built into the Stick's webserver:
+Updating an installed firmware is very easy using OTA built into the Stick's webserver:
 
 Use:  http://&lt;ip&gt;/firmware

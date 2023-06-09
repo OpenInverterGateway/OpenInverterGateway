@@ -153,7 +153,7 @@ void WiFi_Reconnect()
     }
 }
 
-// Conection can fail after sunrise. The stick powers up before the inverter.
+// Connection can fail after sunrise. The stick powers up before the inverter.
 // So the detection of the inverter will fail. If no inverter is detected, we have to retry later (s. loop() )
 // The detection without running inverter will take several seconds, because the ModBus-Lib has a timeout of 2s 
 // for each read access (and we do several of them). The WiFi can crash during this function. Perhaps we can fix 
