@@ -28,7 +28,7 @@ The PCB is equipped with the following major functional parts
 * RTC on I2C-bus with CR1220 backup battery
 * Flash on SPI-bus
 * Three status LEDs
-* One Pusbutton 
+* One pushbutton
 * WiFi Antenna wire on IPEX connector
 
 
@@ -47,10 +47,10 @@ There is an unpopulated connector CN1
 
 The LEDs are driven toward Ground, i.e. a Logical HIGH turns them on.
 
-The Pushbutton is connected to the Analog Input of the ESP thru a voltage divider pull-up to 3.3V.
+The pushbutton is connected to the Analog Input of the ESP through a voltage divider pull-up to 3.3V.
 
 
-Reverse Engineering of the connections to te ESP-07 module:
+Reverse Engineering of the connections to the ESP-07 module:
 
 ESP-07S Module (16Pin) on ShineWifi-X:
 
@@ -79,8 +79,8 @@ ESP-07S Module (16Pin) on ShineWifi-X:
 ### Modbus Communication
 
 My ShineWifi-X stick was delivered along with a Growatt 600TL-X.  
-In this combination, the inverter is the USB-host that avtivates the USB-to-serial chip.  
-Then, the ShineWiFi-X is the Mobus master, while the inverter responds to Modbus Address #1 at 115200 Baud, 8N1
+In this combination, the inverter is the USB host that activates the USB-to-serial chip.  
+Then, the ShineWiFi-X is the Modbus master, while the inverter responds to Modbus address #1 at 115200 Baud, 8N1
 
 Modbus Protocol description v1.05 dated 2018 seems to be applicable.
 
