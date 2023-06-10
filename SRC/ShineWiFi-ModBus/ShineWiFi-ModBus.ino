@@ -141,7 +141,7 @@ void WiFi_Reconnect()
         }
 
         // todo: use Log
-            WiFi.printDiag(Serial);
+        WiFi.printDiag(Serial);
         Log.print(F("local IP:"));
         Log.println(WiFi.localIP());
         Log.print(F("Hostname: "));
@@ -163,11 +163,11 @@ void InverterReconnect(void)
     // Baudrate will be set here, depending on the version of the stick
     Inverter.begin(Serial);
 
-        if (Inverter.GetWiFiStickType() == ShineWiFi_S)
+    if (Inverter.GetWiFiStickType() == ShineWiFi_S)
         Log.println(F("ShineWiFi-S (Serial) found"));
-        else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
+    else if (Inverter.GetWiFiStickType() == ShineWiFi_X)
         Log.println(F("ShineWiFi-X (USB) found"));
-        else
+    else
         Log.println(F("Error: Unknown Shine Stick"));
 }
 
@@ -227,11 +227,11 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 void setup()
 {
 #ifdef ENABLE_SERIAL_DEBUG
-        Serial.begin(115200);
+    Serial.begin(115200);
     Log.disableSerial(false);
 #else
     Log.disableSerial(true);
-    #endif
+#endif
     MDNS.begin(HOSTNAME);
 #ifdef ENABLE_TELNET_DEBUG
     Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
@@ -285,7 +285,7 @@ void setup()
     else
     {
         digitalWrite(LED_BL, 0);
-            //if you get here you have connected to the WiFi
+        //if you get here you have connected to the WiFi
         Log.println(F("WIFI connected...yeey :)"));
     }
 
