@@ -34,8 +34,15 @@
 // For ShineWiFi-S everything seems to work perfect even though this flag is set
 // #define ENABLE_SERIAL_DEBUG
 
-// Setting this define to 1 will enable a web page (<ip>/debug) where debug messages can be displayed
-#define ENABLE_WEB_DEBUG 1
+// define this will enable a web page (<ip>/debug) where debug messages can be displayed
+#define ENABLE_WEB_DEBUG
+// define this will enable Remote Debug
+// #define ENABLE_TELNET_DEBUG
+
+#if defined(ENABLE_SERIAL_DEBUG) || defined(ENABLE_WEB_DEBUG) || defined(ENABLE_TELNET_DEBUG)
+// to debug Modbus output turn this on (this is very verbose)
+// #define DEBUG_MODBUS_OUTPUT
+#endif
 
 // Enable TLS connection from stick to broker. Make sure to update port and hostname to match the cert
 // of the mqtt broker as well. Change this CERT to your custom mqtt cert.
