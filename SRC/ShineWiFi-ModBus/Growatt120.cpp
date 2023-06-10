@@ -272,7 +272,7 @@ void init_growatt120(sProtocolDefinition_t &Protocol) {
   // 101. RealOPPercent Real Output power Percent 1%
   Protocol.InputRegisters[P120_REAL_OUTPUT_POWER] = sGrowattModbusReg_t{
       101,        0,     SIZE_16BIT, "RealOutputPowerPercent", 1, 1,
-      PRECENTAGE, false, false};
+      PERCENTAGE, false, false};
   // 102. OPFullwatt H Output Maxpower Limited high
   Protocol.InputRegisters[P120_OUTPUT_MAXPOWER_LIMITED] = sGrowattModbusReg_t{
       102, 0, SIZE_16BIT, "LimitedOutputPower", 1, 1, POWER_W, false, false};
@@ -296,7 +296,7 @@ void init_growatt120(sProtocolDefinition_t &Protocol) {
   // 112. bINVWarnCode bINVWarnCode
   // 113. real Power Percent real Power Percent 0-100 %
   // Protocol.InputRegisters[P120_REAL_POWER] = sGrowattModbusReg_t{3, 0,
-  // SIZE_16BIT, "RealPowerPercent", 1, PRECENTAGE, false, false};
+  // SIZE_16BIT, "RealPowerPercent", 1, PERCENTAGE, false, false};
   // 114. inv start delay time inv start delay time
   // Protocol.InputRegisters[P120_START_DELAY] = sGrowattModbusReg_t{57, 0,
   // SIZE_32BIT, "StartDelay", 0.5, SECONDS, false, false};
@@ -314,6 +314,6 @@ void init_growatt120(sProtocolDefinition_t &Protocol) {
   Protocol.HoldingRegisters[P120_CMD_MEMORY_STATE] = sGrowattModbusReg_t{
       2, 0, SIZE_16BIT, "CmdMemoryState", 1, 1, NONE, true, false};
   Protocol.HoldingRegisters[P120_Active_P_Rate] = sGrowattModbusReg_t{
-      3, 0, SIZE_16BIT, "ActivePowerRate", 1, 1, PRECENTAGE, true, false};
+      3, 0, SIZE_16BIT, "ActivePowerRate", 1, 1, PERCENTAGE, true, false};
   // FRAGMENT 1: END
 }

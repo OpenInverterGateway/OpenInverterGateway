@@ -36,7 +36,7 @@ void init_growattSPF(sProtocolDefinition_t &Protocol) {
       sGrowattModbusReg_t{17,   0,       SIZE_16BIT, "BattVoltage", 0.01,
                           0.01, VOLTAGE, true,       false};  // #12
   Protocol.InputRegisters[SPF_BATT_SOC] = sGrowattModbusReg_t{
-      18, 0, SIZE_16BIT, "BattSOC", 1, 1, PRECENTAGE, true, false};  // #13
+      18, 0, SIZE_16BIT, "BattSOC", 1, 1, PERCENTAGE, true, false};  // #13
   Protocol.InputRegisters[SPF_BUS_V] = sGrowattModbusReg_t{
       19, 0, SIZE_16BIT, "BusVoltage", 0.1, 0.1, VOLTAGE, true, false};  // #14
   Protocol.InputRegisters[SPF_GRID_V] =
@@ -61,7 +61,7 @@ void init_growattSPF(sProtocolDefinition_t &Protocol) {
                           0.1, TEMPERATURE, true,       false};  // #21
   Protocol.InputRegisters[SPF_LOAD] =
       sGrowattModbusReg_t{27,  0,          SIZE_16BIT, "LoadPercent", 0.1,
-                          0.1, PRECENTAGE, true,       false};  // #22
+                          0.1, PERCENTAGE, true,       false};  // #22
   Protocol.InputRegisters[SPF_BUCK1_T] =
       sGrowattModbusReg_t{32,  0,           SIZE_16BIT, "Buck1Temp", 0.1,
                           0.1, TEMPERATURE, true,       false};  // #23

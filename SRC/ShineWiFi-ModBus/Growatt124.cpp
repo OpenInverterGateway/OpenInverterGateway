@@ -115,7 +115,7 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
       1013,    0,     SIZE_16BIT, "BatteryVoltage", 0.1, 0.1,
       VOLTAGE, false, false};  // #33
   Protocol.InputRegisters[P124_SOC] = sGrowattModbusReg_t{
-      1014, 0, SIZE_16BIT, "SOC", 1, 1, PRECENTAGE, true, true};  // #34
+      1014, 0, SIZE_16BIT, "SOC", 1, 1, PERCENTAGE, true, true};  // #34
   Protocol.InputRegisters[P124_PAC_TO_USER] =
       sGrowattModbusReg_t{1015,    0,     SIZE_32BIT, "ACPowerToUser", 0.1, 0.1,
                           POWER_W, false, false};  // #35
