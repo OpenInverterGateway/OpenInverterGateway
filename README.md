@@ -24,7 +24,7 @@ Implemented Features:
 * Built-in simple Webserver
 * The inverter is queried using Modbus Protocol
 * The data received will be transmitted by MQTT to a server of your choice.
-* The data received is also provied as JSON
+* The data received is also provided as JSON
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
 * It supports convenient OTA firmware update (`http://<ip>/firmware`)
 * It supports basic access to arbitrary modbus data
@@ -60,7 +60,7 @@ See the short descriptions to the devices (including some pictures) in the "Doc"
 * And others ....
 
 ## Modbus Protocol Versions
-The documentation from Growatt on the Modbus interface is avaliable, search for "Growatt PV Inverter Modbus RS485 RTU Protocol" on Google.
+The documentation from Growatt on the Modbus interface is available, search for "Growatt PV Inverter Modbus RS485 RTU Protocol" on Google.
 
 The older inverters apparently use Protocol v3.05 from year 2013.
 The newer inverters apparently use protocol v1.05 from year 2018.
