@@ -20,7 +20,7 @@ To open the stick's housing, push in the two plastic retention tongues, and pull
 
 ### Electrical build
 
-The PCB is equipped with the follwing major functional parts
+The PCB is equipped with the following major functional parts
 
 * USB-to-Serial Converter
 * Linear voltage regulator
@@ -28,7 +28,7 @@ The PCB is equipped with the follwing major functional parts
 * RTC on I2C-bus with CR1220 backup battery
 * Flash on SPI-bus
 * Three status LEDs
-* One Pusbutton 
+* One pushbutton
 * WiFi Antenna wire on IPEX connector
 
 
@@ -47,10 +47,10 @@ There is an unpopulated connector CN1
 
 The LEDs are driven toward Ground, i.e. a Logical HIGH turns them on.
 
-The Pushbutton is connected to the Analog Input of the ESP thru a voltage divider pull-up to 3.3V.
+The pushbutton is connected to the Analog Input of the ESP through a voltage divider pull-up to 3.3V.
 
 
-Reverse Engineering of the connections to te ESP-07 module:
+Reverse Engineering of the connections to the ESP-07 module:
 
 ESP-07S Module (16Pin) on ShineWifi-X:
 
@@ -79,20 +79,20 @@ ESP-07S Module (16Pin) on ShineWifi-X:
 ### Modbus Communication
 
 My ShineWifi-X stick was delivered along with a Growatt 600TL-X.  
-In this combination, the inverter is the USB-host that avtivates the USB-to-serial chip.  
-Then, the ShineWiFi-X is the Mobus master, while the inverter responds to Modbus Address #1 at 115200 Baud, 8N1
+In this combination, the inverter is the USB host that activates the USB-to-serial chip.  
+Then, the ShineWiFi-X is the Modbus master, while the inverter responds to Modbus address #1 at 115200 Baud, 8N1
 
 Modbus Protocol description v1.05 dated 2018 seems to be applicable.
 
 It uses Modbus command 0x03 (Read Input Registers) for all the volatile information (i.e voltages, power, ...)  
 It uses Modbus command 0x04 (Read Holding Registers) for static information (i.e. capabilities, firmware version, ...)
 
-Note: at the inverter, this modbus interface at 115200Bd seems to be simultaneously useable to the RS485-based Modbus interface of the communication connector directly at the inverter at 9600Bd.
+Note: at the inverter, this modbus interface at 115200Bd seems to be simultaneously usable to the RS485-based Modbus interface of the communication connector directly at the inverter at 9600Bd.
 
 
 ### Loading Firmware
 
-Initial loding of Firmware to the stick is very easy:
+Initial loading of Firmware to the stick is very easy:
 
 Remove the stick's PCB from the housing.
 Temporarily  connect the header's Pins GPIO0 and GND while powering-on (plugging in) the stick.
@@ -102,6 +102,6 @@ Upload of the compiled binary of the firmware. (using arduino-ide, esptool or av
 I have used a male dupont-wire pushed in place while plugging into my USB-extension cord.
 
 
-Updating an installed firware is very easy using OTA built into the Stick's webserver:
+Updating an installed firmware is very easy using OTA built into the Stick's webserver:
 
 Use:  http://&lt;ip&gt;/firmware

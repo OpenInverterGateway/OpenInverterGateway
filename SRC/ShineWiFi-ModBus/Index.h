@@ -107,7 +107,7 @@ copies or substantial portions of the Software. -->
                     // clear data view container just in case
                     container = document.getElementById("DataContainer");
                     container.innerHTML = "";
-                    // Add Data Lables to chart
+                    // Add Data Labels to chart
                     for (var key in obj) {
                         if (obj[key][2] == true) {
                             const newDataset = {
