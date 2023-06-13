@@ -18,7 +18,7 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   Serial.println(intPort);
   Serial.print(F("MqttTopic: "));
   Serial.println(this->mqttconfig.mqtttopic);
-  Serial.print("MqttLWT: ");
+  Serial.print(F("MqttLWT: "));
   Serial.println(this->mqttconfig.mqttlwt);
 #endif
 
@@ -51,15 +51,15 @@ bool ShineMqtt::mqttReconnect() {
 
   if (millis() - this->previousConnectTryMillis >= (5000)) {
 #if ENABLE_DEBUG_OUTPUT == 1
-    Serial.print("MqttServer: ");
+    Serial.print(F("MqttServer: "));
     Serial.println(this->mqttconfig.mqttserver);
-    Serial.print("MqttUser: ");
+    Serial.print(F("MqttUser: "));
     Serial.println(this->mqttconfig.mqttuser);
-    Serial.print("MqttTopic: ");
+    Serial.print(F("MqttTopic: "));
     Serial.println(this->mqttconfig.mqtttopic);
-    Serial.print("MqttLWT: ");
+    Serial.print(F("MqttLWT: "));
     Serial.println(this->mqttconfig.mqttlwt);
-    Serial.print("Attempting MQTT connection...");
+    Serial.print(F("Attempting MQTT connection..."));
 #endif
 
     // Run only once every 5 seconds
