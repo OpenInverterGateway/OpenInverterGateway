@@ -27,6 +27,19 @@ ModbusMaster Modbus;
 Growatt::Growatt() {
   _eDevice = Undef_stick;
   _PacketCnt = 0;
+
+  handlers = std::map<String, CommandHandlerFunc>();
+
+  // register default handlers
+  RegisterCommand("echo", [this](const DynamicJsonDocument& req,
+                                 DynamicJsonDocument& res, Growatt& inverter) {
+    return handleEcho(req, res, *this);
+  });
+
+  RegisterCommand("list", [this](const DynamicJsonDocument& req,
+                                 DynamicJsonDocument& res, Growatt& inverter) {
+    return handleCommandList(req, res, *this);
+  });
 }
 
 void Growatt::InitProtocol() {
@@ -35,13 +48,13 @@ void Growatt::InitProtocol() {
  * @param version The version of the modbus protocol to use
  */
 #if GROWATT_MODBUS_VERSION == 120
-  init_growatt120(_Protocol);
+  init_growatt120(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 124
-  init_growatt124(_Protocol);
+  init_growatt124(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 305
-  init_growatt305(_Protocol);
+  init_growatt305(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 5000
-  init_growattSPF(_Protocol);
+  init_growattSPF(_Protocol, *this);
 #else
 #error "Unsupported Growatt Modbus version"
 #endif
@@ -249,6 +262,43 @@ bool Growatt::ReadHoldingReg(uint16_t adr, uint32_t* result) {
   return false;
 }
 
+bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* result) {
+  /**
+   * @brief read 16b holding register fragment
+   * @param adr address of the register
+   * @param size size of the register
+   * @param result pointer to the result
+   * @returns true if successful
+   */
+  uint8_t res = Modbus.readHoldingRegisters(adr, size);
+  if (res == Modbus.ku8MBSuccess) {
+    for (int i = 0; i < size; i++) {
+      result[i] = Modbus.getResponseBuffer(i);
+    }
+    return true;
+  }
+  return false;
+}
+
+bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result) {
+  /**
+   * @brief read 32b holding register fragment
+   * @param adr address of the register
+   * @param size size of the register
+   * @param result pointer to the result
+   * @returns true if successful
+   */
+  uint8_t res = Modbus.readHoldingRegisters(adr, size * 2);
+  if (res == Modbus.ku8MBSuccess) {
+    for (int i = 0; i < size; i++) {
+      result[i] = (Modbus.getResponseBuffer(i * 2) << 16) +
+                  Modbus.getResponseBuffer(i * 2 + 1);
+    }
+    return true;
+  }
+  return false;
+}
+
 bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value) {
   /**
    * @brief write 16b holding register
@@ -257,6 +307,24 @@ bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value) {
    * @returns true if successful
    */
   uint8_t res = Modbus.writeSingleRegister(adr, value);
+  if (res == Modbus.ku8MBSuccess) {
+    return true;
+  }
+  return false;
+}
+
+bool Growatt::WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value) {
+  /**
+   * @brief write 16b holding register
+   * @param adr address of the register
+   * @param value value to write to the register
+   * @param size size of the register
+   * @returns true if successful
+   */
+  for (int i = 0; i < size; i++) {
+    Modbus.setTransmitBuffer(i, value[i]);
+  }
+  uint8_t res = Modbus.writeMultipleRegisters(adr, size);
   if (res == Modbus.ku8MBSuccess) {
     return true;
   }
@@ -469,4 +537,68 @@ void Growatt::CreateUIJson(char* Buffer) {
 #endif  // SIMULATE_INVERTER
 
   serializeJson(doc, Buffer, 4096);
+}
+
+void Growatt::RegisterCommand(const String& command,
+                              CommandHandlerFunc handler) {
+  handlers[command] = handler;
+}
+
+String Growatt::HandleCommand(const String& command, const String& request) {
+  String correlationId = "";
+  DynamicJsonDocument req(1024);
+  DynamicJsonDocument res(1024);
+  DeserializationError deserializationErr = deserializeJson(req, request);
+  bool success;
+  String message;
+  if (deserializationErr) {
+    Log.println("Failed to parse JSON request in command '" + command +
+                "': " + String(deserializationErr.c_str()));
+    success = false;
+    message =
+        "Failed to parse JSON request: " + String(deserializationErr.c_str());
+  } else {
+    if (req.containsKey("correlationId")) {
+      res["correlationId"] = req["correlationId"].as<String>();
+    }
+
+    auto it = handlers.find(command.c_str());
+    if (it != handlers.end()) {
+      Log.println("Handling command: " + command);
+      std::tie(success, message) = it->second(req, res, *this);
+    } else {
+      Log.println("Unknown command: " + command);
+      success = false;
+      message = "Unknown command: " + command;
+    }
+  }
+
+  res["command"] = command;
+  res["success"] = success;
+  res["message"] = message;
+
+  String responseJson;
+  serializeJson(res, responseJson);
+  return responseJson;
+}
+
+std::tuple<bool, String> Growatt::handleEcho(const DynamicJsonDocument& req,
+                                             DynamicJsonDocument& res,
+                                             Growatt& inverter) {
+  if (!req.containsKey("text")) {
+    return std::make_tuple(false, "'text' field is required");
+  }
+  String text = req["text"].as<String>();
+  res["text"] = "Echo: " + text;
+  return std::make_tuple(true, "");
+}
+
+std::tuple<bool, String> Growatt::handleCommandList(
+    const DynamicJsonDocument& req, DynamicJsonDocument& res,
+    Growatt& inverter) {
+  JsonArray commands = res.createNestedArray("commands");
+  for (auto it = handlers.begin(); it != handlers.end(); ++it) {
+    commands.add(it->first);
+  }
+  return std::make_tuple(true, "");
 }

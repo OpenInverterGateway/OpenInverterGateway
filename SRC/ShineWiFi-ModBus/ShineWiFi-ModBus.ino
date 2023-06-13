@@ -62,18 +62,18 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     #include "ShineMqtt.h"
 #endif
 
+Preferences prefs;
+Growatt Inverter;
+bool StartedConfigAfterBoot = false;
+
 #if MQTT_SUPPORTED == 1
     #ifdef MQTTS_ENABLED
         WiFiClientSecure espClient;
     #else
         WiFiClient espClient;
     #endif
-    ShineMqtt shineMqtt(espClient);
+    ShineMqtt shineMqtt(espClient, Inverter);
 #endif
-
-Preferences prefs;
-Growatt Inverter;
-bool StartedConfigAfterBoot = false;
 
 #ifdef AP_BUTTON_PRESSED
 byte btnPressed = 0;

@@ -1,8 +1,9 @@
 #include "Arduino.h"
 
+#include "Growatt.h"
 #include "Growatt305.h"
 
-void init_growatt305(sProtocolDefinition_t &Protocol) {
+void init_growatt305(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // definition of input registers
   Protocol.InputRegisterCount = 12;
   // address, value, size, name, multiplier, unit, frontend, plot

@@ -1,10 +1,84 @@
 #include "Arduino.h"
 
+#include "Config.h"
+#include "Growatt.h"
 #include "Growatt124.h"
+
+std::tuple<bool, String> getDateTime(const DynamicJsonDocument& req,
+                                     DynamicJsonDocument& res,
+                                     Growatt& inverter) {
+  String respStr;
+  uint16_t year, month, day, hour, minute, second;
+  uint16_t result[6];
+
+#if SIMULATE_INVERTER != 1
+  bool success = inverter.ReadHoldingRegFrag(45, 6, result);
+  if (success) {
+    year = result[0];
+    month = result[1];
+    day = result[2];
+    hour = result[3];
+    minute = result[4];
+    second = result[5];
+  }
+#else
+  year = 2023;
+  month = 06;
+  day = 22;
+  hour = 18;
+  minute = 30;
+  second = 15;
+  bool success = true;
+#endif
+
+  if (success) {
+    char buf[20];
+    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour,
+            minute, second);
+    return std::make_tuple(true, buf);
+  } else {
+    return std::make_tuple(false, "Failed to read date/time");
+  }
+};
+
+std::tuple<bool, String> updateDateTime(const DynamicJsonDocument& req,
+                                        DynamicJsonDocument& res,
+                                        Growatt& inverter) {
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+  String datetime = req["value"].as<String>();
+  if (datetime.length() != 19) {
+    return std::make_tuple(false, "Invalid datetime format");
+  }
+
+  uint16_t year = datetime.substring(0, 4).toInt();
+  uint16_t month = datetime.substring(5, 7).toInt();
+  uint16_t day = datetime.substring(8, 10).toInt();
+  uint16_t hour = datetime.substring(11, 13).toInt();
+  uint16_t minute = datetime.substring(14, 16).toInt();
+  uint16_t second = datetime.substring(17, 19).toInt();
+
+  year = year > 2000 ? year - 2000 : 0;
+
+  uint16_t values[] = {year, month, day, hour, minute, second};
+
+#if SIMULATE_INVERTER != 1
+  bool success = inverter.WriteHoldingRegFrag(45, 6, values);
+#else
+  bool success = true;
+#endif
+  if (success) {
+    return std::make_tuple(true, "Successfully updated date/time");
+  } else {
+    return std::make_tuple(false, "Failed to write date/time");
+  }
+};
 
 // NOTE: my inverter (SPH4-10KTL3 BH-UP) only manages to read 64 registers in
 // one read!
-void init_growatt124(sProtocolDefinition_t &Protocol) {
+void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // definition of input registers
   Protocol.InputRegisterCount = 54;
   // address, value, size, name, multiplier, unit, frontend, plot
@@ -189,4 +263,9 @@ void init_growatt124(sProtocolDefinition_t &Protocol) {
 
   Protocol.HoldingRegisterCount = 0;
   Protocol.HoldingFragmentCount = 0;
+
+  // COMMANDS
+
+  inverter.RegisterCommand("datetime/get", getDateTime);
+  inverter.RegisterCommand("datetime/set", updateDateTime);
 }

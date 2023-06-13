@@ -1,12 +1,13 @@
 #include "Arduino.h"
 
+#include "Growatt.h"
 #include "GrowattSPF.h"
 
 /* Tested on Growatt SPF5000ES
    Replacing ShineWifi-F "USB" stick
 */
 
-void init_growattSPF(sProtocolDefinition_t &Protocol) {
+void init_growattSPF(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // definition of input registers
   Protocol.InputRegisterCount = 27;
   // address, value, size, name, multiplier, unit, frontend, plot
