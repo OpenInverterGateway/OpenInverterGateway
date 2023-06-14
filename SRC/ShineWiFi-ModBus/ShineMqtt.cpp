@@ -1,10 +1,14 @@
 #include "ShineMqtt.h"
+#include "Growatt.h"
 #if MQTT_SUPPORTED == 1
 #include <TLog.h>
 #include "PubSubClient.h"
 
 #define MQTT_LWT_OFFLINE "offline"
 #define MQTT_LWT_ONLINE "online"
+
+ShineMqtt::ShineMqtt(WiFiClient& wc, Growatt& inverter)
+    : wifiClient(wc), mqttclient(wifiClient), inverter(inverter) {}
 
 void ShineMqtt::mqttSetup(const MqttConfig& config) {
   this->mqttconfig = config;
@@ -26,6 +30,10 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   // make sure the packet size is set correctly in the library
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
   this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
+  this->mqttclient.setCallback(
+      [this](char* topic, byte* payload, unsigned int length) {
+        this->onMqttMessage(topic, payload, length);
+      });
 }
 
 String ShineMqtt::getId() {
@@ -74,6 +82,12 @@ bool ShineMqtt::mqttReconnect() {
 #if ENABLE_DEBUG_OUTPUT == 1
       Log.println("connected");
 #endif
+      String commandTopic = this->mqttconfig.mqtttopic + "/command/#";
+      if (this->mqttclient.subscribe(commandTopic.c_str(), 1)) {
+        Log.println("Subscribed to " + commandTopic);
+      } else {
+        Log.println("Failed to subscribe to " + commandTopic);
+      }
       return true;
     } else {
       Log.print("failed, rc=");
@@ -94,6 +108,25 @@ void ShineMqtt::mqttPublish(const String& JsonString) {
     Log.println(res ? "succeed" : "failed");
   } else
     Log.println("not connected");
+}
+
+void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
+  String strTopic(topic);
+  String strPayload(reinterpret_cast<char*>(payload));
+
+  Log.print(F("MQTT message arrived ["));
+  Log.print(strTopic);
+  Log.print(F("] "));
+  Log.println(strPayload);
+
+  String command = strTopic.substring(
+      String(this->mqttconfig.mqtttopic + "/command/").length());
+  if (command.isEmpty()) {
+    return;
+  }
+  String response = this->inverter.HandleCommand(command, strPayload);
+  this->mqttclient.publish((this->mqttconfig.mqtttopic + "/result").c_str(),
+                           response.c_str());
 }
 
 void ShineMqtt::updateMqttLed() {

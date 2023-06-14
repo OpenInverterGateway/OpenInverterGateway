@@ -1,5 +1,6 @@
 #include "Arduino.h"
 
+#include "Growatt.h"
 #include "Growatt120.h"
 
 // Supported inverters:
@@ -13,7 +14,7 @@
 // - Storage(SPA Type)
 // - Storage(SPH Type)
 
-void init_growatt120(sProtocolDefinition_t &Protocol) {
+void init_growatt120(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // definition of input registers
   Protocol.InputRegisterCount = eP120InputRegisters_t::LASTInput;
   Protocol.InputFragmentCount = 3;

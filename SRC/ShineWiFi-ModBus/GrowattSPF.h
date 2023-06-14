@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Arduino.h"
+#include "Growatt.h"
 #include "GrowattTypes.h"
 
 // Growatt modbus protocol version unknown from 2020-10-16
@@ -36,4 +37,4 @@ typedef enum {
   SPF_BATT_PWR
 } eSPFInputRegisters_t;
 
-void init_growattSPF(sProtocolDefinition_t &Protocol);
+void init_growattSPF(sProtocolDefinition_t& Protocol, Growatt& inverter);
