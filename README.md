@@ -140,7 +140,10 @@ To receive responses to commands you can use templates.
     payload: "ha-datetime-get"
   sensor:
     name: Growatt - Inverter date/time
-    state: "{{ trigger.payload_json.message }}"
+    state: "{{ trigger.payload_json.value }}"
+    attributes:
+      success: "{{ trigger.payload_json.success }}"
+      message: "{{ trigger.payload_json.message }}"
 ```
 
 ```yaml
