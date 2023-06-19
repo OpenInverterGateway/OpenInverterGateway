@@ -40,6 +40,16 @@ Growatt::Growatt() {
                                  DynamicJsonDocument& res, Growatt& inverter) {
     return handleCommandList(req, res, *this);
   });
+
+  RegisterCommand(
+      "modbus/get",
+      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
+             Growatt& inverter) { return handleModbusGet(req, res, *this); });
+
+  RegisterCommand(
+      "modbus/set",
+      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
+             Growatt& inverter) { return handleModbusSet(req, res, *this); });
 }
 
 void Growatt::InitProtocol() {
@@ -601,4 +611,125 @@ std::tuple<bool, String> Growatt::handleCommandList(
     commands.add(it->first);
   }
   return std::make_tuple(true, "");
+}
+
+std::tuple<bool, String> Growatt::handleModbusGet(
+    const DynamicJsonDocument& req, DynamicJsonDocument& res,
+    Growatt& inverter) {
+  if (!req.containsKey("id")) {
+    return std::make_tuple(false, "'id' field is required");
+  }
+
+  uint16_t id = req["id"].as<uint16_t>();
+
+  if (!req.containsKey("type")) {
+    return std::make_tuple(false, "'type' field is required");
+  }
+
+  String type = req["type"].as<String>();
+
+  if (type != "16b" && type != "32b") {
+    return std::make_tuple(false, "'type' must be '16b' or '32b'");
+  }
+
+  if (!req.containsKey("registerType")) {
+    return std::make_tuple(false, "'registerType' field is required");
+  }
+
+  String registerType = req["registerType"].as<String>();
+
+  if (registerType != "H" && registerType != "I") {
+    return std::make_tuple(
+        false, "'registerType' must be 'H' (holding) or 'I' (input)");
+  }
+
+#if SIMULATE_INVERTER != 1
+  if (type == "16b") {
+    uint16_t value;
+    if (registerType == "H") {
+      if (!inverter.ReadHoldingReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read holding register");
+      }
+    } else {
+      if (!inverter.ReadInputReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read input register");
+      }
+    }
+    res["value"] = value;
+  } else {
+    uint32_t value;
+    if (registerType == "H") {
+      if (!inverter.ReadHoldingReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read holding register");
+      }
+    } else {
+      if (!inverter.ReadInputReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read input register");
+      }
+    }
+    res["value"] = value;
+  }
+#else
+  if (type == "16b") {
+    res["value"] = 16;
+  } else {
+    res["value"] = 32;
+  }
+#endif
+
+  return std::make_tuple(true, "success");
+}
+
+std::tuple<bool, String> Growatt::handleModbusSet(
+    const DynamicJsonDocument& req, DynamicJsonDocument& res,
+    Growatt& inverter) {
+  if (!req.containsKey("id")) {
+    return std::make_tuple(false, "'id' field is required");
+  }
+
+  uint16_t id = req["id"].as<uint16_t>();
+
+  if (!req.containsKey("type")) {
+    return std::make_tuple(false, "'type' field is required");
+  }
+
+  String type = req["type"].as<String>();
+
+  if (type == "32b") {
+    return std::make_tuple(
+        false, "writing to double (32b) registers is not currently supported");
+  }
+
+  if (type != "16b") {
+    return std::make_tuple(false, "'type' must be '16b'");
+  }
+
+  if (!req.containsKey("registerType")) {
+    return std::make_tuple(false, "'registerType' field is required");
+  }
+
+  String registerType = req["registerType"].as<String>();
+
+  if (registerType == "I") {
+    return std::make_tuple(false,
+                           "it is not possible to write into input registers");
+  }
+
+  if (registerType != "H") {
+    return std::make_tuple(false, "'registerType' must be 'H' (holding)");
+  }
+
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+  uint16_t value = req["value"].as<uint16_t>();
+
+#if SIMULATE_INVERTER != 1
+  if (!inverter.WriteHoldingReg(id, value)) {
+    return std::make_tuple(false, "failed to write holding register");
+  }
+#endif
+
+  return std::make_tuple(true, "success");
 }

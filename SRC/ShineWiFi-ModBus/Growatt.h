@@ -48,4 +48,10 @@ class Growatt {
   std::tuple<bool, String> handleCommandList(const DynamicJsonDocument& req,
                                              DynamicJsonDocument& res,
                                              Growatt& inverter);
+  std::tuple<bool, String> handleModbusGet(const DynamicJsonDocument& req,
+                                           DynamicJsonDocument& res,
+                                           Growatt& inverter);
+  std::tuple<bool, String> handleModbusSet(const DynamicJsonDocument& req,
+                                           DynamicJsonDocument& res,
+                                           Growatt& inverter);
 };
