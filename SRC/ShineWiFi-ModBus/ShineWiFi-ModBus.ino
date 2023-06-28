@@ -506,7 +506,7 @@ long ButtonTimer = 0;
 long LEDTimer = 0;
 long RefreshTimer = 0;
 long WifiRetryTimer = 0;
-
+long now = 0;
 void loop()
 {
     #if ENABLE_DOUBLE_RESET
@@ -514,7 +514,7 @@ void loop()
     #endif
 
     Log.loop();
-    long now = millis();
+    now = millis();
     char readoutSucceeded;
 
 #ifdef AP_BUTTON_PRESSED
@@ -648,6 +648,6 @@ void loop()
                 WiFi.disconnect();
         #endif
 
-        RefreshTimer = now;
+        RefreshTimer = millis();
     }
 }
