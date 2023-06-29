@@ -400,7 +400,7 @@ void Growatt::CreateUIJson(char* Buffer) {
       } else {
         arr.add(roundByResolution(_Protocol.HoldingRegisters[i].value *
                                       _Protocol.HoldingRegisters[i].multiplier,
-                                  _Protocol.InputRegisters[i].resolution));
+                                  _Protocol.HoldingRegisters[i].resolution));
       }
       if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0 &&
           _Protocol.HoldingRegisters[i].value < statusStrLength) {
