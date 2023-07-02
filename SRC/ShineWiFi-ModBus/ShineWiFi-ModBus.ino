@@ -33,6 +33,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include <TLog.h>
 #include "Index.h"
 #include "Growatt.h"
+#include "StickConfig.h"
 #include <Preferences.h>
 #include <WiFiManager.h>
 
@@ -50,8 +51,8 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 
 #if ENABLE_DOUBLE_RESET == 1
-    #define ESP_DRD_USE_LITTLEFS    true
-    #define ESP_DRD_USE_EEPROM      false
+    #define ESP_DRD_USE_LITTLEFS    false
+    #define ESP_DRD_USE_EEPROM      true
     #define DRD_TIMEOUT             10
     #define DRD_ADDRESS             0
     #include <ESP_DoubleResetDetector.h>
@@ -62,12 +63,13 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
     #include "ShineMqtt.h"
 #endif
 
+#ifdef MQTTS_ENABLED
+    WiFiClientSecure espClient;
+#else
+    WiFiClient espClient;
+#endif
+
 #if MQTT_SUPPORTED == 1
-    #ifdef MQTTS_ENABLED
-        WiFiClientSecure espClient;
-    #else
-        WiFiClient espClient;
-    #endif
     ShineMqtt shineMqtt(espClient);
 #endif
 
@@ -338,7 +340,11 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     #if UPDATE_SUPPORTED == 1
-        httpUpdater.setup(&httpServer, update_path, stickConfig.update_user.c_str(), stickConfig.update_user.c_str());
+    if(stickConfig.update_pwd.length() == 0) {
+        httpUpdater.setup(&httpServer, update_path, stickConfig.update_user.c_str(), stickConfig.update_pwd.c_str());
+    } else {
+        Log.println(F("Disabling updater due to empty password."));
+    }
     #endif
     httpServer.begin();
 }
