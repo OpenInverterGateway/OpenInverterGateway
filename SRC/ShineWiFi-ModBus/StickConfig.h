@@ -2,9 +2,11 @@
 #include <Arduino.h>
 
 typedef struct {
-  String mqttserver;
-  String mqttport;
-  String mqtttopic;
-  String mqttuser;
-  String mqttpwd;
+  String mqtt_server;
+  String mqtt_port;
+  String mqtt_topic;
+  String mqtt_user;
+  String mqtt_pwd;
+  String update_user;
+  String update_pwd;
 } StickConfig;

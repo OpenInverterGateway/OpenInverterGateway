@@ -6,19 +6,19 @@
 void ShineMqtt::mqttSetup(const StickConfig& config) {
   this->mqttconfig = config;
 
-  uint16_t intPort = config.mqttport.toInt();
+  uint16_t intPort = config.mqtt_port.toInt();
   if (intPort == 0) intPort = 1883;
 
   Log.print(F("MqttServer: "));
-  Log.println(this->mqttconfig.mqttserver);
+  Log.println(this->mqttconfig.mqtt_server);
   Log.print(F("MqttPort: "));
   Log.println(intPort);
   Log.print(F("MqttTopic: "));
-  Log.println(this->mqttconfig.mqtttopic);
+  Log.println(this->mqttconfig.mqtt_topic);
 
   // make sure the packet size is set correctly in the library
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
-  this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
+  this->mqttclient.setServer(this->mqttconfig.mqtt_server.c_str(), intPort);
 }
 
 String ShineMqtt::getId() {
@@ -34,7 +34,7 @@ String ShineMqtt::getId() {
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
 bool ShineMqtt::mqttReconnect() {
-  if (this->mqttconfig.mqttserver.length() == 0) {
+  if (this->mqttconfig.mqtt_server.length() == 0) {
     // No server configured
     return false;
   }
@@ -45,20 +45,20 @@ bool ShineMqtt::mqttReconnect() {
 
   if (millis() - this->previousConnectTryMillis >= (5000)) {
     Log.print("MqttServer: ");
-    Log.println(this->mqttconfig.mqttserver.c_str());
+    Log.println(this->mqttconfig.mqtt_server.c_str());
     Log.print("MqttUser: ");
-    Log.println(this->mqttconfig.mqttuser.c_str());
+    Log.println(this->mqttconfig.mqtt_user.c_str());
     Log.print("MqttTopic: ");
-    Log.println(this->mqttconfig.mqtttopic.c_str());
+    Log.println(this->mqttconfig.mqtt_topic.c_str());
     Log.print("Attempting MQTT connection...");
 
     // Run only once every 5 seconds
     this->previousConnectTryMillis = millis();
     // Attempt to connect with last will
     if (this->mqttclient.connect(getId().c_str(),
-                                 this->mqttconfig.mqttuser.c_str(),
-                                 this->mqttconfig.mqttpwd.c_str(),
-                                 this->mqttconfig.mqtttopic.c_str(), 1, 1,
+                                 this->mqttconfig.mqtt_user.c_str(),
+                                 this->mqttconfig.mqtt_pwd.c_str(),
+                                 this->mqttconfig.mqtt_topic.c_str(), 1, 1,
                                  "{\"InverterStatus\": -1 }")) {
       Log.println("connected");
       return true;
@@ -76,7 +76,7 @@ bool ShineMqtt::mqttReconnect() {
 void ShineMqtt::mqttPublish(const String& JsonString) {
   Log.print("publish MQTT message... ");
   if (this->mqttclient.connected()) {
-    bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
+    bool res = this->mqttclient.publish(this->mqttconfig.mqtt_topic.c_str(),
                                         JsonString.c_str(), true);
     Log.println(res ? "succeed" : "failed");
   } else

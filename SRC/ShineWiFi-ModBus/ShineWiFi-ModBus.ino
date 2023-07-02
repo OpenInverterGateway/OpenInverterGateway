@@ -111,12 +111,20 @@ WiFiManager wm;
     WiFiManagerParameter* custom_mqtt_user = NULL;
     WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-    const static char* serverfile = "/mqtts";
-    const static char* portfile = "/mqttp";
-    const static char* topicfile = "/mqttt";
-    const static char* userfile = "/mqttu";
-    const static char* secretfile = "/mqttw";
+    const static char* pref_mqtt_server = "/mqtt_server";
+    const static char* pref_mqtt_port = "/mqtt_port";
+    const static char* pref_mqtt_topic = "/mqtt_topic";
+    const static char* pref_mqtt_user = "/mqtt_user";
+    const static char* pref_mqtt_pwd = "/mqtt_pwd";
 #endif
+#if UPDATE_SUPPORTED == 1
+    WiFiManagerParameter* custom_update_user = NULL;
+    WiFiManagerParameter* custom_update_pwd = NULL;
+
+    const static char* pref_update_user = "/update_user";
+    const static char* pref_update_pwd = "/update_pwd";
+#endif
+
 
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 
@@ -171,28 +179,40 @@ void InverterReconnect(void)
         Log.println(F("Error: Unknown Shine Stick"));
 }
 
-#if MQTT_SUPPORTED == 1
+
 void loadConfig(StickConfig* config);
 void saveConfig(StickConfig* config);
 void saveParamCallback();
-void SetupWifiManagerStickConfigMenu(StickConfig &mqttConfig);
+void SetupWifiManagerStickConfigMenu(StickConfig &stickConfig);
 
 void loadConfig(StickConfig* config)
 {
-    config->mqttserver = prefs.getString(serverfile, "10.1.2.3");
-    config->mqttport = prefs.getString(portfile, "1883");
-    config->mqtttopic = prefs.getString(topicfile, "energy/solar");
-    config->mqttuser = prefs.getString(userfile, "");
-    config->mqttpwd = prefs.getString(secretfile, "");
+    #if MQTT_SUPPORTED == 1
+    config->mqtt_server = prefs.getString(pref_mqtt_server, "10.1.2.3");
+    config->mqtt_port = prefs.getString(pref_mqtt_port, "1883");
+    config->mqtt_topic = prefs.getString(pref_mqtt_topic, "energy/solar");
+    config->mqtt_user = prefs.getString(pref_mqtt_user, "");
+    config->mqtt_pwd = prefs.getString(pref_mqtt_pwd, "");
+    #endif
+    #if UPDATE_SUPPORTED == 1
+    config->update_user = prefs.getString(pref_update_user, "");
+    config->update_pwd = prefs.getString(pref_update_pwd, "");
+    #endif
 }
 
 void saveConfig(StickConfig* config)
 {
-    prefs.putString(serverfile, config->mqttserver);
-    prefs.putString(portfile, config->mqttport);
-    prefs.putString(topicfile, config->mqtttopic);
-    prefs.putString(userfile, config->mqttuser);
-    prefs.putString(secretfile, config->mqttpwd);
+    #if MQTT_SUPPORTED == 1
+    prefs.putString(pref_mqtt_server, config->mqtt_server);
+    prefs.putString(pref_mqtt_port, config->mqtt_port);
+    prefs.putString(pref_mqtt_topic, config->mqtt_topic);
+    prefs.putString(pref_mqtt_user, config->mqtt_user);
+    prefs.putString(pref_mqtt_pwd, config->mqtt_pwd);
+    #endif
+    #if UPDATE_SUPPORTED == 1
+    prefs.putString(pref_update_user, config->update_user);
+    prefs.putString(pref_update_pwd, config->update_pwd);
+    #endif
 }
 
 void saveParamCallback()
@@ -200,19 +220,25 @@ void saveParamCallback()
     Log.println(F("[CALLBACK] saveParamCallback fired"));
     StickConfig config;
 
-    config.mqttserver = custom_mqtt_server->getValue();
-    config.mqttport = custom_mqtt_port->getValue();
-    config.mqtttopic = custom_mqtt_topic->getValue();
-    config.mqttuser = custom_mqtt_user->getValue();
-    config.mqttpwd = custom_mqtt_pwd->getValue();
-
+    #if MQTT_SUPPORTED == 1
+    config.mqtt_server = custom_mqtt_server->getValue();
+    config.mqtt_port = custom_mqtt_port->getValue();
+    config.mqtt_topic = custom_mqtt_topic->getValue();
+    config.mqtt_user = custom_mqtt_user->getValue();
+    config.mqtt_pwd = custom_mqtt_pwd->getValue();
+    #endif
+    #if UPDATE_SUPPORTED == 1
+    config.update_user = custom_update_user->getValue();
+    config.update_pwd = custom_update_pwd->getValue();
+    #endif
     saveConfig(&config);
+    prefs.end();
 
-    Serial.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
+    Log.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
 
     ESP.restart();
 }
-#endif
+
 
 #ifdef ENABLE_TELNET_DEBUG
 #include <TelnetSerialStream.h>
@@ -312,7 +338,7 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     #if UPDATE_SUPPORTED == 1
-        httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
+        httpUpdater.setup(&httpServer, update_path, stickConfig.update_user.c_str(), stickConfig.update_user.c_str());
     #endif
     httpServer.begin();
 }
@@ -321,17 +347,25 @@ void SetupWifiManagerStickConfigMenu(StickConfig &stickConfig) {
     loadConfig(&stickConfig);
 
     #if MQTT_SUPPORTED == 1
-    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", stickConfig.mqttserver.c_str(), 40);
-    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", stickConfig.mqttport.c_str(), 6);
-    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", stickConfig.mqtttopic.c_str(), 64);
-    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", stickConfig.mqttuser.c_str(), 40);
-    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", stickConfig.mqttpwd.c_str(), 64);
+    custom_mqtt_server = new WiFiManagerParameter("mqttServer", "mqtt server", stickConfig.mqtt_server.c_str(), 40);
+    custom_mqtt_port = new WiFiManagerParameter("mqttPort", "mqtt port", stickConfig.mqtt_port.c_str(), 6);
+    custom_mqtt_topic = new WiFiManagerParameter("mqttTopic", "mqtt topic", stickConfig.mqtt_topic.c_str(), 64);
+    custom_mqtt_user = new WiFiManagerParameter("mqttUsername", "mqtt username", stickConfig.mqtt_user.c_str(), 40);
+    custom_mqtt_pwd = new WiFiManagerParameter("mqttPassword", "mqtt password", stickConfig.mqtt_pwd.c_str(), 64);
 
     wm.addParameter(custom_mqtt_server);
     wm.addParameter(custom_mqtt_port);
     wm.addParameter(custom_mqtt_topic);
     wm.addParameter(custom_mqtt_user);
     wm.addParameter(custom_mqtt_pwd);
+    #endif
+
+    #if UPDATE_SUPPORTED == 1
+    custom_update_user = new WiFiManagerParameter("updateUsername", "update username", stickConfig.update_user.c_str(), 40);
+    custom_update_pwd = new WiFiManagerParameter("updatePassword", "update password", stickConfig.update_pwd.c_str(), 64);
+    
+    wm.addParameter(custom_update_user);
+    wm.addParameter(custom_update_pwd);
     #endif
 
     wm.setSaveParamsCallback(saveParamCallback);
