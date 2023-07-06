@@ -36,6 +36,7 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include "StickConfig.h"
 #include <Preferences.h>
 #include <WiFiManager.h>
+#include <LittleFS.h>
 
 #if UPDATE_SUPPORTED == 1
     #ifdef ESP8266
@@ -51,8 +52,8 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #endif
 
 #if ENABLE_DOUBLE_RESET == 1
-    #define ESP_DRD_USE_LITTLEFS    false
-    #define ESP_DRD_USE_EEPROM      true
+    #define ESP_DRD_USE_LITTLEFS    true
+    #define ESP_DRD_USE_EEPROM      false
     #define DRD_TIMEOUT             10
     #define DRD_ADDRESS             0
     #include <ESP_DoubleResetDetector.h>
@@ -234,11 +235,8 @@ void saveParamCallback()
     config.update_pwd = custom_update_pwd->getValue();
     #endif
     saveConfig(&config);
-    prefs.end();
 
     Log.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
-
-    ESP.restart();
 }
 
 
@@ -254,46 +252,47 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 
 void setup()
 {
-#ifdef ENABLE_SERIAL_DEBUG
+    #ifdef ENABLE_SERIAL_DEBUG
     Serial.begin(115200);
     Log.disableSerial(false);
-#else
+    #else
     Log.disableSerial(true);
-#endif
+    #endif
     MDNS.begin(HOSTNAME);
-#ifdef ENABLE_TELNET_DEBUG
+    #ifdef ENABLE_TELNET_DEBUG
     Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
-#endif
-#ifdef ENABLE_WEB_DEBUG
+    #endif
+    #ifdef ENABLE_WEB_DEBUG
     Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
-#endif
+    #endif
 
     Log.println("Setup()");
 
+    LittleFS.begin(true);
+
+    #if MQTT_SUPPORTED == 1 || UPDATE_SUPPORTED == 1
+    prefs.begin("ShineWifi");
+    #endif
+
     #if ENABLE_DOUBLE_RESET == 1
-        drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+    drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+
+    if (drd->detectDoubleReset()) {
+        Log.println(F("Double reset detected"));
+        StartedConfigAfterBoot = true;
+    }
     #endif
 
     pinMode(LED_GN, OUTPUT);
     pinMode(LED_RT, OUTPUT);
     pinMode(LED_BL, OUTPUT);
 
-    #if MQTT_SUPPORTED == 1
-    prefs.begin("ShineWifi");
-    #endif
-
-    #if ENABLE_DOUBLE_RESET == 1
-    if (drd->detectDoubleReset()) {
-    Log.println(F("Double reset detected"));
-        StartedConfigAfterBoot = true;
-    }
-    #endif
-
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     Log.begin();
     StickConfig stickConfig;
+    loadConfig(&stickConfig);
     SetupWifiManagerStickConfigMenu(stickConfig);
 
     digitalWrite(LED_BL, 1);
@@ -340,7 +339,7 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     #if UPDATE_SUPPORTED == 1
-    if(stickConfig.update_pwd.length() == 0) {
+    if(!stickConfig.update_pwd.isEmpty()) {
         httpUpdater.setup(&httpServer, update_path, stickConfig.update_user.c_str(), stickConfig.update_pwd.c_str());
     } else {
         Log.println(F("Disabling updater due to empty password."));
@@ -350,8 +349,6 @@ void setup()
 }
 
 void SetupWifiManagerStickConfigMenu(StickConfig &stickConfig) {
-    loadConfig(&stickConfig);
-
     #if MQTT_SUPPORTED == 1
     custom_mqtt_server = new WiFiManagerParameter("mqttServer", "mqtt server", stickConfig.mqtt_server.c_str(), 40);
     custom_mqtt_port = new WiFiManagerParameter("mqttPort", "mqtt port", stickConfig.mqtt_port.c_str(), 6);
