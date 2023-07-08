@@ -39,7 +39,6 @@ copies or substantial portions of the Software. -->
     <div><canvas id="powerChart"></canvas></div>
     <div id="DataContainer"></div>
 
-  <a href="./firmware">Firmware update</a> -
   <a href="./status">Json</a> -
   <a href="./uistatus">UI Json</a> -
   <a href="./debug">Log</a> -

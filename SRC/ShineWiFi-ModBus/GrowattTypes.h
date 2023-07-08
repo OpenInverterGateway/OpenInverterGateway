@@ -1,4 +1,5 @@
 #pragma once
+#include "Arduino.h"
 
 typedef enum {
   Undef_stick = 0,
