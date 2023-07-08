@@ -36,14 +36,6 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include <Preferences.h>
 #include <WiFiManager.h>
 
-#if UPDATE_SUPPORTED == 1
-    #ifdef ESP8266
-        #include <ESP8266HTTPUpdateServer.h>
-    #elif ESP32
-        #include <ESPHTTPUpdateServer.h>
-    #endif
-#endif
-
 #if PINGER_SUPPORTED == 1
     #include <Pinger.h>
     #include <PingerResponse.h>
@@ -93,15 +85,6 @@ uint16_t u16PacketCnt = 0;
     WebServer httpServer(80);
 #endif
 
-#if UPDATE_SUPPORTED == 1
-    const char* update_path = "/firmware";
-    
-    #ifdef ESP8266
-        ESP8266HTTPUpdateServer httpUpdater;
-    #elif ESP32
-        ESPHTTPUpdateServer httpUpdater;
-    #endif
-#endif
 
 WiFiManager wm;
 #if MQTT_SUPPORTED == 1
@@ -209,8 +192,6 @@ void saveParamCallback()
     saveConfig(&config);
 
     Serial.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
-
-    ESP.restart();
 }
 #endif
 
@@ -315,9 +296,6 @@ void setup()
 
     Inverter.InitProtocol();
     InverterReconnect();
-    #if UPDATE_SUPPORTED == 1
-        httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
-    #endif
     httpServer.begin();
 }
 
@@ -348,7 +326,7 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
  * @param enableCustomParams enable custom params aka. mqtt settings
  */
 void setupMenu(bool enableCustomParams){
-    std::vector<const char*> menu = { "wifi","wifinoscan"};
+    std::vector<const char*> menu = { "wifi","wifinoscan","update"};
     if(enableCustomParams){
         menu.push_back("param");
     }
