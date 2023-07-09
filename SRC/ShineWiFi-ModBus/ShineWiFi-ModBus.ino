@@ -389,7 +389,7 @@ void handlePostData()
     if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
     {
         // If the POST request doesn't have data
-        httpServer.send(400, F("text/plain"), "400: Invalid Request"); // The request is invalid, so send HTTP status 400
+        httpServer.send(400, F("text/plain"), F("400: Invalid Request")); // The request is invalid, so send HTTP status 400
         return;
     }
     else
