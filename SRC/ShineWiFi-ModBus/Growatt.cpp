@@ -546,7 +546,7 @@ void Growatt::CreateUIJson(char* Buffer) {
   arr.add(false);
 #endif  // SIMULATE_INVERTER
 
-  serializeJson(doc, Buffer, 4096);
+  serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }
 
 void Growatt::RegisterCommand(const String& command,
