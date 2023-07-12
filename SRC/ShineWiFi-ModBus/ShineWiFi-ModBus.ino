@@ -191,7 +191,7 @@ void saveParamCallback()
 
     saveConfig(&config);
 
-    Serial.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
+    Serial.println(F("[CALLBACK] saveParamCallback complete"));
 }
 #endif
 
@@ -207,19 +207,19 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 
 void setup()
 {
-#ifdef ENABLE_SERIAL_DEBUG
-    Serial.begin(115200);
-    Log.disableSerial(false);
-#else
-    Log.disableSerial(true);
-#endif
-    MDNS.begin(HOSTNAME);
-#ifdef ENABLE_TELNET_DEBUG
-    Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
-#endif
-#ifdef ENABLE_WEB_DEBUG
-    Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
-#endif
+    #ifdef ENABLE_SERIAL_DEBUG
+        Serial.begin(115200);
+        Log.disableSerial(false);
+    #else
+        Log.disableSerial(true);
+    #endif
+        MDNS.begin(HOSTNAME);
+    #ifdef ENABLE_TELNET_DEBUG
+        Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
+    #endif
+    #ifdef ENABLE_WEB_DEBUG
+        Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+    #endif
 
     Log.println("Setup()");
 
@@ -232,14 +232,14 @@ void setup()
     pinMode(LED_BL, OUTPUT);
 
     #if MQTT_SUPPORTED == 1
-    prefs.begin("ShineWifi");
+        prefs.begin("ShineWifi");
     #endif
 
     #if ENABLE_DOUBLE_RESET == 1
-    if (drd->detectDoubleReset()) {
-    Log.println(F("Double reset detected"));
-        StartedConfigAfterBoot = true;
-    }
+        if (drd->detectDoubleReset()) {
+        Log.println(F("Double reset detected"));
+            StartedConfigAfterBoot = true;
+        }
     #endif
 
     WiFi.hostname(HOSTNAME);
