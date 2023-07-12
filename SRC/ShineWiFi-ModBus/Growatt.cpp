@@ -75,11 +75,10 @@ void Growatt::begin(Stream& serial) {
    * @brief Set up communication with the inverter
    * @param serial The serial interface
    */
-  uint8_t res;
-
 #if SIMULATE_INVERTER == 1
   _eDevice = SIMULATE_DEVICE;
 #else
+  uint8_t res;
   // init communication with the inverter
   Serial.begin(9600);
   Modbus.begin(1, serial);
@@ -435,11 +434,12 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
 
 void Growatt::CreateUIJson(char* Buffer) {
   StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
+
+#if SIMULATE_INVERTER != 1
   const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
 
-#if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     if (_Protocol.InputRegisters[i].frontend == true ||
         _Protocol.InputRegisters[i].plot == true) {
@@ -620,7 +620,9 @@ std::tuple<bool, String> Growatt::handleModbusGet(
     return std::make_tuple(false, "'id' field is required");
   }
 
+#if SIMULATE_INVERTER != 1
   uint16_t id = req["id"].as<uint16_t>();
+#endif
 
   if (!req.containsKey("type")) {
     return std::make_tuple(false, "'type' field is required");
@@ -687,7 +689,9 @@ std::tuple<bool, String> Growatt::handleModbusSet(
     return std::make_tuple(false, "'id' field is required");
   }
 
+#if SIMULATE_INVERTER != 1
   uint16_t id = req["id"].as<uint16_t>();
+#endif
 
   if (!req.containsKey("type")) {
     return std::make_tuple(false, "'type' field is required");
@@ -723,7 +727,9 @@ std::tuple<bool, String> Growatt::handleModbusSet(
     return std::make_tuple(false, "'value' field is required");
   }
 
+#if SIMULATE_INVERTER != 1
   uint16_t value = req["value"].as<uint16_t>();
+#endif
 
 #if SIMULATE_INVERTER != 1
   if (!inverter.WriteHoldingReg(id, value)) {
