@@ -102,6 +102,6 @@ Upload of the compiled binary of the firmware. (using arduino-ide, esptool or av
 I have used a male dupont-wire pushed in place while plugging into my USB-extension cord.
 
 
-Updating an installed firmware is very easy using OTA built into the Stick's webserver:
+Updating an installed firmware is very easy using OTA the buildin config webserver (192.168.4.1):
 
-Use:  http://&lt;ip&gt;/firmware
+Use:  http://&lt;config ip&gt;/ and click on update.
