@@ -1,5 +1,11 @@
 #pragma once
 #include "Arduino.h"
+#include <ArduinoJson.h>
+
+#define JSON_DOCUMENT_SIZE 2048
+#define BUFFER_SIZE 256
+
+typedef StaticJsonDocument<JSON_DOCUMENT_SIZE> ShineJsonDocument;
 
 typedef enum {
   Undef_stick = 0,

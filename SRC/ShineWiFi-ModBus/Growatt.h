@@ -1,6 +1,6 @@
 #pragma once
 #include "GrowattTypes.h"
-#include <ArduinoJson.h>
+#include "Config.h"
 #include <map>
 
 class Growatt {
@@ -30,8 +30,8 @@ class Growatt {
   bool ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result);
   bool WriteHoldingReg(uint16_t adr, uint16_t value);
   bool WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value);
-  void CreateJson(char* Buffer, const char* MacAddress);
-  void CreateUIJson(char* Buffer);
+  void CreateJson(ShineJsonDocument& doc, String MacAddress);
+  void CreateUIJson(ShineJsonDocument& doc);
 
  private:
   eDevice_t _eDevice;
