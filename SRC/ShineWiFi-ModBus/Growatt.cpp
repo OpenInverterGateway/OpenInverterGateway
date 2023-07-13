@@ -242,33 +242,43 @@ sGrowattModbusReg_t Growatt::GetHoldingRegister(uint16_t reg) {
 }
 
 bool Growatt::ReadHoldingReg(uint16_t adr, uint16_t* result) {
-  /**
-   * @brief read 16b holding register
-   * @param adr address of the register
-   * @param result pointer to the result
-   * @returns true if successful
-   */
+/**
+ * @brief read 16b holding register
+ * @param adr address of the register
+ * @param result pointer to the result
+ * @returns true if successful
+ */
+#if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.readHoldingRegisters(adr, 1);
   if (res == Modbus.ku8MBSuccess) {
     *result = Modbus.getResponseBuffer(0);
     return true;
   }
   return false;
+#else
+  *result = 0;
+  return true;
+#endif
 }
 
 bool Growatt::ReadHoldingReg(uint16_t adr, uint32_t* result) {
-  /**
-   * @brief read 32b holding register
-   * @param adr address of the register
-   * @param result pointer to the result
-   * @returns true if successful
-   */
+/**
+ * @brief read 32b holding register
+ * @param adr address of the register
+ * @param result pointer to the result
+ * @returns true if successful
+ */
+#if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.readHoldingRegisters(adr, 2);
   if (res == Modbus.ku8MBSuccess) {
     *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
     return true;
   }
   return false;
+#else
+  *result = 0;
+  return true;
+#endif
 }
 
 bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* result) {
@@ -309,17 +319,21 @@ bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result) {
 }
 
 bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value) {
-  /**
-   * @brief write 16b holding register
-   * @param adr address of the register
-   * @param value value to write to the register
-   * @returns true if successful
-   */
+/**
+ * @brief write 16b holding register
+ * @param adr address of the register
+ * @param value value to write to the register
+ * @returns true if successful
+ */
+#if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.writeSingleRegister(adr, value);
   if (res == Modbus.ku8MBSuccess) {
     return true;
   }
   return false;
+#else
+  return true;
+#endif
 }
 
 bool Growatt::WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value) {
@@ -341,33 +355,43 @@ bool Growatt::WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value) {
 }
 
 bool Growatt::ReadInputReg(uint16_t adr, uint16_t* result) {
-  /**
-   * @brief read 16b input register
-   * @param adr address of the register
-   * @param result pointer to the result
-   * @returns true if successful
-   */
+/**
+ * @brief read 16b input register
+ * @param adr address of the register
+ * @param result pointer to the result
+ * @returns true if successful
+ */
+#if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.readInputRegisters(adr, 1);
   if (res == Modbus.ku8MBSuccess) {
     *result = Modbus.getResponseBuffer(0);
     return true;
   }
   return false;
+#else
+  *result = 0;
+  return true;
+#endif
 }
 
 bool Growatt::ReadInputReg(uint16_t adr, uint32_t* result) {
-  /**
-   * @brief read 32b input register
-   * @param adr address of the register
-   * @param result pointer to the result
-   * @returns true if successful
-   */
+/**
+ * @brief read 32b input register
+ * @param adr address of the register
+ * @param result pointer to the result
+ * @returns true if successful
+ */
+#if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.readInputRegisters(adr, 2);
   if (res == Modbus.ku8MBSuccess) {
     *result = (Modbus.getResponseBuffer(0) << 16) + Modbus.getResponseBuffer(1);
     return true;
   }
   return false;
+#else
+  *result = 0;
+  return true;
+#endif
 }
 
 double Growatt::roundByResolution(const double& value,
@@ -401,9 +425,7 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
   }
 }
 
-void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
-  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
-
+void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
     JSONAddReg(&_Protocol.InputRegisters[i], &doc);
@@ -429,12 +451,9 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
 #endif  // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
-  serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }
 
-void Growatt::CreateUIJson(char* Buffer) {
-  StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
-
+void Growatt::CreateUIJson(ShineJsonDocument& doc) {
 #if SIMULATE_INVERTER != 1
   const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
@@ -545,8 +564,6 @@ void Growatt::CreateUIJson(char* Buffer) {
   arr.add("kWh");
   arr.add(false);
 #endif  // SIMULATE_INVERTER
-
-  serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }
 
 void Growatt::RegisterCommand(const String& command,

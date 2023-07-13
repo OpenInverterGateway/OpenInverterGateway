@@ -23,6 +23,7 @@ class ShineMqtt {
   void mqttSetup(const MqttConfig& config);
   bool mqttReconnect();
   void mqttPublish(const String& JsonString);
+  void mqttPublish(ShineJsonDocument& doc);
   void onMqttMessage(char* topic, byte* payload, unsigned int length);
   void updateMqttLed();
   void loop();

@@ -2,6 +2,7 @@
 #include "Growatt.h"
 #if MQTT_SUPPORTED == 1
 #include <TLog.h>
+#include <StreamUtils.h>
 #include "PubSubClient.h"
 
 ShineMqtt::ShineMqtt(WiFiClient& wc, Growatt& inverter)
@@ -20,8 +21,6 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   Log.print(F("MqttTopic: "));
   Log.println(this->mqttconfig.mqtttopic);
 
-  // make sure the packet size is set correctly in the library
-  this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
   this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
   this->mqttclient.setCallback(
       [this](char* topic, byte* payload, unsigned int length) {
@@ -94,8 +93,25 @@ void ShineMqtt::mqttPublish(const String& JsonString) {
     bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
                                         JsonString.c_str(), true);
     Log.println(res ? "succeed" : "failed");
-  } else
+  } else {
     Log.println(F("not connected"));
+  }
+}
+
+void ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
+  Log.print(F("publish MQTT message... "));
+  if (this->mqttclient.connected()) {
+    bool res = this->mqttclient.beginPublish(this->mqttconfig.mqtttopic.c_str(),
+                                             measureJson(doc), true);
+    BufferingPrint bufferedClient(this->mqttclient, BUFFER_SIZE);
+    serializeJson(doc, this->mqttclient);
+    bufferedClient.flush();
+    this->mqttclient.endPublish();
+
+    Log.println(res ? "succeed" : "failed");
+  } else {
+    Log.println(F("not connected"));
+  }
 }
 
 void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
