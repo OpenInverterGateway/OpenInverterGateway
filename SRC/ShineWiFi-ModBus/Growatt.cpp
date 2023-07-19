@@ -40,6 +40,16 @@ Growatt::Growatt() {
                                  DynamicJsonDocument& res, Growatt& inverter) {
     return handleCommandList(req, res, *this);
   });
+
+  RegisterCommand(
+      "modbus/get",
+      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
+             Growatt& inverter) { return handleModbusGet(req, res, *this); });
+
+  RegisterCommand(
+      "modbus/set",
+      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
+             Growatt& inverter) { return handleModbusSet(req, res, *this); });
 }
 
 void Growatt::InitProtocol() {
@@ -65,11 +75,10 @@ void Growatt::begin(Stream& serial) {
    * @brief Set up communication with the inverter
    * @param serial The serial interface
    */
-  uint8_t res;
-
 #if SIMULATE_INVERTER == 1
   _eDevice = SIMULATE_DEVICE;
 #else
+  uint8_t res;
   // init communication with the inverter
   Serial.begin(9600);
   Modbus.begin(1, serial);
@@ -425,11 +434,12 @@ void Growatt::CreateJson(char* Buffer, const char* MacAddress) {
 
 void Growatt::CreateUIJson(char* Buffer) {
   StaticJsonDocument<MQTT_MAX_PACKET_SIZE> doc;
+
+#if SIMULATE_INVERTER != 1
   const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
 
-#if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     if (_Protocol.InputRegisters[i].frontend == true ||
         _Protocol.InputRegisters[i].plot == true) {
@@ -468,7 +478,7 @@ void Growatt::CreateUIJson(char* Buffer) {
       } else {
         arr.add(roundByResolution(_Protocol.HoldingRegisters[i].value *
                                       _Protocol.HoldingRegisters[i].multiplier,
-                                  _Protocol.InputRegisters[i].resolution));
+                                  _Protocol.HoldingRegisters[i].resolution));
       }
       if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0 &&
           _Protocol.HoldingRegisters[i].value < statusStrLength) {
@@ -536,7 +546,7 @@ void Growatt::CreateUIJson(char* Buffer) {
   arr.add(false);
 #endif  // SIMULATE_INVERTER
 
-  serializeJson(doc, Buffer, 4096);
+  serializeJson(doc, Buffer, MQTT_MAX_PACKET_SIZE);
 }
 
 void Growatt::RegisterCommand(const String& command,
@@ -601,4 +611,131 @@ std::tuple<bool, String> Growatt::handleCommandList(
     commands.add(it->first);
   }
   return std::make_tuple(true, "");
+}
+
+std::tuple<bool, String> Growatt::handleModbusGet(
+    const DynamicJsonDocument& req, DynamicJsonDocument& res,
+    Growatt& inverter) {
+  if (!req.containsKey("id")) {
+    return std::make_tuple(false, "'id' field is required");
+  }
+
+#if SIMULATE_INVERTER != 1
+  uint16_t id = req["id"].as<uint16_t>();
+#endif
+
+  if (!req.containsKey("type")) {
+    return std::make_tuple(false, "'type' field is required");
+  }
+
+  String type = req["type"].as<String>();
+
+  if (type != "16b" && type != "32b") {
+    return std::make_tuple(false, "'type' must be '16b' or '32b'");
+  }
+
+  if (!req.containsKey("registerType")) {
+    return std::make_tuple(false, "'registerType' field is required");
+  }
+
+  String registerType = req["registerType"].as<String>();
+
+  if (registerType != "H" && registerType != "I") {
+    return std::make_tuple(
+        false, "'registerType' must be 'H' (holding) or 'I' (input)");
+  }
+
+#if SIMULATE_INVERTER != 1
+  if (type == "16b") {
+    uint16_t value;
+    if (registerType == "H") {
+      if (!inverter.ReadHoldingReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read holding register");
+      }
+    } else {
+      if (!inverter.ReadInputReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read input register");
+      }
+    }
+    res["value"] = value;
+  } else {
+    uint32_t value;
+    if (registerType == "H") {
+      if (!inverter.ReadHoldingReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read holding register");
+      }
+    } else {
+      if (!inverter.ReadInputReg(id, &value)) {
+        return std::make_tuple(false, "Failed to read input register");
+      }
+    }
+    res["value"] = value;
+  }
+#else
+  if (type == "16b") {
+    res["value"] = 16;
+  } else {
+    res["value"] = 32;
+  }
+#endif
+
+  return std::make_tuple(true, "success");
+}
+
+std::tuple<bool, String> Growatt::handleModbusSet(
+    const DynamicJsonDocument& req, DynamicJsonDocument& res,
+    Growatt& inverter) {
+  if (!req.containsKey("id")) {
+    return std::make_tuple(false, "'id' field is required");
+  }
+
+#if SIMULATE_INVERTER != 1
+  uint16_t id = req["id"].as<uint16_t>();
+#endif
+
+  if (!req.containsKey("type")) {
+    return std::make_tuple(false, "'type' field is required");
+  }
+
+  String type = req["type"].as<String>();
+
+  if (type == "32b") {
+    return std::make_tuple(
+        false, "writing to double (32b) registers is not currently supported");
+  }
+
+  if (type != "16b") {
+    return std::make_tuple(false, "'type' must be '16b'");
+  }
+
+  if (!req.containsKey("registerType")) {
+    return std::make_tuple(false, "'registerType' field is required");
+  }
+
+  String registerType = req["registerType"].as<String>();
+
+  if (registerType == "I") {
+    return std::make_tuple(false,
+                           "it is not possible to write into input registers");
+  }
+
+  if (registerType != "H") {
+    return std::make_tuple(false, "'registerType' must be 'H' (holding)");
+  }
+
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+#if SIMULATE_INVERTER != 1
+  uint16_t value = req["value"].as<uint16_t>();
+#endif
+
+#if SIMULATE_INVERTER != 1
+  if (!inverter.WriteHoldingReg(id, value)) {
+    return std::make_tuple(false, "failed to write holding register");
+  }
+#endif
+
+  return std::make_tuple(true, "success");
 }

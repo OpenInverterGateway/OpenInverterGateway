@@ -58,13 +58,13 @@ bool ShineMqtt::mqttReconnect() {
 
   if (millis() - this->previousConnectTryMillis >= (5000)) {
     Log.print(F("MqttServer: "));
-    Log.println(this->mqttconfig.mqttserver);
+    Log.println(this->mqttconfig.mqttserver.c_str());
     Log.print(F("MqttUser: "));
-    Log.println(this->mqttconfig.mqttuser);
+    Log.println(this->mqttconfig.mqttuser.c_str());
     Log.print(F("MqttTopic: "));
-    Log.println(this->mqttconfig.mqtttopic);
+    Log.println(this->mqttconfig.mqtttopic.c_str());
     Log.print(F("MqttLWT: "));
-    Log.println(this->mqttconfig.mqttlwt);
+    Log.println(this->mqttconfig.mqttlwt.c_str());
     Log.print(F("Attempting MQTT connection..."));
 
     // Run only once every 5 seconds
@@ -86,10 +86,10 @@ bool ShineMqtt::mqttReconnect() {
       }
       return true;
     } else {
-      Log.print("failed, rc=");
+      Log.print(F("failed, rc="));
       Log.print(this->mqttclient.state());
-      Log.println(" try again in 5 seconds");
-      Log.println("MQTT Connect failed");
+      Log.println(F(" try again in 5 seconds"));
+      Log.println(F("MQTT Connect failed"));
       previousConnectTryMillis = millis();
     }
   }
@@ -97,13 +97,13 @@ bool ShineMqtt::mqttReconnect() {
 }
 
 void ShineMqtt::mqttPublish(const String& JsonString) {
-  Log.print("publish MQTT message... ");
+  Log.print(F("publish MQTT message... "));
   if (this->mqttclient.connected()) {
     bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
                                         JsonString.c_str(), true);
     Log.println(res ? "succeed" : "failed");
   } else
-    Log.println("not connected");
+    Log.println(F("not connected"));
 }
 
 void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {

@@ -66,8 +66,8 @@ Another way to do this (Otti):
 Add a 1k resistor between the output of the SW1 and GPIO0. So it is possible to put the device into boot mode on start up
 
 
-Updating an already installed firmware is very easy using OTA built into the Stick's webserver:
-Use: http://&lt;ip&gt;/firmware
+Updating an installed firmware is very easy using OTA the buildin config webserver (192.168.4.1):
+Use:  http://&lt;config ip&gt;/ and click on update.
 
 
 ### Arduino IDE settings

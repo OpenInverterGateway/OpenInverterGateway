@@ -36,14 +36,6 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include <Preferences.h>
 #include <WiFiManager.h>
 
-#if UPDATE_SUPPORTED == 1
-    #ifdef ESP8266
-        #include <ESP8266HTTPUpdateServer.h>
-    #elif ESP32
-        #include <ESPHTTPUpdateServer.h>
-    #endif
-#endif
-
 #if PINGER_SUPPORTED == 1
     #include <Pinger.h>
     #include <PingerResponse.h>
@@ -93,15 +85,6 @@ uint16_t u16PacketCnt = 0;
     WebServer httpServer(80);
 #endif
 
-#if UPDATE_SUPPORTED == 1
-    const char* update_path = "/firmware";
-    
-    #ifdef ESP8266
-        ESP8266HTTPUpdateServer httpUpdater;
-    #elif ESP32
-        ESPHTTPUpdateServer httpUpdater;
-    #endif
-#endif
 
 WiFiManager wm;
 #if MQTT_SUPPORTED == 1
@@ -213,9 +196,7 @@ void saveParamCallback()
 
     saveConfig(&config);
 
-    Serial.println(F("[CALLBACK] saveParamCallback complete restarting ESP"));
-
-    ESP.restart();
+    Serial.println(F("[CALLBACK] saveParamCallback complete"));
 }
 #endif
 
@@ -231,19 +212,19 @@ WebSerialStream webSerialStream = WebSerialStream(8080);
 
 void setup()
 {
-#ifdef ENABLE_SERIAL_DEBUG
-    Serial.begin(115200);
-    Log.disableSerial(false);
-#else
-    Log.disableSerial(true);
-#endif
-    MDNS.begin(HOSTNAME);
-#ifdef ENABLE_TELNET_DEBUG
-    Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
-#endif
-#ifdef ENABLE_WEB_DEBUG
-    Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
-#endif
+    #ifdef ENABLE_SERIAL_DEBUG
+        Serial.begin(115200);
+        Log.disableSerial(false);
+    #else
+        Log.disableSerial(true);
+    #endif
+        MDNS.begin(HOSTNAME);
+    #ifdef ENABLE_TELNET_DEBUG
+        Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
+    #endif
+    #ifdef ENABLE_WEB_DEBUG
+        Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
+    #endif
 
     Log.println("Setup()");
 
@@ -256,14 +237,14 @@ void setup()
     pinMode(LED_BL, OUTPUT);
 
     #if MQTT_SUPPORTED == 1
-    prefs.begin("ShineWifi");
+        prefs.begin("ShineWifi");
     #endif
 
     #if ENABLE_DOUBLE_RESET == 1
-    if (drd->detectDoubleReset()) {
-    Log.println(F("Double reset detected"));
-        StartedConfigAfterBoot = true;
-    }
+        if (drd->detectDoubleReset()) {
+        Log.println(F("Double reset detected"));
+            StartedConfigAfterBoot = true;
+        }
     #endif
 
     WiFi.hostname(HOSTNAME);
@@ -320,9 +301,6 @@ void setup()
 
     Inverter.InitProtocol();
     InverterReconnect();
-    #if UPDATE_SUPPORTED == 1
-        httpUpdater.setup(&httpServer, update_path, UPDATE_USER, UPDATE_PASSWORD);
-    #endif
     httpServer.begin();
 }
 
@@ -355,7 +333,7 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
  * @param enableCustomParams enable custom params aka. mqtt settings
  */
 void setupMenu(bool enableCustomParams){
-    std::vector<const char*> menu = { "wifi","wifinoscan"};
+    std::vector<const char*> menu = { "wifi","wifinoscan","update"};
     if(enableCustomParams){
         menu.push_back("param");
     }
@@ -418,7 +396,7 @@ void handlePostData()
     if (!httpServer.hasArg("reg") || !httpServer.hasArg("val"))
     {
         // If the POST request doesn't have data
-        httpServer.send(400, F("text/plain"), "400: Invalid Request"); // The request is invalid, so send HTTP status 400
+        httpServer.send(400, F("text/plain"), F("400: Invalid Request")); // The request is invalid, so send HTTP status 400
         return;
     }
     else

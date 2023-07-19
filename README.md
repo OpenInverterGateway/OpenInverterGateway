@@ -55,6 +55,7 @@ See the short descriptions to the devices (including some pictures) in the "Doc"
 * Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
 * Growatt MID 3-25ktl3-x (Protocol 124 via USB)
 * Growatt MOD 3-15ktl3-x-xh (Protocol 120 via USB)
+* Growatt MOD 12KTL3-X (Protocol 124 via USB)
 * Growatt MID 25-40ktl3-x (Protocol 120 via USB)
 * Growatt SPH 4000-10000ktl3-x BH (Protocol 124 via Serial)
 * And others ....
@@ -74,32 +75,92 @@ For IoT applications the raw data can now read in JSON format (application/json)
 
 
 This will put the inverter on the energy dashboard.
-     
-     mqtt:
-        sensor:
-          - state_topic: "energy/solar"
-            unique_id: "growatt_wr_total_production"
-            name: "Growatt.TotalGenerateEnergy"
-            unit_of_measurement: "kWh"
-            value_template: "{{ float(value_json.TotalGenerateEnergy) | round(1) }}"
-            device_class: energy
-            state_class: total_increasing
-            json_attributes_topic: "energy/solar"
-            last_reset_topic: "energy/solar"
-            last_reset_value_template: "1970-01-01T00:00:00+00:00"
-            payload_available: "1"
-            availability_mode: latest
-            availability_topic: "energy/solar"
-            availability_template: "{{ value_json.InverterStatus }}"
+
+```yaml
+mqtt:
+  sensor:
+    - state_topic: "energy/solar"
+      unique_id: "growatt_wr_total_production"
+      name: "Growatt.TotalGenerateEnergy"
+      unit_of_measurement: "kWh"
+      value_template: "{{ float(value_json.TotalGenerateEnergy) | round(1) }}"
+      device_class: energy
+      state_class: total_increasing
+      json_attributes_topic: "energy/solar"
+      last_reset_topic: "energy/solar"
+      last_reset_value_template: "1970-01-01T00:00:00+00:00"
+      payload_available: "1"
+      availability_mode: latest
+      availability_topic: "energy/solar"
+      availability_template: "{{ value_json.InverterStatus }}"
+```
 
 
 To extract the current AC Power you have to add a sensor template.
 
-    template:
-      - sensor:
-          - name: "Growatt inverter AC Power"
-            unit_of_measurement: "W"
-            state: "{{ float(state_attr('sensor.growatt_inverter', 'OutputPower')) }}"
+```yaml
+template:
+  - sensor:
+      - name: "Growatt inverter AC Power"
+        unit_of_measurement: "W"
+        state: "{{ float(state_attr('sensor.growatt_inverter', 'OutputPower')) }}"
+```
+
+To send commands you can use the MQTT Publish service. Note that the datetime commands are currently only available on the 1.24 modbus version.
+
+```yaml
+service: mqtt.publish
+data:
+  qos: "1"
+  topic: energy/solar/command/datetime/get
+  payload_template: |
+    {
+      "correlationId": "ha-datetime-get"
+    }
+```
+
+```yaml
+service: mqtt.publish
+data:
+  qos: "1"
+  topic: energy/solar/command/datetime/set
+  payload_template: |
+    {
+      "correlationId": "ha-datetime-set",
+      "value": "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    }
+```
+
+To receive responses to commands you can use templates.
+
+```yaml
+- trigger:
+    platform: mqtt
+    topic: energy/solar/result
+    value_template: "{{ value_json.correlationId }}"
+    payload: "ha-datetime-get"
+  sensor:
+    name: Growatt - Inverter date/time
+    state: "{{ trigger.payload_json.value }}"
+    attributes:
+      success: "{{ trigger.payload_json.success }}"
+      message: "{{ trigger.payload_json.message }}"
+```
+
+```yaml
+- trigger:
+    platform: mqtt
+    topic: energy/solar/result
+    value_template: "{{ value_json.correlationId }}"
+    payload: "ha-datetime-set"
+  binary_sensor:
+    name: Growatt - Inverter set date/time
+    state: "{{ trigger.payload_json.success }}"
+    attributes:
+      message: "{{ trigger.payload_json.message }}"
+```
+
+You could create an automation triggered by a binary sensor on the success JSON attribute if you want to be notified when a command has failed for example.
 
 ## Debugging
 
