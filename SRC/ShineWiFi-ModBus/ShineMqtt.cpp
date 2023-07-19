@@ -82,6 +82,8 @@ bool ShineMqtt::mqttReconnect() {
 #if ENABLE_DEBUG_OUTPUT == 1
       Log.println("connected");
 #endif
+      this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
+
       String commandTopic = this->mqttconfig.mqtttopic + "/command/#";
       if (this->mqttclient.subscribe(commandTopic.c_str(), 1)) {
         Log.println("Subscribed to " + commandTopic);
@@ -132,9 +134,9 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
 void ShineMqtt::updateMqttLed() {
   if (!this->mqttclient.connected()) {
     digitalWrite(LED_RT, 1);
+    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_OFFLINE, true);
   } else {
     digitalWrite(LED_RT, 0);
-    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
   }
 }
 
