@@ -16,7 +16,6 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   uint16_t intPort = config.mqttport.toInt();
   if (intPort == 0) intPort = 1883;
 
-#if ENABLE_DEBUG_OUTPUT == 1
   Log.print(F("MqttServer: "));
   Log.println(this->mqttconfig.mqttserver);
   Log.print(F("MqttPort: "));
@@ -25,7 +24,6 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   Log.println(this->mqttconfig.mqtttopic);
   Log.print(F("MqttLWT: "));
   Log.println(this->mqttconfig.mqttlwt);
-#endif
 
   // make sure the packet size is set correctly in the library
   this->mqttclient.setBufferSize(MQTT_MAX_PACKET_SIZE);
@@ -42,7 +40,7 @@ String ShineMqtt::getId() {
 #elif ESP32
   uint64_t id = ESP.getEfuseMac();
 #endif
-  return "Growatt" + (id & 0xffffffff);
+  return "Growatt" + String((unsigned long)(id & 0xffffffff));
 }
 
 // -------------------------------------------------------
@@ -59,7 +57,6 @@ bool ShineMqtt::mqttReconnect() {
   if (this->mqttclient.connected()) return true;
 
   if (millis() - this->previousConnectTryMillis >= (5000)) {
-#if ENABLE_DEBUG_OUTPUT == 1
     Log.print(F("MqttServer: "));
     Log.println(this->mqttconfig.mqttserver);
     Log.print(F("MqttUser: "));
@@ -69,7 +66,6 @@ bool ShineMqtt::mqttReconnect() {
     Log.print(F("MqttLWT: "));
     Log.println(this->mqttconfig.mqttlwt);
     Log.print(F("Attempting MQTT connection..."));
-#endif
 
     // Run only once every 5 seconds
     this->previousConnectTryMillis = millis();
@@ -79,9 +75,7 @@ bool ShineMqtt::mqttReconnect() {
                                  this->mqttconfig.mqttpwd.c_str(),
                                  this->mqttconfig.mqttlwt.c_str(), 1, 1,
                                  MQTT_LWT_OFFLINE)) {
-#if ENABLE_DEBUG_OUTPUT == 1
       Log.println("connected");
-#endif
       this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
 
       String commandTopic = this->mqttconfig.mqtttopic + "/command/#";
