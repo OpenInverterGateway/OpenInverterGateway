@@ -5,6 +5,9 @@
 #include <StreamUtils.h>
 #include "PubSubClient.h"
 
+#define MQTT_LWT_OFFLINE "offline"
+#define MQTT_LWT_ONLINE "online"
+
 ShineMqtt::ShineMqtt(WiFiClient& wc, Growatt& inverter)
     : wifiClient(wc), mqttclient(wifiClient), inverter(inverter) {}
 
@@ -20,6 +23,8 @@ void ShineMqtt::mqttSetup(const MqttConfig& config) {
   Log.println(intPort);
   Log.print(F("MqttTopic: "));
   Log.println(this->mqttconfig.mqtttopic);
+  Log.print(F("MqttLWT: "));
+  Log.println(this->mqttconfig.mqttlwt);
 
   this->mqttclient.setServer(this->mqttconfig.mqttserver.c_str(), intPort);
   this->mqttclient.setCallback(
@@ -34,7 +39,7 @@ String ShineMqtt::getId() {
 #elif ESP32
   uint64_t id = ESP.getEfuseMac();
 #endif
-  return "Growatt" + String(id & 0xffffffff);
+  return "Growatt" + String((unsigned long)(id & 0xffffffff));
 }
 
 // -------------------------------------------------------
@@ -57,6 +62,8 @@ bool ShineMqtt::mqttReconnect() {
     Log.println(this->mqttconfig.mqttuser.c_str());
     Log.print(F("MqttTopic: "));
     Log.println(this->mqttconfig.mqtttopic.c_str());
+    Log.print(F("MqttLWT: "));
+    Log.println(this->mqttconfig.mqttlwt.c_str());
     Log.print(F("Attempting MQTT connection..."));
 
     // Run only once every 5 seconds
@@ -65,9 +72,10 @@ bool ShineMqtt::mqttReconnect() {
     if (this->mqttclient.connect(getId().c_str(),
                                  this->mqttconfig.mqttuser.c_str(),
                                  this->mqttconfig.mqttpwd.c_str(),
-                                 this->mqttconfig.mqtttopic.c_str(), 1, 1,
-                                 "{\"InverterStatus\": -1 }")) {
-      Log.println(F("connected"));
+                                 this->mqttconfig.mqttlwt.c_str(), 1, 1,
+                                 MQTT_LWT_OFFLINE)) {
+      Log.println("connected");
+      this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_ONLINE, true);
 
       String commandTopic = this->mqttconfig.mqtttopic + "/command/#";
       if (this->mqttclient.subscribe(commandTopic.c_str(), 1)) {
@@ -134,10 +142,12 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
 }
 
 void ShineMqtt::updateMqttLed() {
-  if (!this->mqttclient.connected())
+  if (!this->mqttclient.connected()) {
     digitalWrite(LED_RT, 1);
-  else
+    this->mqttclient.publish(this->mqttconfig.mqttlwt.c_str(), MQTT_LWT_OFFLINE, true);
+  } else {
     digitalWrite(LED_RT, 0);
+  }
 }
 
 void ShineMqtt::loop() { this->mqttclient.loop(); }
