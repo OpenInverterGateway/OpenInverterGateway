@@ -400,8 +400,8 @@ double Growatt::roundByResolution(const double& value,
   return int32_t(value * res + 0.5) / res;
 }
 
-void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
-  char* name = reg->name;
+void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument& doc) {
+  auto name = reg->name;
   RegisterSize_t size = reg->size;
   const float& mult = reg->multiplier;
   const uint32_t& value = reg->value;
@@ -409,29 +409,29 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc) {
 
   switch (size) {
     case SIZE_16BIT_S:
-      (*doc)[name] = (mult == (int)mult)
-                         ? (int16_t)value * mult
-                         : roundByResolution((int16_t)value * mult, resolution);
+      doc[name] = (mult == (int)mult)
+                      ? (int16_t)value * mult
+                      : roundByResolution((int16_t)value * mult, resolution);
       break;
     case SIZE_32BIT_S:
-      (*doc)[name] = (mult == (int)mult)
-                         ? (int32_t)value * mult
-                         : roundByResolution((int32_t)value * mult, resolution);
+      doc[name] = (mult == (int)mult)
+                      ? (int32_t)value * mult
+                      : roundByResolution((int32_t)value * mult, resolution);
       break;
     default:
-      (*doc)[name] = (mult == (int)mult)
-                         ? value * mult
-                         : roundByResolution(value * mult, resolution);
+      doc[name] = (mult == (int)mult)
+                      ? value * mult
+                      : roundByResolution(value * mult, resolution);
   }
 }
 
 void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
-    JSONAddReg(&_Protocol.InputRegisters[i], &doc);
+    JSONAddReg(&_Protocol.InputRegisters[i], doc);
 
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
-    JSONAddReg(&_Protocol.HoldingRegisters[i], &doc);
+    JSONAddReg(&_Protocol.HoldingRegisters[i], doc);
 #else
 #warning simulating the inverter
   doc["Status"] = 1;
@@ -474,7 +474,7 @@ void Growatt::CreateUIJson(ShineJsonDocument& doc) {
                                       _Protocol.InputRegisters[i].multiplier,
                                   _Protocol.InputRegisters[i].resolution));
       }
-      if (strcmp(_Protocol.InputRegisters[i].name, "InverterStatus") == 0 &&
+      if (String(_Protocol.InputRegisters[i].name) == F("InverterStatus") &&
           _Protocol.InputRegisters[i].value < statusStrLength) {
         arr.add(statusStr[_Protocol.InputRegisters[i].value]);  // use unit for
                                                                 // status
@@ -499,7 +499,7 @@ void Growatt::CreateUIJson(ShineJsonDocument& doc) {
                                       _Protocol.HoldingRegisters[i].multiplier,
                                   _Protocol.HoldingRegisters[i].resolution));
       }
-      if (strcmp(_Protocol.HoldingRegisters[i].name, "InverterStatus") == 0 &&
+      if (String(_Protocol.HoldingRegisters[i].name) == F("InverterStatus") &&
           _Protocol.HoldingRegisters[i].value < statusStrLength) {
         arr.add(statusStr[_Protocol.HoldingRegisters[i].value]);  // use unit
                                                                   // for status

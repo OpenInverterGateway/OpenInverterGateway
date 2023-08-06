@@ -41,7 +41,7 @@ class Growatt {
 
   eDevice_t _InitModbusCommunication();
   double roundByResolution(const double& value, const float& resolution);
-  void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument* doc);
+  void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument& doc);
   std::tuple<bool, String> handleEcho(const DynamicJsonDocument& req,
                                       DynamicJsonDocument& res,
                                       Growatt& inverter);

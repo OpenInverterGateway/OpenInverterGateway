@@ -58,7 +58,7 @@ typedef struct {
   uint16_t address;
   uint32_t value;
   RegisterSize_t size;
-  char name[64];
+  const __FlashStringHelper* name;
   float multiplier;
   float resolution;
   RegisterUnit_t unit;
