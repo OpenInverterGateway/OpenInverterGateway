@@ -370,12 +370,12 @@ void sendMqttJson(void)
     shineMqtt.mqttPublish(doc);
 }
 #endif
-    
+
 void StartConfigAccessPoint(void)
 {
     String Text;
-    Text = "Configuration access point started ...\r\nConnect to Wifi: \"GrowattConfig\" with your password (default: \"growsolar\") and visit 192.168.4.1\r\nThe Stick will automatically go back to normal operation after " + String(CONFIG_PORTAL_MAX_TIME_SECONDS) + " seconds";
-    httpServer.send(200, "text/plain", Text);
+    Text = "<html><body>Configuration access point started ...<br /><br />Connect to Wifi: \"GrowattConfig\" with your password (default: \"growsolar\") and visit <a href='http://192.168.4.1'>192.168.4.1</a><br />The Stick will automatically go back to normal operation after " + String(CONFIG_PORTAL_MAX_TIME_SECONDS) + " seconds</body></html>";
+    httpServer.send(200, "text/html", Text);
     StartedConfigAfterBoot = true;
 }
 
