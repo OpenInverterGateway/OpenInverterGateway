@@ -34,14 +34,18 @@ String ShineMqtt::getId() {
 #elif ESP32
   uint64_t id = ESP.getEfuseMac();
 #endif
-  return "Growatt" + String(id & 0xffffffff);
+  return HOSTNAME + String(id & 0xffffffff);
+}
+
+boolean ShineMqtt::mqttEnabled() {
+  return !this->mqttconfig.mqttserver.isEmpty();
 }
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
 // -------------------------------------------------------
 bool ShineMqtt::mqttReconnect() {
-  if (this->mqttconfig.mqttserver.length() == 0) {
+  if (!this->mqttEnabled()) {
     // No server configured
     return false;
   }
@@ -87,18 +91,22 @@ bool ShineMqtt::mqttReconnect() {
   return false;
 }
 
-void ShineMqtt::mqttPublish(const String& JsonString) {
+boolean ShineMqtt::mqttPublish(const String& JsonString) {
   Log.print(F("publish MQTT message... "));
   if (this->mqttclient.connected()) {
     bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
                                         JsonString.c_str(), true);
     Log.println(res ? "succeed" : "failed");
+
+    return res;
   } else {
     Log.println(F("not connected"));
+
+    return false;
   }
 }
 
-void ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
+boolean ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
   Log.print(F("publish MQTT message... "));
   if (this->mqttclient.connected()) {
     bool res = this->mqttclient.beginPublish(this->mqttconfig.mqtttopic.c_str(),
@@ -109,8 +117,12 @@ void ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
     this->mqttclient.endPublish();
 
     Log.println(res ? "succeed" : "failed");
+
+    return res;
   } else {
     Log.println(F("not connected"));
+
+    return false;
   }
 }
 

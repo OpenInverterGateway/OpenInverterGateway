@@ -37,6 +37,10 @@ e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
 #include <WiFiManager.h>
 #include <StreamUtils.h>
 
+#ifdef ESP32
+    #include <esp_task_wdt.h>
+#endif
+
 #if PINGER_SUPPORTED == 1
     #include <Pinger.h>
     #include <PingerResponse.h>
@@ -229,9 +233,41 @@ void setupGPIO()
 
 void setupWifiHost()
 {
-    MDNS.begin(HOSTNAME);
     WiFi.hostname(HOSTNAME);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+    MDNS.begin(HOSTNAME);
+}
+
+void startWdt() 
+{
+    #ifdef ESP32
+    Log.println("Configuring WDT...");
+    esp_task_wdt_init(WDT_TIMEOUT, true);
+    esp_task_wdt_add(NULL);
+    #endif
+}
+
+void handleWdtReset(boolean mqttSuccess) 
+{
+    #if MQTT_SUPPORTED == 1
+    if(mqttSuccess) {
+        resetWdt();
+    } else {
+        if(!shineMqtt.mqttEnabled()) {
+            resetWdt();
+        }
+    }
+    #else
+        resetWdt();
+    #endif
+}
+
+void resetWdt() 
+{
+    #ifdef ESP32
+    Log.println("WDT reset ...");
+    esp_task_wdt_reset();
+    #endif
 }
 
 void setup()
@@ -259,6 +295,8 @@ void setup()
     setupWifiHost();
 
     Log.begin();
+    startWdt();
+
     #if MQTT_SUPPORTED == 1
         MqttConfig mqttConfig;
         SetupMqttWifiManagerMenu(mqttConfig);
@@ -376,12 +414,12 @@ void sendUiJsonSite(void)
 }
 
 #if MQTT_SUPPORTED == 1
-void sendMqttJson(void)
+boolean sendMqttJson(void)
 {
     StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
 
     Inverter.CreateJson(doc, WiFi.macAddress());
-    shineMqtt.mqttPublish(doc);
+    return shineMqtt.mqttPublish(doc);
 }
 #endif
 
@@ -612,9 +650,12 @@ void loop()
                     Log.println(F("ReadData() successful"));
                     u16PacketCnt++;
                     u8RetryCounter = NUM_OF_RETRIES;
+                    boolean mqttSuccess = false;
+
                     #if MQTT_SUPPORTED == 1
-                    sendMqttJson();
+                    mqttSuccess = sendMqttJson();
                     #endif
+                    handleWdtReset(mqttSuccess);
 
                     digitalWrite(LED_RT, 0); // clear red led if everything is ok
                     // leave while-loop
