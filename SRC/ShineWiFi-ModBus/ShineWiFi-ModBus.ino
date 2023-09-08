@@ -204,31 +204,46 @@ TelnetSerialStream telnetSerialStream = TelnetSerialStream();
 WebSerialStream webSerialStream = WebSerialStream(8080);
 #endif
 
-void setup()
-{
+void configureLogging() {
     #ifdef ENABLE_SERIAL_DEBUG
         Serial.begin(115200);
         Log.disableSerial(false);
     #else
         Log.disableSerial(true);
     #endif
-        MDNS.begin(HOSTNAME);
     #ifdef ENABLE_TELNET_DEBUG
         Log.addPrintStream(std::make_shared<TelnetSerialStream>(telnetSerialStream));
     #endif
     #ifdef ENABLE_WEB_DEBUG
         Log.addPrintStream(std::make_shared<WebSerialStream>(webSerialStream));
     #endif
+}
 
+void setupGPIO() 
+{
+    pinMode(LED_GN, OUTPUT);
+    pinMode(LED_RT, OUTPUT);
+    pinMode(LED_BL, OUTPUT);    
+}
+
+
+void setupWifiHost()
+{
+    MDNS.begin(HOSTNAME);
+    WiFi.hostname(HOSTNAME);
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+}
+
+void setup()
+{
     Log.println("Setup()");
+
+    configureLogging();
+    setupGPIO();
 
     #if ENABLE_DOUBLE_RESET == 1
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
-
-    pinMode(LED_GN, OUTPUT);
-    pinMode(LED_RT, OUTPUT);
-    pinMode(LED_BL, OUTPUT);
 
     #if MQTT_SUPPORTED == 1
         prefs.begin("ShineWifi");
@@ -241,8 +256,7 @@ void setup()
         }
     #endif
 
-    WiFi.hostname(HOSTNAME);
-    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+    setupWifiHost();
 
     Log.begin();
     #if MQTT_SUPPORTED == 1
