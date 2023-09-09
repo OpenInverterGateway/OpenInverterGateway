@@ -74,7 +74,7 @@ For IoT applications the raw data can now read in JSON format (application/json)
 
 ## Homeassistant configuration
 
-Homeassistant config is described [here](docs/MQTT.md)
+Homeassistant config is described [here](Doc/MQTT.md)
 
 ## Debugging
 
