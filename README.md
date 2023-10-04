@@ -16,9 +16,9 @@ Or
 
 After you obtained an image you want to flash:
 
-* Flash to an esp32/esp8266 ([details](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/Doc/)).
+* Flash to an esp32/esp8266 or to a shineX/S-stick ([details](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/Doc/)).
 * Connect to the setup wifi called GrowattConfig (PW: growsolar) and configure the firmware via the webinterface at http://192.168.4.1
-* If you need to reconfigure the stick later on you have to either press the ap button (configured in Config.h) or reset the stick twice within 10sec
+* If you need to reconfigure the stick later on you have to either press the ap button (configured in Config.h) or reset the stick twice within 2-10sec
 
 ## Features
 Implemented Features:
