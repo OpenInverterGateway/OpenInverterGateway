@@ -4,7 +4,7 @@ Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or cust
 
 # How to install
 
-* Download a precompiled release from [here](https://github.com/otti/Growatt_ShineWiFi-S/releases)
+* Download a precompiled release from [here](https://github.com/otti/Growatt_ShineWiFi-S/releases) (hardcoded to default [settings](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/Config.h.example)/growatt protocol 1.24)
 
 Or
 
