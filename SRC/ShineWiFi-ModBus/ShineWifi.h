@@ -20,3 +20,5 @@ extern WiFiClientSecure espClient;
 #else
 extern WiFiClient espClient;
 #endif
+
+bool ShineWifiDisconnect();
