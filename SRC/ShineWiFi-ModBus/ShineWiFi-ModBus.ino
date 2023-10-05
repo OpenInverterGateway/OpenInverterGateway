@@ -300,11 +300,16 @@ void setup()
     #if MQTT_SUPPORTED == 1
         MqttConfig mqttConfig;
         SetupMqttWifiManagerMenu(mqttConfig);
+    #else
+        setupMenu(false);    
     #endif
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
+    
+    int connect_timeout_seonds = 15;
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
+    wm.setConnectTimeout(connect_timeout_seonds);
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
@@ -331,8 +336,6 @@ void setup()
             espClient.setCACert(MQTTS_BROKER_CA_CERT);
         #endif
         shineMqtt.mqttSetup(mqttConfig);
-    #else
-        setupMenu(false);
     #endif
 
     httpServer.on("/status", sendJsonSite);
@@ -377,6 +380,7 @@ void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
  * @param enableCustomParams enable custom params aka. mqtt settings
  */
 void setupMenu(bool enableCustomParams){
+    Log.println(F("Setting up WiFiManager menu"));
     std::vector<const char*> menu = { "wifi","wifinoscan","update"};
     if(enableCustomParams){
         menu.push_back("param");
@@ -425,16 +429,18 @@ boolean sendMqttJson(void)
 
 void StartConfigAccessPoint(void)
 {
-    String Text;
-    Text = "<html><body>Configuration access point started ...<br /><br />Connect to Wifi: \"GrowattConfig\" with your password (default: \"growsolar\") and visit <a href='http://192.168.4.1'>192.168.4.1</a><br />The Stick will automatically go back to normal operation after " + String(CONFIG_PORTAL_MAX_TIME_SECONDS) + " seconds</body></html>";
-    httpServer.send(200, "text/html", Text);
+    char msg[384];
+
+    snprintf_P(msg, sizeof(msg), PSTR("<html><body>Configuration access point started ...<br /><br />Connect to Wifi: \"GrowattConfig\" with your password (default: \"growsolar\") and visit <a href='http://192.168.4.1'>192.168.4.1</a><br />The Stick will automatically go back to normal operation after a %d seconds</body></html>"), CONFIG_PORTAL_MAX_TIME_SECONDS);
+    httpServer.send(200, "text/html", msg);
+    delay(2000);
     StartedConfigAfterBoot = true;
 }
 
 #ifdef ENABLE_WEB_DEBUG
 void SendDebug(void) {
     httpServer.sendHeader("Location", "http://" + WiFi.localIP().toString() + ":8080/", true);
-    httpServer.send ( 302, "text/plain", "");
+    httpServer.send(302, "text/plain", "");
 }
 #endif
 
@@ -593,8 +599,11 @@ void loop()
         digitalWrite(LED_BL, 1);
         httpServer.stop();
         Log.println(F("Config after boot started"));
+        ShineWifiDisconnect();
+        
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
         wm.startConfigPortal("GrowattConfig", APPassword);
+        Log.println(F("GrowattConfig finished"));
         digitalWrite(LED_BL, 0);
         delay(3000);
         ESP.restart();
