@@ -7,11 +7,15 @@
 
 // Define used modbus version used by your invertor here. Currently
 // only 120 (v1.20), 124 (v1.24) and 305 (v3.05) versions are supported.
-// Also SPF5000ES (Probably SPF3000ES too) coded as 5000 supported.
+// Also SPF (version 5000) has some preliminary support.
 // New protocols can be easily defined by adding new Growatt<version>.cpp/h
 // files and then specifying the protocol there. See existing procol files
 // for reference.
 #define GROWATT_MODBUS_VERSION 124
+
+// On some SPH inverters (Protocol 124) the battery temperature multiplier 
+// differs from the documented value (of 0.1). Set this to 1.0 on these inverters.
+// #define TEMPERATURE_WORKAROUND_MULTIPLIER 1.0
 
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
