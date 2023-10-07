@@ -40,9 +40,9 @@ copies or substantial portions of the Software. -->
     <div id="DataContainer"></div>
 
   <a href="./status">Json</a> -
-  <a href="./uistatus">UI Json</a> -
+  <a href="./uiStatus">UI Json</a> -
   <a href="./debug">Log</a> -
-  <a href="./StartAp">Start config access point</a> -
+  <a href="./startAp">Start config access point</a> -
   <a href="./postCommunicationModbus">RW Modbus</a>
 
 </body>
@@ -145,7 +145,7 @@ copies or substantial portions of the Software. -->
                 }
             }
         }
-        xhttp.open("GET", "./uistatus", true);
+        xhttp.open("GET", "./uiStatus", true);
         xhttp.send();
     }, 5000);
 </script>
