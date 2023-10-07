@@ -351,6 +351,10 @@ std::tuple<bool, String> setGridFirstTimeSlot(const DynamicJsonDocument& req,
   return setTimeSlot(req, res, inverter, 1080);
 }
 
+#ifndef TEMPERATURE_WORKAROUND_MULTIPLIER
+#define TEMPERATURE_WORKAROUND_MULTIPLIER 0.1
+#endif
+
 // NOTE: my inverter (SPH4-10KTL3 BH-UP) only manages to read 64 registers in
 // one read!
 void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
@@ -486,9 +490,16 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputRegisters[P124_PLOCAL_LOAD_TOTAL] = sGrowattModbusReg_t{
       1037,    0,    SIZE_32BIT, F("INVPowerToLocalLoadTotal"), 0.1, 0.1,
       POWER_W, true, false};  // #40
-  Protocol.InputRegisters[P124_BATTERY_TEMPERATURE] = sGrowattModbusReg_t{
-      1040,        0,    SIZE_16BIT, F("BatteryTemperature"), 1, 1,
-      TEMPERATURE, true, true};  // #41
+  Protocol.InputRegisters[P124_BATTERY_TEMPERATURE] =
+      sGrowattModbusReg_t{1040,
+                          0,
+                          SIZE_16BIT,
+                          F("BatteryTemperature"),
+                          TEMPERATURE_WORKAROUND_MULTIPLIER,
+                          TEMPERATURE_WORKAROUND_MULTIPLIER,
+                          TEMPERATURE,
+                          true,
+                          true};  // #41
   Protocol.InputRegisters[P124_BATTERY_STATE] = sGrowattModbusReg_t{
       1041, 0, SIZE_16BIT, F("BatteryState"), 1, 1, NONE, true, false};  // #42
 
