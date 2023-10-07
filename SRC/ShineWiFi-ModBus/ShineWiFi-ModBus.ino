@@ -339,10 +339,12 @@ void setup()
     #endif
 
     httpServer.on("/status", sendJsonSite);
-    httpServer.on("/uistatus", sendUiJsonSite);
-    httpServer.on("/StartAp", StartConfigAccessPoint);
+    httpServer.on("/uiStatus", sendUiJsonSite);
+    httpServer.on("/startAp", StartConfigAccessPoint);
+    #if ENABLE_MODBUS_COMMUNICATION == 1 
     httpServer.on("/postCommunicationModbus", SendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
+    #endif 
     httpServer.on("/", MainPage);
     #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", SendDebug);

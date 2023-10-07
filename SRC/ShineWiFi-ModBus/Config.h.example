@@ -16,6 +16,9 @@
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
 
+// Enable direct modbus read/write support via the WebGUI. Enabling this is a potential security issue.
+#define ENABLE_MODBUS_COMMUNICATION 1
+
 // Setting this define to 1 will ping the default gateway periodically
 // if the ping is not successful, the wifi connection will be reestablished
 #define PINGER_SUPPORTED 0
