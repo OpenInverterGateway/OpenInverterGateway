@@ -7,7 +7,8 @@
 
 // Define used modbus version used by your invertor here. Currently
 // only 120 (v1.20), 124 (v1.24) and 305 (v3.05) versions are supported.
-// Also SPF5000ES (Probably SPF3000ES too) coded as 5000 supported.
+// Also inverter specific protocols SPF-XXXX-ES (SPF) and TL(3)-X-H (TLXH) 
+// are supported as well. 
 // New protocols can be easily defined by adding new Growatt<version>.cpp/h
 // files and then specifying the protocol there. See existing procol files
 // for reference.
