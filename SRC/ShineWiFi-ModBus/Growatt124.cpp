@@ -32,9 +32,9 @@ std::tuple<bool, String> getDateTime(const DynamicJsonDocument& req,
 #endif
 
   if (success) {
-    char buf[20];
-    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour,
-            minute, second);
+    char buf[30];
+    snprintf(buf, sizeof(buf), "%04hu-%02hu-%02hu %02hu:%02hu:%02hu", year,
+             month, day, hour, minute, second);
     res["value"] = buf;
     return std::make_tuple(true, "Successfully read date/time");
   } else {
@@ -84,8 +84,9 @@ std::tuple<String, String> getTimeSlot(uint16_t start, uint16_t stop) {
   int stop_minutes = stop & 0xFF;
   char start_str[8];
   char stop_str[8];
-  sprintf(start_str, "%02d:%02d", start_hours, start_minutes);
-  sprintf(stop_str, "%02d:%02d", stop_hours, stop_minutes);
+  snprintf(start_str, sizeof(start_str), "%02d:%02d", start_hours,
+           start_minutes);
+  snprintf(stop_str, sizeof(stop_str), "%02d:%02d", stop_hours, stop_minutes);
   return std::make_tuple(String(start_str), String(stop_str));
 }
 
