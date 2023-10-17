@@ -54,11 +54,11 @@ See the short descriptions to the devices (including some pictures) in the "Doc"
 ## Supported Inverters
 * Growatt 1000-3000S 
 * Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
-* Growatt MID 3-25ktl3-x (Protocol 124 via USB)
-* Growatt MOD 3-15ktl3-x-xh (Protocol 120 via USB)
+* Growatt MID 3-25KTL3-X (Protocol 124 via USB)
+* Growatt MOD 3-15KTL3-X-H (Protocol 120 via USB)
 * Growatt MOD 12KTL3-X (Protocol 124 via USB)
-* Growatt MID 25-40ktl3-x (Protocol 120 via USB)
-* Growatt SPH 4000-10000ktl3-x BH (Protocol 124 via Serial)
+* Growatt MID 25-40KTL3-X (Protocol 120 via USB)
+* Growatt SPH 4000-10000STL3-X BH (Protocol 124 via Serial)
 * And others ....
 
 ## Modbus Protocol Versions
