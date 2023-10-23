@@ -448,12 +448,12 @@ void SendDebug(void) {
 
 void MainPage(void)
 {
-    httpServer.send(200, "text/html", MAIN_page);
+    httpServer.send(200, "text/html", FILE_INDEX_HTML);
 }
 
 void SendPostSite(void)
 {
-    httpServer.send(200, "text/html", SendPostSite_page);
+    httpServer.send(200, "text/html", FILE_POST_HTML);
 }
 
 void handlePostData()

@@ -13,3 +13,4 @@ SRC/ShineWiFi-ModBus/Config.h
 # VisualStudioCode
 .vscode/*
 *.code-workspace
+node_modules
