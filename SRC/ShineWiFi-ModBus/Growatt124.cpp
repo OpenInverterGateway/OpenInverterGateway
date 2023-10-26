@@ -346,6 +346,42 @@ std::tuple<bool, String> setGridFirstTimeSlot(const JsonDocument& req,
   return setTimeSlot(req, res, inverter, 1080);
 }
 
+std::tuple<bool, String> setActiveRate(const JsonDocument& req,
+                                       JsonDocument& res, Growatt& inverter) {
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+  auto value = req["value"].as<uint16_t>();
+
+  if (!((value >= 0 && value <= 100) || value == 255)) {
+    return std::make_tuple(false, "'value' field not in range");
+  }
+
+#if SIMULATE_INVERTER != 1
+  if (!inverter.WriteHoldingReg(3, value)) {
+    return std::make_tuple(false, "Failed to write active rate");
+  }
+#endif
+
+  return std::make_tuple(true, "success");
+}
+
+std::tuple<bool, String> getActiveRate(const JsonDocument& req,
+                                       JsonDocument& res, Growatt& inverter) {
+  uint16_t value;
+
+#if SIMULATE_INVERTER != 1
+  if (!inverter.ReadHoldingReg(3, &value)) {
+    return std::make_tuple(false, "Failed to write active rate");
+  }
+#endif
+
+  res["value"] = value;
+
+  return std::make_tuple(true, "success");
+}
+
 #ifndef TEMPERATURE_WORKAROUND_MULTIPLIER
 #define TEMPERATURE_WORKAROUND_MULTIPLIER 0.1
 #endif
@@ -566,4 +602,6 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   inverter.RegisterCommand("gridfirst/set/powerrate", setGridFirstPowerRate);
   inverter.RegisterCommand("gridfirst/set/stopsoc", setGridFirstStopSOC);
   inverter.RegisterCommand("gridfirst/set/timeslot", setGridFirstTimeSlot);
+  inverter.RegisterCommand("power/set/activeRate", setActiveRate);
+  inverter.RegisterCommand("power/get/activeRate", getActiveRate);
 }
