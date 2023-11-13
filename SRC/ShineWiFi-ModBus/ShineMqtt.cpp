@@ -91,11 +91,17 @@ bool ShineMqtt::mqttReconnect() {
   return false;
 }
 
-boolean ShineMqtt::mqttPublish(const String& JsonString) {
+boolean ShineMqtt::mqttPublish(const String& jsonString) {
+  if (jsonString.length() >= BUFFER_SIZE) {
+    Log.println(F("MQTT message to long for buffer"));
+
+    return false;
+  }
+
   Log.print(F("publish MQTT message... "));
   if (this->mqttclient.connected()) {
     bool res = this->mqttclient.publish(this->mqttconfig.mqtttopic.c_str(),
-                                        JsonString.c_str(), true);
+                                        jsonString.c_str(), true);
     Log.println(res ? "succeed" : "failed");
 
     return res;
@@ -106,11 +112,16 @@ boolean ShineMqtt::mqttPublish(const String& JsonString) {
   }
 }
 
-boolean ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
+boolean ShineMqtt::mqttPublish(JsonDocument& doc, String topic) {
   Log.print(F("publish MQTT message... "));
+
+  if (topic.isEmpty()) {
+    topic = this->mqttconfig.mqtttopic;
+  }
+
   if (this->mqttclient.connected()) {
-    bool res = this->mqttclient.beginPublish(this->mqttconfig.mqtttopic.c_str(),
-                                             measureJson(doc), true);
+    bool res =
+        this->mqttclient.beginPublish(topic.c_str(), measureJson(doc), true);
     BufferingPrint bufferedClient(this->mqttclient, BUFFER_SIZE);
     serializeJson(doc, this->mqttclient);
     bufferedClient.flush();
@@ -128,6 +139,7 @@ boolean ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
 
 void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   String strTopic(topic);
+  ShineJsonDocument doc;
 
   Log.print(F("MQTT message arrived ["));
   Log.print(strTopic);
@@ -138,9 +150,8 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   if (command.isEmpty()) {
     return;
   }
-  String response = this->inverter.HandleCommand(command, payload, length);
-  this->mqttclient.publish((this->mqttconfig.mqtttopic + "/result").c_str(),
-                           response.c_str());
+  this->inverter.HandleCommand(command, payload, length, doc);
+  mqttPublish(doc, this->mqttconfig.mqtttopic + "/result");
 }
 
 void ShineMqtt::updateMqttLed() {

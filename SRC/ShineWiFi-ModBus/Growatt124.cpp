@@ -4,8 +4,7 @@
 #include "Growatt.h"
 #include "Growatt124.h"
 
-std::tuple<bool, String> getDateTime(const DynamicJsonDocument& req,
-                                     DynamicJsonDocument& res,
+std::tuple<bool, String> getDateTime(const JsonDocument& req, JsonDocument& res,
                                      Growatt& inverter) {
   String respStr;
   uint16_t year, month, day, hour, minute, second;
@@ -42,9 +41,8 @@ std::tuple<bool, String> getDateTime(const DynamicJsonDocument& req,
   }
 };
 
-std::tuple<bool, String> updateDateTime(const DynamicJsonDocument& req,
-                                        DynamicJsonDocument& res,
-                                        Growatt& inverter) {
+std::tuple<bool, String> updateDateTime(const JsonDocument& req,
+                                        JsonDocument& res, Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -90,9 +88,8 @@ std::tuple<String, String> getTimeSlot(uint16_t start, uint16_t stop) {
   return std::make_tuple(String(start_str), String(stop_str));
 }
 
-std::tuple<bool, String> getBatteryFirst(const DynamicJsonDocument& req,
-                                         DynamicJsonDocument& res,
-                                         Growatt& inverter) {
+std::tuple<bool, String> getBatteryFirst(const JsonDocument& req,
+                                         JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   uint16_t settings[3];
   if (!inverter.ReadHoldingRegFrag(1090, 3, settings)) {
@@ -143,9 +140,9 @@ std::tuple<bool, String> getBatteryFirst(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setBatteryFirstPowerRate(
-    const DynamicJsonDocument& req, DynamicJsonDocument& res,
-    Growatt& inverter) {
+std::tuple<bool, String> setBatteryFirstPowerRate(const JsonDocument& req,
+                                                  JsonDocument& res,
+                                                  Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -160,8 +157,8 @@ std::tuple<bool, String> setBatteryFirstPowerRate(
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setBatteryFirstStopSOC(const DynamicJsonDocument& req,
-                                                DynamicJsonDocument& res,
+std::tuple<bool, String> setBatteryFirstStopSOC(const JsonDocument& req,
+                                                JsonDocument& res,
                                                 Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
@@ -177,9 +174,9 @@ std::tuple<bool, String> setBatteryFirstStopSOC(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setBatteryFirstACChargeEnabled(
-    const DynamicJsonDocument& req, DynamicJsonDocument& res,
-    Growatt& inverter) {
+std::tuple<bool, String> setBatteryFirstACChargeEnabled(const JsonDocument& req,
+                                                        JsonDocument& res,
+                                                        Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -195,8 +192,7 @@ std::tuple<bool, String> setBatteryFirstACChargeEnabled(
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setTimeSlot(const DynamicJsonDocument& req,
-                                     DynamicJsonDocument& res,
+std::tuple<bool, String> setTimeSlot(const JsonDocument& req, JsonDocument& res,
                                      Growatt& inverter, uint16_t startReg) {
   if (!req.containsKey("start")) {
     return std::make_tuple(false, "'start' field is required");
@@ -255,15 +251,14 @@ std::tuple<bool, String> setTimeSlot(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setBatteryFirstTimeSlot(const DynamicJsonDocument& req,
-                                                 DynamicJsonDocument& res,
+std::tuple<bool, String> setBatteryFirstTimeSlot(const JsonDocument& req,
+                                                 JsonDocument& res,
                                                  Growatt& inverter) {
   return setTimeSlot(req, res, inverter, 1100);
 }
 
-std::tuple<bool, String> getGridFirst(const DynamicJsonDocument& req,
-                                      DynamicJsonDocument& res,
-                                      Growatt& inverter) {
+std::tuple<bool, String> getGridFirst(const JsonDocument& req,
+                                      JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   uint16_t settings[3];
   if (!inverter.ReadHoldingRegFrag(1070, 2, settings)) {
@@ -311,8 +306,8 @@ std::tuple<bool, String> getGridFirst(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setGridFirstPowerRate(const DynamicJsonDocument& req,
-                                               DynamicJsonDocument& res,
+std::tuple<bool, String> setGridFirstPowerRate(const JsonDocument& req,
+                                               JsonDocument& res,
                                                Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
@@ -328,8 +323,8 @@ std::tuple<bool, String> setGridFirstPowerRate(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setGridFirstStopSOC(const DynamicJsonDocument& req,
-                                             DynamicJsonDocument& res,
+std::tuple<bool, String> setGridFirstStopSOC(const JsonDocument& req,
+                                             JsonDocument& res,
                                              Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
@@ -345,8 +340,8 @@ std::tuple<bool, String> setGridFirstStopSOC(const DynamicJsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setGridFirstTimeSlot(const DynamicJsonDocument& req,
-                                              DynamicJsonDocument& res,
+std::tuple<bool, String> setGridFirstTimeSlot(const JsonDocument& req,
+                                              JsonDocument& res,
                                               Growatt& inverter) {
   return setTimeSlot(req, res, inverter, 1080);
 }
