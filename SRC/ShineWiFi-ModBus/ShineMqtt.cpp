@@ -128,19 +128,17 @@ boolean ShineMqtt::mqttPublish(ShineJsonDocument& doc) {
 
 void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   String strTopic(topic);
-  String strPayload(reinterpret_cast<char*>(payload));
 
   Log.print(F("MQTT message arrived ["));
   Log.print(strTopic);
   Log.print(F("] "));
-  Log.println(strPayload);
 
   String command = strTopic.substring(
       String(this->mqttconfig.mqtttopic + "/command/").length());
   if (command.isEmpty()) {
     return;
   }
-  String response = this->inverter.HandleCommand(command, strPayload);
+  String response = this->inverter.HandleCommand(command, payload, length);
   this->mqttclient.publish((this->mqttconfig.mqtttopic + "/result").c_str(),
                            response.c_str());
 }

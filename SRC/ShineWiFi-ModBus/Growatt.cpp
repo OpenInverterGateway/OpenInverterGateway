@@ -571,11 +571,11 @@ void Growatt::RegisterCommand(const String& command,
   handlers[command] = handler;
 }
 
-String Growatt::HandleCommand(const String& command, const String& request) {
+String Growatt::HandleCommand(const String& command, const byte* payload, const unsigned int length) {
   String correlationId = "";
   DynamicJsonDocument req(1024);
   DynamicJsonDocument res(1024);
-  DeserializationError deserializationErr = deserializeJson(req, request);
+  DeserializationError deserializationErr = deserializeJson(req, payload, length);
   bool success;
   String message;
   if (deserializationErr) {
@@ -586,7 +586,7 @@ String Growatt::HandleCommand(const String& command, const String& request) {
         "Failed to parse JSON request: " + String(deserializationErr.c_str());
   } else {
     if (req.containsKey("correlationId")) {
-      res["correlationId"] = req["correlationId"].as<String>();
+      res["correlationId"] = String(req["correlationId"].as<String>());
     }
 
     auto it = handlers.find(command.c_str());

@@ -14,7 +14,7 @@ class Growatt {
   void begin(Stream& serial);
   void InitProtocol();
   void RegisterCommand(const String& command, CommandHandlerFunc handler);
-  String HandleCommand(const String& command, const String& request);
+  String HandleCommand(const String& command, const byte* payload, const unsigned int length);
 
   bool ReadInputRegisters();
   bool ReadHoldingRegisters();
