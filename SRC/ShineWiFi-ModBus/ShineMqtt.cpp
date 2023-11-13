@@ -138,8 +138,9 @@ boolean ShineMqtt::mqttPublish(JsonDocument& doc, String topic) {
 }
 
 void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
+  StaticJsonDocument<1024> req;
+  StaticJsonDocument<1024> res;
   String strTopic(topic);
-  ShineJsonDocument doc;
 
   Log.print(F("MQTT message arrived ["));
   Log.print(strTopic);
@@ -150,8 +151,9 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   if (command.isEmpty()) {
     return;
   }
-  this->inverter.HandleCommand(command, payload, length, doc);
-  mqttPublish(doc, this->mqttconfig.mqtttopic + "/result");
+
+  this->inverter.HandleCommand(command, payload, length, req, res);
+  mqttPublish(req, this->mqttconfig.mqtttopic + "/result");
 }
 
 void ShineMqtt::updateMqttLed() {

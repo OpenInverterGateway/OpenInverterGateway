@@ -572,9 +572,9 @@ void Growatt::RegisterCommand(const String& command,
 }
 
 void Growatt::HandleCommand(const String& command, const byte* payload,
-                            const unsigned int length, JsonDocument& res) {
+                            const unsigned int length, JsonDocument& req,
+                            JsonDocument& res) {
   String correlationId = "";
-  DynamicJsonDocument req(1024);
   DeserializationError deserializationErr =
       deserializeJson(req, payload, length);
 
