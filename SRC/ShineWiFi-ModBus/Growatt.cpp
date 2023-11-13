@@ -31,25 +31,25 @@ Growatt::Growatt() {
   handlers = std::map<String, CommandHandlerFunc>();
 
   // register default handlers
-  RegisterCommand("echo", [this](const DynamicJsonDocument& req,
-                                 DynamicJsonDocument& res, Growatt& inverter) {
+  RegisterCommand("echo", [this](const JsonDocument& req, JsonDocument& res,
+                                 Growatt& inverter) {
     return handleEcho(req, res, *this);
   });
 
-  RegisterCommand("list", [this](const DynamicJsonDocument& req,
-                                 DynamicJsonDocument& res, Growatt& inverter) {
+  RegisterCommand("list", [this](const JsonDocument& req, JsonDocument& res,
+                                 Growatt& inverter) {
     return handleCommandList(req, res, *this);
   });
 
-  RegisterCommand(
-      "modbus/get",
-      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
-             Growatt& inverter) { return handleModbusGet(req, res, *this); });
+  RegisterCommand("modbus/get", [this](const JsonDocument& req,
+                                       JsonDocument& res, Growatt& inverter) {
+    return handleModbusGet(req, res, *this);
+  });
 
-  RegisterCommand(
-      "modbus/set",
-      [this](const DynamicJsonDocument& req, DynamicJsonDocument& res,
-             Growatt& inverter) { return handleModbusSet(req, res, *this); });
+  RegisterCommand("modbus/set", [this](const JsonDocument& req,
+                                       JsonDocument& res, Growatt& inverter) {
+    return handleModbusSet(req, res, *this);
+  });
 }
 
 void Growatt::InitProtocol() {
@@ -571,11 +571,13 @@ void Growatt::RegisterCommand(const String& command,
   handlers[command] = handler;
 }
 
-String Growatt::HandleCommand(const String& command, const byte* payload, const unsigned int length) {
+void Growatt::HandleCommand(const String& command, const byte* payload,
+                            const unsigned int length, JsonDocument& res) {
   String correlationId = "";
   DynamicJsonDocument req(1024);
-  DynamicJsonDocument res(1024);
-  DeserializationError deserializationErr = deserializeJson(req, payload, length);
+  DeserializationError deserializationErr =
+      deserializeJson(req, payload, length);
+
   bool success;
   String message;
   if (deserializationErr) {
@@ -603,14 +605,10 @@ String Growatt::HandleCommand(const String& command, const byte* payload, const 
   res["command"] = command;
   res["success"] = success;
   res["message"] = message;
-
-  String responseJson;
-  serializeJson(res, responseJson);
-  return responseJson;
 }
 
-std::tuple<bool, String> Growatt::handleEcho(const DynamicJsonDocument& req,
-                                             DynamicJsonDocument& res,
+std::tuple<bool, String> Growatt::handleEcho(const JsonDocument& req,
+                                             JsonDocument& res,
                                              Growatt& inverter) {
   if (!req.containsKey("text")) {
     return std::make_tuple(false, "'text' field is required");
@@ -620,9 +618,9 @@ std::tuple<bool, String> Growatt::handleEcho(const DynamicJsonDocument& req,
   return std::make_tuple(true, "");
 }
 
-std::tuple<bool, String> Growatt::handleCommandList(
-    const DynamicJsonDocument& req, DynamicJsonDocument& res,
-    Growatt& inverter) {
+std::tuple<bool, String> Growatt::handleCommandList(const JsonDocument& req,
+                                                    JsonDocument& res,
+                                                    Growatt& inverter) {
   JsonArray commands = res.createNestedArray("commands");
   for (auto it = handlers.begin(); it != handlers.end(); ++it) {
     commands.add(it->first);
@@ -630,9 +628,9 @@ std::tuple<bool, String> Growatt::handleCommandList(
   return std::make_tuple(true, "");
 }
 
-std::tuple<bool, String> Growatt::handleModbusGet(
-    const DynamicJsonDocument& req, DynamicJsonDocument& res,
-    Growatt& inverter) {
+std::tuple<bool, String> Growatt::handleModbusGet(const JsonDocument& req,
+                                                  JsonDocument& res,
+                                                  Growatt& inverter) {
   if (!req.containsKey("id")) {
     return std::make_tuple(false, "'id' field is required");
   }
@@ -699,9 +697,9 @@ std::tuple<bool, String> Growatt::handleModbusGet(
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> Growatt::handleModbusSet(
-    const DynamicJsonDocument& req, DynamicJsonDocument& res,
-    Growatt& inverter) {
+std::tuple<bool, String> Growatt::handleModbusSet(const JsonDocument& req,
+                                                  JsonDocument& res,
+                                                  Growatt& inverter) {
   if (!req.containsKey("id")) {
     return std::make_tuple(false, "'id' field is required");
   }

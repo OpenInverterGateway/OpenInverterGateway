@@ -8,14 +8,13 @@ class Growatt {
   Growatt();
   sProtocolDefinition_t _Protocol;
   using CommandHandlerFunc = std::function<std::tuple<bool, String>(
-      const DynamicJsonDocument& req, DynamicJsonDocument& res,
-      Growatt& inverter)>;
+      const JsonDocument& req, JsonDocument& res, Growatt& inverter)>;
 
   void begin(Stream& serial);
   void InitProtocol();
   void RegisterCommand(const String& command, CommandHandlerFunc handler);
-  String HandleCommand(const String& command, const byte* payload, const unsigned int length);
-
+  void HandleCommand(const String& command, const byte* payload,
+                     const unsigned int length, JsonDocument& res);
   bool ReadInputRegisters();
   bool ReadHoldingRegisters();
   bool ReadData();
@@ -42,16 +41,15 @@ class Growatt {
   eDevice_t _InitModbusCommunication();
   double roundByResolution(const double& value, const float& resolution);
   void JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument& doc);
-  std::tuple<bool, String> handleEcho(const DynamicJsonDocument& req,
-                                      DynamicJsonDocument& res,
-                                      Growatt& inverter);
-  std::tuple<bool, String> handleCommandList(const DynamicJsonDocument& req,
-                                             DynamicJsonDocument& res,
+  std::tuple<bool, String> handleEcho(const JsonDocument& req,
+                                      JsonDocument& res, Growatt& inverter);
+  std::tuple<bool, String> handleCommandList(const JsonDocument& req,
+                                             JsonDocument& res,
                                              Growatt& inverter);
-  std::tuple<bool, String> handleModbusGet(const DynamicJsonDocument& req,
-                                           DynamicJsonDocument& res,
+  std::tuple<bool, String> handleModbusGet(const JsonDocument& req,
+                                           JsonDocument& res,
                                            Growatt& inverter);
-  std::tuple<bool, String> handleModbusSet(const DynamicJsonDocument& req,
-                                           DynamicJsonDocument& res,
+  std::tuple<bool, String> handleModbusSet(const JsonDocument& req,
+                                           JsonDocument& res,
                                            Growatt& inverter);
 };
