@@ -14,7 +14,8 @@ class Growatt {
   void InitProtocol();
   void RegisterCommand(const String& command, CommandHandlerFunc handler);
   void HandleCommand(const String& command, const byte* payload,
-                     const unsigned int length, JsonDocument& res);
+                     const unsigned int length, JsonDocument& req,
+                     JsonDocument& res);
   bool ReadInputRegisters();
   bool ReadHoldingRegisters();
   bool ReadData();
