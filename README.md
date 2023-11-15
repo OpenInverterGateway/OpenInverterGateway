@@ -9,9 +9,8 @@ Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or cust
 Or
 
 * Checkout this repo
-* Setup the IDE of your choice
-    * **Recommended:** For platformio just open the project folder and choose the correct env for your hardware
-    * For the original Arduino IDE follow the instruction in the main ino [file](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/ShineWiFi-ModBus.ino) (esp8266 only)
+* Setup platform.io of your choice
+* Open the project folder and choose the correct env for your hardware
 * Rename and adapt [Config.h.example](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/Config.h.example) to Config.h with your compile time settings
 
 After you obtained an image you want to flash:
