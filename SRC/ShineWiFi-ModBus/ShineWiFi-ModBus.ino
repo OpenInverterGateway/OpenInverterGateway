@@ -1,29 +1,3 @@
-/*
-
-Add ESP8266 compiler to arduino IDE
-  - In your Arduino IDE, go to File -> Preferences
-  - Enter http://arduino.esp8266.com/stable/package_esp8266com_index.json into the "Additional Boards Manager URLs"
-
-Used Libs
-  - WiFiManager         by tzapu                  https://github.com/tzapu/WiFiManager
-  - PubSubClient        by Nick O´Leary           https://github.com/knolleary/pubsubclient
-  - DoubleResetDetector by Khai Hoang             https://github.com/khoih-prog/ESP_DoubleResetDetector
-  - ModbusMaster        by Doc Walker             https://github.com/4-20ma/ModbusMaster
-  - ArduinoJson         by Benoit Blanchon        https://github.com/bblanchon/ArduinoJson
-  - Preferences         by vshymanskyy            https://github.com/vshymanskyy/Preferences
-  - TeeLog              by Dirk-Willem van Gulik  https://github.com/dirkx/tee-log.git
-
-To install the used libraries, use the embedded library manager (Sketch -> Include Library -> Manage Libraries),
-or download them from github (Sketch -> Include Library -> Add .ZIP Library)
-
-Thanks to Jethro Kairys
-https://github.com/jkairys/growatt-esp8266
-
-File -> "Show verbose output during:" "compilation".
-This will show the path to the binary during compilation
-e.g. C:\Users\<username>\AppData\Local\Temp\arduino_build_533155
-*/
-
 #include "Config.h"
 #ifndef _SHINE_CONFIG_H_
 #error Please rename Config.h.example to Config.h
