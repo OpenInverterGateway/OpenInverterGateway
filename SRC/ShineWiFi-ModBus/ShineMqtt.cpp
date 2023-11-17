@@ -153,7 +153,7 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
   }
 
   this->inverter.HandleCommand(command, payload, length, req, res);
-  mqttPublish(req, this->mqttconfig.mqtttopic + "/result");
+  mqttPublish(res, this->mqttconfig.mqtttopic + "/result");
 }
 
 void ShineMqtt::updateMqttLed() {
