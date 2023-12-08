@@ -210,3 +210,16 @@ mqtt:
       state_topic: "energy/solar"
       value_template: "{{ value_json.Temperature }}"
 ```
+## Direct Access
+
+Using mosquitto_sub/mosquitto_pub directly from the cli.
+
+Subscribe to mqtt events from the stick:
+
+    mosquitto_sub -h <ip> -u <mqttuser> -P <mqttpw> -t "energytest/" -v
+
+Get battery first state:
+
+    mosquitto_pub -h <ip> -u <mqttuser> -P <mqttpw> -m "{\"correlationId\": \"ha-batteryfirst-get\"}" -t energytest/solar/command/batteryfirst/get
+
+ 
