@@ -575,7 +575,9 @@ void loop()
         digitalWrite(LED_BL, 1);
         httpServer.stop();
         Log.println(F("Config after boot started"));
+        #ifndef KEEP_AP_CONFIG_CONNECTION
         ShineWifiDisconnect();
+        #endif
         
         wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
         wm.startConfigPortal("GrowattConfig", APPassword);
