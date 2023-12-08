@@ -135,7 +135,7 @@ void InverterReconnect(void)
 void loadConfig(MqttConfig* config);
 void saveConfig(MqttConfig* config);
 void saveParamCallback();
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig);
+void setupMqttWifiManagerMenu(MqttConfig &mqttConfig);
 
 void loadConfig(MqttConfig* config)
 {
@@ -273,7 +273,7 @@ void setup()
 
     #if MQTT_SUPPORTED == 1
         MqttConfig mqttConfig;
-        SetupMqttWifiManagerMenu(mqttConfig);
+        setupMqttWifiManagerMenu(mqttConfig);
     #else
         setupMenu(false);    
     #endif
@@ -314,14 +314,14 @@ void setup()
 
     httpServer.on("/status", sendJsonSite);
     httpServer.on("/uiStatus", sendUiJsonSite);
-    httpServer.on("/startAp", StartConfigAccessPoint);
+    httpServer.on("/startAp", startConfigAccessPoint);
     #if ENABLE_MODBUS_COMMUNICATION == 1 
-    httpServer.on("/postCommunicationModbus", SendPostSite);
+    httpServer.on("/postCommunicationModbus", sendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     #endif 
-    httpServer.on("/", MainPage);
+    httpServer.on("/", sendMainPage);
     #ifdef ENABLE_WEB_DEBUG
-        httpServer.on("/debug", SendDebug);
+        httpServer.on("/debug", sendDebug);
     #endif
 
     Inverter.InitProtocol();
@@ -330,7 +330,7 @@ void setup()
 }
 
 #if MQTT_SUPPORTED == 1
-void SetupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
+void setupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
     loadConfig(&mqttConfig);
 
     custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttConfig.mqttserver.c_str(), 40);
@@ -403,7 +403,7 @@ boolean sendMqttJson(void)
 }
 #endif
 
-void StartConfigAccessPoint(void)
+void startConfigAccessPoint(void)
 {
     char msg[384];
 
@@ -414,18 +414,18 @@ void StartConfigAccessPoint(void)
 }
 
 #ifdef ENABLE_WEB_DEBUG
-void SendDebug(void) {
+void sendDebug(void) {
     httpServer.sendHeader("Location", "http://" + WiFi.localIP().toString() + ":8080/", true);
     httpServer.send(302, "text/plain", "");
 }
 #endif
 
-void MainPage(void)
+void sendMainPage(void)
 {
     httpServer.send(200, "text/html", MAIN_page);
 }
 
-void SendPostSite(void)
+void sendPostSite(void)
 {
     httpServer.send(200, "text/html", SendPostSite_page);
 }
