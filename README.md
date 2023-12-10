@@ -9,7 +9,7 @@ Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or cust
 Or
 
 * Checkout this repo
-* Setup platform.io of your choice
+* Setup platform.io
 * Open the project folder and choose the correct env for your hardware
 * Rename and adapt [Config.h.example](https://github.com/otti/Growatt_ShineWiFi-S/blob/master/SRC/ShineWiFi-ModBus/Config.h.example) to Config.h with your compile time settings
 
