@@ -26,7 +26,7 @@ Implemented Features:
 * The data received will be transmitted by MQTT to a server of your choice.
 * The data received is also provided as JSON
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
-* It supports convenient OTA firmware update (`http://<ip>/firmware`)
+* Firmware update via wifiManager
 * It supports basic access to arbitrary modbus data
 * It tries to autodected which stick type to use
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
@@ -37,6 +37,7 @@ Implemented Features:
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards.
 * It does not communicate to Growatt Cloud at all.
+* The ShineWifi-LAN stick is not supported. But there is another project for  [this](https://github.com/mwalle/shinelanx-modbus)
 
 ## Supported sticks/microcontrollers
 * ShineWifi-S with a Growatt Inverter connected via serial (Modbus over RS232 with level shifter)
