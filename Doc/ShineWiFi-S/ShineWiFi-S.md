@@ -64,10 +64,10 @@ Connect your USB-to-Serial module to the pinheader and power. Note that Rx and T
 
 **Boards after 2022-08**
 
-New Wifi-S sticks with something looking like rev.number 530.0046400 (after 2022-08) have different behaviour (see [issue 123](https://github.com/otti/Growatt_ShineWiFi-S/issues/123) ):
+New Wifi-S sticks with something looking like rev.number 530.0046400 (after 2022-08) have different behaviour (see [issue 123](https://github.com/OpenInverterGateway/OpenInverterGateway/issues/123) ):
 You have to keep GPIO0 to GND connected for the whole process, not just boot (Green LED is off). Also, you need to connect TX-TX and RX-RX directly (no cross!).
 
-If you don't have USB serial adapter, the ones that are proven to work are based on FTDI (e.g. FT232RL 3.3v-5v) or based on CP2102. From [Issue 13. What kind of USB-to-serial cable to use for flashing?](https://github.com/otti/Growatt_ShineWiFi-S/issues/123) 
+If you don't have USB serial adapter, the ones that are proven to work are based on FTDI (e.g. FT232RL 3.3v-5v) or based on CP2102. From [Issue 13. What kind of USB-to-serial cable to use for flashing?](https://github.com/OpenInverterGateway/OpenInverterGateway/issues/123) 
 
 After you have checked that adapter works with your computer, disconnect it. Connect the board to adapter as described above, then connect adapter to USB (so the board powers up at the same time). 
 
