@@ -45,6 +45,7 @@ Not supported:
 * NODEMCU V1 (ESP8266) with a Growatt Inverter connected via USB (USB-Serial Chip: CH340)
 * ShineWifi-T (untested, please give feedback)
 * Lolin32 (ESP32) with a Growatt Inverter connected via USB
+* The ShineWifi-LAN stick is not supported ([details](https://github.com/mwalle/shinelanx-modbus))
 
 I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). Almost all ESP8266 modules with added 9-Pin Serial port and level shifter should work with little soldering via Serial.
 
