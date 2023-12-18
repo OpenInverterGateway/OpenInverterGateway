@@ -381,9 +381,9 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
       9,       0,     SIZE_32BIT, F("PV2InputPower"), 0.1, 0.1,
       POWER_W, false, false};  // #8
 
-  Protocol.InputRegisters[P124_PAC] =
-      sGrowattModbusReg_t{35,      0,    SIZE_32BIT, F("OutputPower"), 0.1, 0.1,
-                          POWER_W, true, true};  // #9
+  Protocol.InputRegisters[P124_PAC] = sGrowattModbusReg_t{
+      35,      0,    SIZE_32BIT_S, F("OutputPower"), 0.1, 0.1,
+      POWER_W, true, true};  // #9
   Protocol.InputRegisters[P124_FAC] = sGrowattModbusReg_t{
       37,        0,     SIZE_16BIT, F("GridFrequency"), 0.01, 0.01,
       FREQUENCY, false, false};  // #10
