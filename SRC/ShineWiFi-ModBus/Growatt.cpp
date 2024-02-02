@@ -17,6 +17,8 @@
 #include "Growatt305.h"
 #elif GROWATT_MODBUS_VERSION == 5000
 #include "GrowattSPF.h"
+#elif GROWATT_MODBUS_VERSION == 6000
+#include "GrowattBP.h"
 #else
 #error "Unsupported Growatt Modbus version"
 #endif
@@ -65,6 +67,8 @@ void Growatt::InitProtocol() {
   init_growatt305(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 5000
   init_growattSPF(_Protocol, *this);
+#elif GROWATT_MODBUS_VERSION == 6000
+  init_growattBP(_Protocol, *this);
 #else
 #error "Unsupported Growatt Modbus version"
 #endif
