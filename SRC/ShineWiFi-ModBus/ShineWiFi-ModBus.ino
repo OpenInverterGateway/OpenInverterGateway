@@ -674,8 +674,11 @@ void loop()
 
         #if PINGER_SUPPORTED == 1
             //frequently check if gateway is reachable
-            if (pinger.Ping(GATEWAY_IP) == false)
-                WiFi.disconnect();
+            if (pinger.Ping(GATEWAY_IP) == false) {
+                digitalWrite(LED_RT, 1);
+                delay(3000);
+                ESP.restart();
+            }
         #endif
 
         RefreshTimer = now;
