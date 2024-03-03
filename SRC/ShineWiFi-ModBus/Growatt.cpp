@@ -404,8 +404,8 @@ double Growatt::roundByResolution(const double& value,
   return int32_t(value * res + 0.5) / res;
 }
 
-void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument& doc) {
-  auto name = reg->name;
+double Growatt::getRegValue(sGrowattModbusReg_t* reg) {
+  double result = 0;
   RegisterSize_t size = reg->size;
   const float& mult = reg->multiplier;
   const uint32_t& value = reg->value;
@@ -413,29 +413,32 @@ void Growatt::JSONAddReg(sGrowattModbusReg_t* reg, JsonDocument& doc) {
 
   switch (size) {
     case SIZE_16BIT_S:
-      doc[name] = (mult == (int)mult)
-                      ? (int16_t)value * mult
-                      : roundByResolution((int16_t)value * mult, resolution);
+      result = (mult == (int)mult)
+                   ? (int16_t)value * mult
+                   : roundByResolution((int16_t)value * mult, resolution);
       break;
     case SIZE_32BIT_S:
-      doc[name] = (mult == (int)mult)
-                      ? (int32_t)value * mult
-                      : roundByResolution((int32_t)value * mult, resolution);
+      result = (mult == (int)mult)
+                   ? (int32_t)value * mult
+                   : roundByResolution((int32_t)value * mult, resolution);
       break;
     default:
-      doc[name] = (mult == (int)mult)
-                      ? value * mult
-                      : roundByResolution(value * mult, resolution);
+      result = (mult == (int)mult)
+                   ? value * mult
+                   : roundByResolution(value * mult, resolution);
   }
+  return result;
 }
 
 void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
-    JSONAddReg(&_Protocol.InputRegisters[i], doc);
+    doc[_Protocol.InputRegisters[i].name] =
+        getRegValue(&_Protocol.InputRegisters[i]);
 
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
-    JSONAddReg(&_Protocol.HoldingRegisters[i], doc);
+    doc[_Protocol.HoldingRegisters[i].name] =
+        getRegValue(&_Protocol.HoldingRegisters[i]);
 #else
 #warning simulating the inverter
   doc["Status"] = 1;
@@ -450,8 +453,6 @@ void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
   doc["OperatingTime"] = 123456;
   doc["Temperature"] = 21.12;
   doc["AccumulatedEnergy"] = 320;
-  doc["EnergyToday"] = 0.3;
-  doc["EnergyToday"] = 0.3;
 #endif  // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
@@ -563,11 +564,60 @@ void Growatt::CreateUIJson(ShineJsonDocument& doc) {
   arr.add(320);
   arr.add("kWh");
   arr.add(false);
-  arr = doc.createNestedArray("EnergyToday");
-  arr.add(0.3);
-  arr.add("kWh");
-  arr.add(false);
 #endif  // SIMULATE_INVERTER
+}
+
+void Growatt::camelCaseToUnderscore(String input, char* output) {
+  int outputIndex = 0;
+  for (int i = 0; input[i] != '\0'; i++) {
+    if (isUpperCase(input[i]) && isLowerCase(input[i + 1]) && i != 0) {
+      output[outputIndex++] = '_';
+    }
+    output[outputIndex++] = toLowerCase(input[i]);
+  }
+  output[outputIndex] = '\0';
+}
+
+void Growatt::metricsAddValue(String name, double value, StringStream& metrics,
+                              String MacAddress) {
+  char nameUnderscore[name.length() + 10];
+  camelCaseToUnderscore(name, nameUnderscore);
+
+  metrics.print("growatt_");
+  metrics.print(nameUnderscore);
+  metrics.print("{mac=\"");
+  metrics.print(MacAddress);
+  metrics.printf("\"} %g\n", value);
+}
+
+void Growatt::CreateMetrics(StringStream& metrics, String MacAddress) {
+#if SIMULATE_INVERTER != 1
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++)
+    metricsAddValue(_Protocol.InputRegisters[i].name,
+                    getRegValue(&_Protocol.InputRegisters[i]), metrics,
+                    MacAddress);
+
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
+    metricsAddValue(_Protocol.HoldingRegisters[i].name,
+                    getRegValue(&_Protocol.HoldingRegisters[i]), metrics,
+                    MacAddress);
+
+#else
+#warning simulating the inverter
+  metricsAddValue("Status", 1, metrics, MacAddress);
+  metricsAddValue("DcPower", 230, metrics, MacAddress);
+  metricsAddValue("DcVoltage", 70.5, metrics, MacAddress);
+  metricsAddValue("DcInputCurrent", 8.5, metrics, MacAddress);
+  metricsAddValue("AcFreq", 50.00, metrics, MacAddress);
+  metricsAddValue("AcVoltage", 230.0, metrics, MacAddress);
+  metricsAddValue("AcPower", 0.00, metrics, MacAddress);
+  metricsAddValue("EnergyToday", 0.3, metrics, MacAddress);
+  metricsAddValue("EnergyTotal", 49.1, metrics, MacAddress);
+  metricsAddValue("OperatingTime", 123456, metrics, MacAddress);
+  metricsAddValue("Temperature", 21.12, metrics, MacAddress);
+  metricsAddValue("AccumulatedEnergy", 320, metrics, MacAddress);
+#endif  // SIMULATE_INVERTER
+  metricsAddValue("Cnt", _PacketCnt, metrics, MacAddress);
 }
 
 void Growatt::RegisterCommand(const String& command,

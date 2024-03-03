@@ -314,6 +314,7 @@ void setup()
 
     httpServer.on("/status", sendJsonSite);
     httpServer.on("/uiStatus", sendUiJsonSite);
+    httpServer.on("/metrics", sendMetrics);
     httpServer.on("/startAp", startConfigAccessPoint);
     #if ENABLE_MODBUS_COMMUNICATION == 1 
     httpServer.on("/postCommunicationModbus", sendPostSite);
@@ -391,6 +392,19 @@ void sendUiJsonSite(void)
     Inverter.CreateUIJson(doc);
 
     sendJson(doc);
+}
+
+void sendMetrics(void)
+{
+    StringStream metrics;
+    Inverter.CreateMetrics(metrics, WiFi.macAddress());
+
+    httpServer.setContentLength(metrics.available());
+    httpServer.send(200, "text/plain", "");
+    WiFiClient client = httpServer.client();
+    WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
+    while (metrics.available())
+        bufferedWifiClient.write(metrics.read());
 }
 
 #if MQTT_SUPPORTED == 1
