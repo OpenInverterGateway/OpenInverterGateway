@@ -1,6 +1,7 @@
 #pragma once
 #include "Arduino.h"
 #include <ArduinoJson.h>
+#include <StreamUtils.h>
 
 #define JSON_DOCUMENT_SIZE 2048
 #define BUFFER_SIZE 256
