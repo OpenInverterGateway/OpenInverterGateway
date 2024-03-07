@@ -43,7 +43,7 @@ class Growatt {
   eDevice_t _InitModbusCommunication();
   double roundByResolution(const double& value, const float& resolution);
   double getRegValue(sGrowattModbusReg_t* reg);
-  void camelCaseToUnderscore(String input, char* output);
+  void camelCaseToSnakeCase(String input, char* output);
   void metricsAddValue(String name, double value, StringStream& metrics,
                        String MacAddress);
   std::tuple<bool, String> handleEcho(const JsonDocument& req,
