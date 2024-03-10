@@ -24,7 +24,7 @@ Implemented Features:
 * Built-in simple Webserver
 * The inverter is queried using Modbus Protocol
 * The data received will be transmitted by MQTT to a server of your choice.
-* The data received is also provided as JSON
+* The data received is also provided as JSON and Prometheus format
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
 * Firmware update via wifiManager
 * It supports basic access to arbitrary modbus data
@@ -68,9 +68,11 @@ The older inverters apparently use Protocol v3.05 from year 2013.
 The newer inverters apparently use protocol v1.05 from year 2018.
 There is also a new protocol version v1.24 from 2020. (used with SPH4-10KTL3 BH-UP inverter)
 
-
 ## JSON Format Data
 For IoT applications the raw data can now read in JSON format (application/json) by calling `http://<ip>/status`
+
+## Prometheus Format Metrics
+If you want to scrape the metrics with a Prometheus server, you can use the endpoint `http://<ip>/metrics`. A possible configuration is described [here](Doc/Prometheus.md).
 
 ## Homeassistant configuration
 
