@@ -2,11 +2,11 @@
 
 To scrape the metrics of your Growatt inverter using [Prometheus](https://prometheus.io/), it is necessary to set up a Prometheus server. If you are not familiar with this technology, please refer to the [getting started tutorial](https://prometheus.io/docs/prometheus/latest/getting_started/).
 
-A possible configuration for the `prometheus.yml` file used to scrape the metrics every second is as follows:
+A possible configuration for the `prometheus.yml` file used to scrape the metrics every 5 minutes is as follows:
 
 ```yaml
 global:
-  scrape_interval: 1m
+  scrape_interval: 5m
 
 scrape_configs:
   - job_name: 'growatt'
