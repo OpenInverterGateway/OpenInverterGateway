@@ -281,9 +281,9 @@ void setup()
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
     
-    int connect_timeout_seonds = 15;
+    int connect_timeout_seconds = 15;
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    wm.setConnectTimeout(connect_timeout_seonds);
+    wm.setConnectTimeout(connect_timeout_seconds);
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
