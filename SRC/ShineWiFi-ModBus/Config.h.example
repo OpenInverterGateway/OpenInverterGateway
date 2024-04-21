@@ -109,6 +109,6 @@
 #endif
 
 // Enabling this will make the wifiManager available on the previously configured wifi and ip.
-// This makes it possible to reconnfigure the stick without a direct WIFI connection. This is
+// This makes it possible to reconfigure the stick without a direct WIFI connection. This is
 // a security risk as anyone could now remotely update your firmware.
 // #define KEEP_AP_CONFIG_CONNECTION 1
