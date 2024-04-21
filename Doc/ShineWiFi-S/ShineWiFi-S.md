@@ -81,7 +81,7 @@ You could also use the 9-Pin serial port, if you power 8V from external and take
 Add a 1k resistor between the output of the SW1 and GPIO0. So it is possible to put the device into boot mode on start up
 
 
-Updating an installed firmware is very easy using OTA the buildin config webserver (192.168.4.1):
+Updating an installed firmware is very easy using OTA the builtin config webserver (192.168.4.1):
 Use:  http://&lt;config ip&gt;/ and click on update.
 
 
