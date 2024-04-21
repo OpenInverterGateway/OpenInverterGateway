@@ -28,7 +28,7 @@ Implemented Features:
 * Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
 * Firmware update via wifiManager
 * It supports basic access to arbitrary modbus data
-* It tries to autodected which stick type to use
+* It tries to autodetect which stick type to use
 * Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
 * Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 * TLS support for esp32
