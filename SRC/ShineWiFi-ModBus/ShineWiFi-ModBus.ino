@@ -466,22 +466,22 @@ void handlePostData()
                 {
                     if (Inverter.ReadInputReg(httpServer.arg(F("reg")).toInt(), &u16Tmp))
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b Input register %ld with value %d"), httpServer.arg("reg").toInt(), u16Tmp);
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b input register %ld with value %d"), httpServer.arg("reg").toInt(), u16Tmp);
                     }
                     else
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b Input register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b input register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
                     }
                 }
                 else
                 {
                     if (Inverter.ReadInputReg(httpServer.arg(F("reg")).toInt(), &u32Tmp))
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b Input register %ld with value %d"), httpServer.arg("reg").toInt(), u32Tmp);
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b input register %ld with value %d"), httpServer.arg("reg").toInt(), u32Tmp);
                     }
                     else
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b Input register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b input register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
                     }
                 }
             }
@@ -491,22 +491,22 @@ void handlePostData()
                 {
                     if (Inverter.ReadHoldingReg(httpServer.arg(F("reg")).toInt(), &u16Tmp))
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b Holding register %ld with value %d"), httpServer.arg("reg").toInt(), u16Tmp);
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b holding register %ld with value %d"), httpServer.arg("reg").toInt(), u16Tmp);
                     }
                     else
                     {
-                        snprintf_P(msg, sizeof(msg),PSTR("Read 16b Holding register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
+                        snprintf_P(msg, sizeof(msg),PSTR("Read 16b holding register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
                     }
                 }
                 else
                 {
                     if (Inverter.ReadHoldingReg(httpServer.arg(F("reg")).toInt(), &u32Tmp))
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b Holding register %ld with value %d"), httpServer.arg("reg").toInt(), u32Tmp);
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b holding register %ld with value %d"), httpServer.arg("reg").toInt(), u32Tmp);
                     }
                     else
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b Holding register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
+                        snprintf_P(msg, sizeof(msg), PSTR("Read 32b holding register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
                     }
                 }
             }
@@ -519,11 +519,11 @@ void handlePostData()
                 {
                     if (Inverter.WriteHoldingReg(httpServer.arg(F("reg")).toInt(), httpServer.arg(F("val")).toInt()))
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Wrote Holding Register %ld to a value of %ld!"), httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+                        snprintf_P(msg, sizeof(msg), PSTR("Wrote holding register %ld to a value of %ld!"), httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
                     }
                     else
                     {
-                        snprintf_P(msg, sizeof(msg), PSTR("Read 16b Holding register %ld impossible - not connected?"), httpServer.arg("reg").toInt());
+                        snprintf_P(msg, sizeof(msg), PSTR("Writing holding register %ld to a value of %ld failed"), httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
                     }
                 }
                 else
@@ -533,7 +533,7 @@ void handlePostData()
             }
             else
             {
-                snprintf_P(msg, sizeof(msg), PSTR("It is not possible to write into Input Registers"));
+                snprintf_P(msg, sizeof(msg), PSTR("It is not possible to write into input registers"));
             }
         }
         httpServer.send(200, F("text/plain"), msg);
