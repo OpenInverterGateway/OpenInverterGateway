@@ -1,4 +1,4 @@
-# Growatt_ShineWiFi
+# OpenInverterGateway
 
 Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build sticks (ESP8266/ESP32).
 
