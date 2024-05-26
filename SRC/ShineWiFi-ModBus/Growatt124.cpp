@@ -76,6 +76,46 @@ std::tuple<bool, String> updateDateTime(const JsonDocument& req,
   }
 };
 
+std::tuple<bool, String> getActivePowerRate(const JsonDocument& req,
+                                            JsonDocument& res, Growatt& inverter) {
+  uint16_t activePowerRate;
+
+#if SIMULATE_INVERTER != 1
+  bool success = inverter.ReadHoldingReg(3, &activePowerRate);
+#else
+  activePowerRate = 100;
+
+  bool success = true;
+#endif
+
+  if (success) {
+    res["value"] = activePowerRate;
+    return std::make_tuple(true, "Successfully read active power rate");
+  } else {
+    return std::make_tuple(false, "Failed to read active power rate");
+  }
+};
+
+std::tuple<bool, String> setActivePowerRate(const JsonDocument& req,
+                                            JsonDocument& res, Growatt& inverter) {
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+#if SIMULATE_INVERTER != 1
+  uint16_t activePowerRate = req["value"].as<uint16_t>();
+
+  bool success = inverter.WriteHoldingReg(3, activePowerRate);
+#else
+  bool success = true;
+#endif
+  if (success) {
+    return std::make_tuple(true, "Successfully updated active power rate");
+  } else {
+    return std::make_tuple(false, "Failed to write active power rate");
+  }
+};
+
 std::tuple<String, String> getTimeSlot(uint16_t start, uint16_t stop) {
   int start_hours = (start >> 8) & 0xFF;
   int start_minutes = start & 0xFF;
@@ -533,11 +573,18 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputReadFragments[2] = sGrowattReadFragment_t{1009, 55};
   Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1124, 4};
 
-  Protocol.HoldingRegisterCount = 0;
-  Protocol.HoldingFragmentCount = 0;
+  // definition of holding registers
+  Protocol.HoldingRegisterCount = 1;
+  
+  // FRAGMENT 1: BEGIN
+  Protocol.HoldingRegisters[P124_Active_P_Rate] = sGrowattModbusReg_t{
+      3, 0, SIZE_16BIT, F("ActivePowerRate"), 1, 1, PERCENTAGE, true, false};
+  // FRAGMENT 1: END
+  
+  Protocol.HoldingFragmentCount = 1;
+  Protocol.HoldingReadFragments[0] = sGrowattReadFragment_t{3, 1};
 
-  // COMMANDS
-
+  // definition of commands
   inverter.RegisterCommand("datetime/get", getDateTime);
   inverter.RegisterCommand("datetime/set", updateDateTime);
 
@@ -554,6 +601,9 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   inverter.RegisterCommand("gridfirst/set/powerrate", setGridFirstPowerRate);
   inverter.RegisterCommand("gridfirst/set/stopsoc", setGridFirstStopSOC);
   inverter.RegisterCommand("gridfirst/set/timeslot", setGridFirstTimeSlot);
+
+  inverter.RegisterCommand("activepowerrate/get", getActivePowerRate);
+  inverter.RegisterCommand("activepowerrate/set", setActivePowerRate);
 
   Log.print(F("init_growatt124: input registers "));
   Log.print(Protocol.InputRegisterCount);

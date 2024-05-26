@@ -128,6 +128,8 @@ You could create an automation triggered by a binary sensor on the success JSON 
 
 The following mqtt commands are defined for protocol 1.24:
 
+    activepowerrate/get
+    activepowerrate/set
     datetime/get
     datetime/set
     batteryfirst/get
