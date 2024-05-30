@@ -10,6 +10,7 @@
 #include <Preferences.h>
 #include <WiFiManager.h>
 #include <StreamUtils.h>
+#include <ArduinoOTA.h>
 
 #ifdef ESP32
     #include <esp_task_wdt.h>
@@ -31,6 +32,10 @@
 
 #if MQTT_SUPPORTED == 1
     #include "ShineMqtt.h"
+#endif
+
+#if OTA_SUPPORTED == 1
+    #include <ArduinoOTA.h>
 #endif
 
 Preferences prefs;
@@ -393,6 +398,11 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     httpServer.begin();
+
+    #if OTA_SUPPORTED == 1 && defined(OTA_PASSWORD)
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+    ArduinoOTA.begin();
+    #endif
 }
 
 
@@ -771,6 +781,11 @@ void loop()
                 delay(3000);
                 ESP.restart();
             }
+        #endif
+
+        #if OTA_SUPPORTED == 1
+        // check for OTA updates
+        ArduinoOTA.handle();
         #endif
 
         RefreshTimer = now;
