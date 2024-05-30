@@ -477,7 +477,7 @@ void sendJsonSite(void)
 void sendUiJsonSite(void)
 {
     StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
-    Inverter.CreateUIJson(doc);
+    Inverter.CreateUIJson(doc, Config.hostname);
 
     sendJson(doc);
 }
