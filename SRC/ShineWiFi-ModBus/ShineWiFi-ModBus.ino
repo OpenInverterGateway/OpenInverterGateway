@@ -742,7 +742,9 @@ void loop()
                     boolean mqttSuccess = false;
 
                     #if MQTT_SUPPORTED == 1
-                    mqttSuccess = sendMqttJson();
+                    if (shineMqtt.mqttEnabled()) {
+                        mqttSuccess = sendMqttJson();
+                    }
                     #endif
                     handleWdtReset(mqttSuccess);
 
