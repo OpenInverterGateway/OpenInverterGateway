@@ -42,7 +42,7 @@ copies or substantial portions of the Software. -->
   <a href="./status">Json</a> -
   <a href="./uiStatus">UI Json</a> -
   <a href="./debug">Log</a> -
-  <a href="./startAp">Start config access point</a> -
+  <a onClick="return confirm('Starting config AP will disconnect you from the device. Are you sure?');" href="./startAp">Start config access point</a> -
   <a href="./postCommunicationModbus">RW Modbus</a>
 
 </body>
