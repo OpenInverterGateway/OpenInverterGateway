@@ -64,21 +64,48 @@ uint16_t u16PacketCnt = 0;
     WebServer httpServer(80);
 #endif
 
-
 WiFiManager wm;
-#if MQTT_SUPPORTED == 1
-    WiFiManagerParameter* custom_mqtt_server = NULL;
-    WiFiManagerParameter* custom_mqtt_port = NULL;
-    WiFiManagerParameter* custom_mqtt_topic = NULL;
-    WiFiManagerParameter* custom_mqtt_user = NULL;
-    WiFiManagerParameter* custom_mqtt_pwd = NULL;
 
-    const static char* serverfile = "/mqtts";
-    const static char* portfile = "/mqttp";
-    const static char* topicfile = "/mqttt";
-    const static char* userfile = "/mqttu";
-    const static char* secretfile = "/mqttw";
+struct {
+    WiFiManagerParameter* hostname = NULL;
+    WiFiManagerParameter* static_ip = NULL;
+    WiFiManagerParameter* static_netmask = NULL;
+    WiFiManagerParameter* static_gateway = NULL;
+    WiFiManagerParameter* static_dns = NULL;
+#if MQTT_SUPPORTED == 1
+    WiFiManagerParameter* mqtt_server = NULL;
+    WiFiManagerParameter* mqtt_port = NULL;
+    WiFiManagerParameter* mqtt_topic = NULL;
+    WiFiManagerParameter* mqtt_user = NULL;
+    WiFiManagerParameter* mqtt_pwd = NULL;
 #endif
+} customWMParams;
+
+static const struct {
+    String hostname = "/hostname";
+    String static_ip = "/staticip";
+    String static_netmask = "/staticnetmask";
+    String static_gateway = "/staticgateway";
+    String static_dns = "/staticdns";
+#if MQTT_SUPPORTED == 1
+    String mqtt_server = "/mqtts";
+    String mqtt_port = "/mqttp";
+    String mqtt_topic = "/mqttt";
+    String mqtt_user = "/mqttu";
+    String mqtt_pwd = "/mqttw";
+#endif
+} ConfigFiles;
+
+struct {
+  String hostname;
+  String static_ip;
+  String static_netmask;
+  String static_gateway;
+  String static_dns;
+#if MQTT_SUPPORTED == 1
+  MqttConfig mqtt;
+#endif
+} Config;
 
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 
@@ -131,46 +158,67 @@ void InverterReconnect(void)
         Log.println(F("Error: Unknown Shine Stick"));
 }
 
-#if MQTT_SUPPORTED == 1
-void loadConfig(MqttConfig* config);
-void saveConfig(MqttConfig* config);
+void loadConfig();
+void saveConfig();
 void saveParamCallback();
-void setupMqttWifiManagerMenu(MqttConfig &mqttConfig);
+void setupWifiManagerConfigMenu();
 
-void loadConfig(MqttConfig* config)
+void loadConfig()
 {
-    config->mqttserver = prefs.getString(serverfile, "10.1.2.3");
-    config->mqttport = prefs.getString(portfile, "1883");
-    config->mqtttopic = prefs.getString(topicfile, "energy/solar");
-    config->mqttuser = prefs.getString(userfile, "");
-    config->mqttpwd = prefs.getString(secretfile, "");
+    Config.hostname = prefs.getString(ConfigFiles.hostname.c_str(), HOSTNAME);
+    Config.static_ip = prefs.getString(ConfigFiles.static_ip.c_str(), "");
+    Config.static_netmask = prefs.getString(ConfigFiles.static_netmask.c_str(), "");
+    Config.static_gateway = prefs.getString(ConfigFiles.static_gateway.c_str(), "");
+    Config.static_dns = prefs.getString(ConfigFiles.static_dns.c_str(), "");
+#if MQTT_SUPPORTED == 1
+    Config.mqtt.server = prefs.getString(ConfigFiles.mqtt_server.c_str(), "10.1.2.3");
+    Config.mqtt.port = prefs.getString(ConfigFiles.mqtt_port.c_str(), "1883");
+    Config.mqtt.topic = prefs.getString(ConfigFiles.mqtt_topic.c_str(), "energy/solar");
+    Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user.c_str(), "");
+    Config.mqtt.pwd = prefs.getString(ConfigFiles.mqtt_pwd.c_str(), "");
+#endif
 }
 
-void saveConfig(MqttConfig* config)
+void saveConfig()
 {
-    prefs.putString(serverfile, config->mqttserver);
-    prefs.putString(portfile, config->mqttport);
-    prefs.putString(topicfile, config->mqtttopic);
-    prefs.putString(userfile, config->mqttuser);
-    prefs.putString(secretfile, config->mqttpwd);
+    prefs.putString(ConfigFiles.hostname.c_str(), Config.hostname);
+    prefs.putString(ConfigFiles.static_ip.c_str(), Config.static_ip);
+    prefs.putString(ConfigFiles.static_netmask.c_str(), Config.static_netmask);
+    prefs.putString(ConfigFiles.static_gateway.c_str(), Config.static_gateway);
+    prefs.putString(ConfigFiles.static_dns.c_str(), Config.static_dns);
+#if MQTT_SUPPORTED == 1
+    prefs.putString(ConfigFiles.mqtt_server.c_str(), Config.mqtt.server);
+    prefs.putString(ConfigFiles.mqtt_port.c_str(), Config.mqtt.port);
+    prefs.putString(ConfigFiles.mqtt_topic.c_str(), Config.mqtt.topic);
+    prefs.putString(ConfigFiles.mqtt_user.c_str(), Config.mqtt.user);
+    prefs.putString(ConfigFiles.mqtt_pwd.c_str(), Config.mqtt.pwd);
+#endif
 }
 
 void saveParamCallback()
 {
     Log.println(F("[CALLBACK] saveParamCallback fired"));
-    MqttConfig config;
 
-    config.mqttserver = custom_mqtt_server->getValue();
-    config.mqttport = custom_mqtt_port->getValue();
-    config.mqtttopic = custom_mqtt_topic->getValue();
-    config.mqttuser = custom_mqtt_user->getValue();
-    config.mqttpwd = custom_mqtt_pwd->getValue();
+    Config.hostname = customWMParams.hostname->getValue();
+    if (Config.hostname.isEmpty()) {
+        Config.hostname = HOSTNAME;
+    }
+    Config.static_ip = customWMParams.static_ip->getValue();
+    Config.static_netmask = customWMParams.static_netmask->getValue();
+    Config.static_gateway = customWMParams.static_gateway->getValue();
+    Config.static_dns = customWMParams.static_dns->getValue();
+#if MQTT_SUPPORTED == 1
+    Config.mqtt.server = customWMParams.mqtt_server->getValue();
+    Config.mqtt.port = customWMParams.mqtt_port->getValue();
+    Config.mqtt.topic = customWMParams.mqtt_topic->getValue();
+    Config.mqtt.user = customWMParams.mqtt_user->getValue();
+    Config.mqtt.pwd = customWMParams.mqtt_pwd->getValue();
+#endif
 
-    saveConfig(&config);
+    saveConfig();
 
     Serial.println(F("[CALLBACK] saveParamCallback complete"));
 }
-#endif
 
 #ifdef ENABLE_TELNET_DEBUG
 #include <TelnetSerialStream.h>
@@ -204,12 +252,13 @@ void setupGPIO()
     pinMode(LED_BL, OUTPUT);    
 }
 
-
 void setupWifiHost()
 {
-    WiFi.hostname(HOSTNAME);
+    WiFi.hostname(Config.hostname);
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-    MDNS.begin(HOSTNAME);
+    MDNS.begin(Config.hostname);
+    Log.print(F("setupWifiHost: hostname "));
+    Log.println(Config.hostname);
 }
 
 void startWdt() 
@@ -255,9 +304,7 @@ void setup()
         drd = new DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
     #endif
 
-    #if MQTT_SUPPORTED == 1
-        prefs.begin("ShineWifi");
-    #endif
+    prefs.begin("ShineWifi");
 
     #if ENABLE_DOUBLE_RESET == 1
         if (drd->detectDoubleReset()) {
@@ -266,17 +313,13 @@ void setup()
         }
     #endif
 
+    loadConfig();
     setupWifiHost();
 
     Log.begin();
     startWdt();
 
-    #if MQTT_SUPPORTED == 1
-        MqttConfig mqttConfig;
-        setupMqttWifiManagerMenu(mqttConfig);
-    #else
-        setupMenu(false);    
-    #endif
+    setupWifiManagerConfigMenu();
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
@@ -284,6 +327,28 @@ void setup()
     int connect_timeout_seconds = 15;
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
     wm.setConnectTimeout(connect_timeout_seconds);
+
+    // Set static ip
+    if (!Config.static_ip.isEmpty() && !Config.static_netmask.isEmpty()) {
+        IPAddress ip, netmask, gateway, dns;
+        ip.fromString(Config.static_ip);
+        netmask.fromString(Config.static_netmask);
+        gateway.fromString(Config.static_gateway);
+        dns.fromString(Config.static_dns);
+        Log.print(F("static ip: "));
+        Log.println(Config.static_ip);
+        Log.print(F("static netmask: "));
+        Log.println(Config.static_netmask);
+        Log.print(F("static gateway: "));
+        Log.println(Config.static_gateway);
+        Log.print(F("static dns: "));
+        Log.println(Config.static_dns);
+        if (!Config.static_dns.isEmpty()) {
+            wm.setSTAStaticIPConfig(ip, gateway, netmask, dns);
+        } else {
+            wm.setSTAStaticIPConfig(ip, gateway, netmask);
+        }
+    }
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
@@ -309,7 +374,7 @@ void setup()
         #ifdef MQTTS_ENABLED
             espClient.setCACert(MQTTS_BROKER_CA_CERT);
         #endif
-        shineMqtt.mqttSetup(mqttConfig);
+        shineMqtt.mqttSetup(Config.mqtt);
     #endif
 
     httpServer.on("/status", sendJsonSite);
@@ -330,26 +395,39 @@ void setup()
     httpServer.begin();
 }
 
+
+void setupWifiManagerConfigMenu() {
+    customWMParams.hostname = new WiFiManagerParameter("hostname", "hostname (no spaces or special chars)", Config.hostname.c_str(), 30);
+    customWMParams.static_ip = new WiFiManagerParameter("staticip", "ip", Config.static_ip.c_str(), 15);
+    customWMParams.static_netmask = new WiFiManagerParameter("staticnetmask", "netmask", Config.static_netmask.c_str(), 15);
+    customWMParams.static_gateway = new WiFiManagerParameter("staticgateway", "gateway", Config.static_gateway.c_str(), 15);
+    customWMParams.static_dns = new WiFiManagerParameter("staticdns", "dns", Config.static_dns.c_str(), 15);
 #if MQTT_SUPPORTED == 1
-void setupMqttWifiManagerMenu(MqttConfig &mqttConfig) {
-    loadConfig(&mqttConfig);
+    customWMParams.mqtt_server = new WiFiManagerParameter("mqttserver", "server", Config.mqtt.server.c_str(), 40);
+    customWMParams.mqtt_port = new WiFiManagerParameter("mqttport", "port", Config.mqtt.port.c_str(), 6);
+    customWMParams.mqtt_topic = new WiFiManagerParameter("mqtttopic", "topic", Config.mqtt.topic.c_str(), 64);
+    customWMParams.mqtt_user = new WiFiManagerParameter("mqttusername", "username", Config.mqtt.user.c_str(), 40);
+    customWMParams.mqtt_pwd = new WiFiManagerParameter("mqttpassword", "password", Config.mqtt.pwd.c_str(), 64);
+#endif
+    wm.addParameter(customWMParams.hostname);
+#if MQTT_SUPPORTED == 1
+    wm.addParameter(new WiFiManagerParameter("<p><b>MQTT Settings</b> (leave server blank to disable)</p>"));
+    wm.addParameter(customWMParams.mqtt_server);
+    wm.addParameter(customWMParams.mqtt_port);
+    wm.addParameter(customWMParams.mqtt_topic);
+    wm.addParameter(customWMParams.mqtt_user);
+    wm.addParameter(customWMParams.mqtt_pwd);
+#endif
+    wm.addParameter(new WiFiManagerParameter("<p><b>Static IP</b> (leave blank for DHCP)</p>"));
+    wm.addParameter(customWMParams.static_ip);
+    wm.addParameter(customWMParams.static_netmask);
+    wm.addParameter(customWMParams.static_gateway);
+    wm.addParameter(customWMParams.static_dns);
 
-    custom_mqtt_server = new WiFiManagerParameter("server", "mqtt server", mqttConfig.mqttserver.c_str(), 40);
-    custom_mqtt_port = new WiFiManagerParameter("port", "mqtt port", mqttConfig.mqttport.c_str(), 6);
-    custom_mqtt_topic = new WiFiManagerParameter("topic", "mqtt topic", mqttConfig.mqtttopic.c_str(), 64);
-    custom_mqtt_user = new WiFiManagerParameter("username", "mqtt username", mqttConfig.mqttuser.c_str(), 40);
-    custom_mqtt_pwd = new WiFiManagerParameter("password", "mqtt password", mqttConfig.mqttpwd.c_str(), 64);
-
-    wm.addParameter(custom_mqtt_server);
-    wm.addParameter(custom_mqtt_port);
-    wm.addParameter(custom_mqtt_topic);
-    wm.addParameter(custom_mqtt_user);
-    wm.addParameter(custom_mqtt_pwd);
     wm.setSaveParamsCallback(saveParamCallback);
 
     setupMenu(true);
 }
-#endif
 
 /**
  * @brief create custom wifimanager menu entries
