@@ -468,12 +468,19 @@ void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress,
   }
 }
 
-void Growatt::CreateUIJson(ShineJsonDocument& doc) {
+void Growatt::CreateUIJson(ShineJsonDocument& doc, String Hostname) {
 #if SIMULATE_INVERTER != 1
   const char* unitStr[] = {"",  "W", "kWh", "V",  "A",
                            "s", "%", "Hz",  "°C", "VA"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
+
+  if (!Hostname.isEmpty()) {
+    JsonArray arr = doc.createNestedArray("Hostname");
+    arr.add(Hostname);
+    arr.add("");
+    arr.add(false);
+  }
 
   for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
     if (_Protocol.InputRegisters[i].frontend == true ||
