@@ -354,7 +354,7 @@ std::tuple<bool, String> setGridFirstTimeSlot(const JsonDocument& req,
 // one read!
 void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // definition of input registers
-  Protocol.InputRegisterCount = 54;
+  Protocol.InputRegisterCount = 58;
   // address, value, size, name, multiplier, unit, frontend, plot
   // FRAGMENT 1: BEGIN
   Protocol.InputRegisters[P124_I_STATUS] = sGrowattModbusReg_t{
@@ -453,38 +453,46 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputRegisters[P124_TEMP3] = sGrowattModbusReg_t{
       95,          0,     SIZE_16BIT, F("BoostTemperature"), 0.1, 0.1,
       TEMPERATURE, false, false};  // #30
+  Protocol.InputRegisters[P124_FAULT_MAINCODE] = sGrowattModbusReg_t{
+      104, 0, SIZE_16BIT, F("InverterFaultMaincode"), 1, 1, NONE, true, false};  // #31
+  Protocol.InputRegisters[P124_FAULT_SUBCODE] = sGrowattModbusReg_t{
+      106, 0, SIZE_16BIT, F("InverterFaultSubcode"), 1, 1, NONE, false, false};  // #32
+  Protocol.InputRegisters[P124_WARN_SUBCODE] = sGrowattModbusReg_t{
+      110, 0, SIZE_16BIT, F("InverterWarnSubcode"), 1, 1, NONE, false, false};  // #33
+  Protocol.InputRegisters[P124_WARN_MAINCODE] = sGrowattModbusReg_t{
+      111, 0, SIZE_16BIT, F("InverterWarnMaincode"), 1, 1, NONE, true, false};  // #34
   // FRAGMENT 2: END
 
   // FRAGMENT 3: BEGIN
   Protocol.InputRegisters[P124_PDISCHARGE] = sGrowattModbusReg_t{
       1009,    0,    SIZE_32BIT, F("DischargePower"), 0.1, 0.1,
-      POWER_W, true, true};  // #31
+      POWER_W, true, true};  // #35
   Protocol.InputRegisters[P124_PCHARGE] =
       sGrowattModbusReg_t{1011,    0,    SIZE_32BIT, F("ChargePower"), 0.1, 0.1,
-                          POWER_W, true, true};  // #32
+                          POWER_W, true, true};  // #36
   Protocol.InputRegisters[P124_VBAT] = sGrowattModbusReg_t{
       1013,    0,     SIZE_16BIT, F("BatteryVoltage"), 0.1, 0.1,
-      VOLTAGE, false, false};  // #33
+      VOLTAGE, false, false};  // #37
   Protocol.InputRegisters[P124_SOC] = sGrowattModbusReg_t{
-      1014, 0, SIZE_16BIT, F("SOC"), 1, 1, PERCENTAGE, true, true};  // #34
+      1014, 0, SIZE_16BIT, F("SOC"), 1, 1, PERCENTAGE, true, true};  // #38
   Protocol.InputRegisters[P124_PAC_TO_USER] = sGrowattModbusReg_t{
       1015,    0,     SIZE_32BIT, F("ACPowerToUser"), 0.1, 0.1,
-      POWER_W, false, false};  // #35
+      POWER_W, false, false};  // #39
   Protocol.InputRegisters[P124_PAC_TO_USER_TOTAL] = sGrowattModbusReg_t{
       1021,    0,     SIZE_32BIT, F("ACPowerToUserTotal"), 0.1, 0.1,
-      POWER_W, false, false};  // #36
+      POWER_W, false, false};  // #40
   Protocol.InputRegisters[P124_PAC_TO_GRID] = sGrowattModbusReg_t{
       1023,    0,     SIZE_32BIT, F("ACPowerToGrid"), 0.1, 0.1,
-      POWER_W, false, false};  // #37
+      POWER_W, false, false};  // #41
   Protocol.InputRegisters[P124_PAC_TO_GRID_TOTAL] = sGrowattModbusReg_t{
       1029,    0,     SIZE_32BIT, F("ACPowerToGridTotal"), 0.1, 0.1,
-      POWER_W, false, false};  // #38
+      POWER_W, false, false};  // #42
   Protocol.InputRegisters[P124_PLOCAL_LOAD] = sGrowattModbusReg_t{
       1031,    0,     SIZE_32BIT, F("INVPowerToLocalLoad"), 0.1, 0.1,
-      POWER_W, false, false};  // #39
+      POWER_W, false, false};  // #43
   Protocol.InputRegisters[P124_PLOCAL_LOAD_TOTAL] = sGrowattModbusReg_t{
       1037,    0,    SIZE_32BIT, F("INVPowerToLocalLoadTotal"), 0.1, 0.1,
-      POWER_W, true, false};  // #40
+      POWER_W, true, false};  // #44
   Protocol.InputRegisters[P124_BATTERY_TEMPERATURE] =
       sGrowattModbusReg_t{1040,
                           0,
@@ -494,54 +502,54 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
                           TEMPERATURE_WORKAROUND_MULTIPLIER,
                           TEMPERATURE,
                           true,
-                          true};  // #41
+                          true};  // #45
   Protocol.InputRegisters[P124_BATTERY_STATE] = sGrowattModbusReg_t{
-      1041, 0, SIZE_16BIT, F("BatteryState"), 1, 1, NONE, true, false};  // #42
+      1041, 0, SIZE_16BIT, F("BatteryState"), 1, 1, NONE, true, false};  // #46
 
   Protocol.InputRegisters[P124_ETOUSER_TODAY] = sGrowattModbusReg_t{
       1044,      0,    SIZE_32BIT, F("EnergyToUserToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #43
+      POWER_KWH, true, false};  // #47
   Protocol.InputRegisters[P124_ETOUSER_TOTAL] = sGrowattModbusReg_t{
       1046,      0,    SIZE_32BIT, F("EnergyToUserTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #44
+      POWER_KWH, true, false};  // #48
   Protocol.InputRegisters[P124_ETOGRID_TODAY] = sGrowattModbusReg_t{
       1048,      0,    SIZE_32BIT, F("EnergyToGridToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #45
+      POWER_KWH, true, false};  // #49
   Protocol.InputRegisters[P124_ETOGRID_TOTAL] = sGrowattModbusReg_t{
       1050,      0,    SIZE_32BIT, F("EnergyToGridTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #46
+      POWER_KWH, true, false};  // #50
   Protocol.InputRegisters[P124_EDISCHARGE_TODAY] = sGrowattModbusReg_t{
       1052,      0,    SIZE_32BIT, F("DischargeEnergyToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #47
+      POWER_KWH, true, false};  // #51
   Protocol.InputRegisters[P124_EDISCHARGE_TOTAL] = sGrowattModbusReg_t{
       1054,      0,    SIZE_32BIT, F("DischargeEnergyTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #48
+      POWER_KWH, true, false};  // #52
   Protocol.InputRegisters[P124_ECHARGE_TODAY] = sGrowattModbusReg_t{
       1056,      0,    SIZE_32BIT, F("ChargeEnergyToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #49
+      POWER_KWH, true, false};  // #53
   Protocol.InputRegisters[P124_ECHARGE_TOTAL] = sGrowattModbusReg_t{
       1058,      0,    SIZE_32BIT, F("ChargeEnergyTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #50
+      POWER_KWH, true, false};  // #54
   Protocol.InputRegisters[P124_ETOLOCALLOAD_TODAY] = sGrowattModbusReg_t{
       1060,      0,    SIZE_32BIT, F("LocalLoadEnergyToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #51
+      POWER_KWH, true, false};  // #55
   Protocol.InputRegisters[P124_ETOLOCALLOAD_TOTAL] = sGrowattModbusReg_t{
       1062,      0,    SIZE_32BIT, F("LocalLoadEnergyTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #52
+      POWER_KWH, true, false};  // #56
   // FRAGMENT 3: END
 
   // FRAGMENT 4: START
   Protocol.InputRegisters[P124_ACCHARGE_TODAY] = sGrowattModbusReg_t{
       1124,      0,    SIZE_32BIT, F("ACChargeEnergyToday"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #53
+      POWER_KWH, true, false};  // #57
   Protocol.InputRegisters[P124_ACCHARGE_TOTAL] = sGrowattModbusReg_t{
       1126,      0,    SIZE_32BIT, F("ACChargeEnergyTotal"), 0.1, 0.1,
-      POWER_KWH, true, false};  // #54
+      POWER_KWH, true, false};  // #58
   // FRAGMENT 4: END
 
   Protocol.InputFragmentCount = 4;
   Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 50};
-  Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 43};
+  Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 59};
   Protocol.InputReadFragments[2] = sGrowattReadFragment_t{1009, 55};
   Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1124, 4};
 
