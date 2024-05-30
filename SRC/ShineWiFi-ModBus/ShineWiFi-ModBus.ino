@@ -485,7 +485,7 @@ void sendUiJsonSite(void)
 void sendMetrics(void)
 {
     StringStream metrics;
-    Inverter.CreateMetrics(metrics, WiFi.macAddress());
+    Inverter.CreateMetrics(metrics, WiFi.macAddress(), Config.hostname);
 
     httpServer.setContentLength(metrics.available());
     httpServer.send(200, "text/plain", "");

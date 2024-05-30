@@ -620,7 +620,7 @@ void Growatt::camelCaseToSnakeCase(String input, char* output) {
 }
 
 void Growatt::metricsAddValue(String name, double value, StringStream& metrics,
-                              String MacAddress) {
+                              String MacAddress, String Hostname) {
   char nameSnakeCase[name.length() + 10];
   camelCaseToSnakeCase(name, nameSnakeCase);
 
@@ -628,37 +628,41 @@ void Growatt::metricsAddValue(String name, double value, StringStream& metrics,
   metrics.print(nameSnakeCase);
   metrics.print("{mac=\"");
   metrics.print(MacAddress);
+#if ENABLE_METRICS_NAME_LABEL == 1
+  metrics.print(",name=\"");
+  metrics.print(Hostname);
+#endif
   metrics.printf("\"} %g\n", value);
 }
 
-void Growatt::CreateMetrics(StringStream& metrics, String MacAddress) {
+void Growatt::CreateMetrics(StringStream& metrics, String MacAddress, String Hostname) {
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
     metricsAddValue(_Protocol.InputRegisters[i].name,
                     getRegValue(&_Protocol.InputRegisters[i]), metrics,
-                    MacAddress);
+                    MacAddress, Hostname);
 
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
     metricsAddValue(_Protocol.HoldingRegisters[i].name,
                     getRegValue(&_Protocol.HoldingRegisters[i]), metrics,
-                    MacAddress);
+                    MacAddress, Hostname);
 
 #else
 #warning simulating the inverter
-  metricsAddValue("Status", 1, metrics, MacAddress);
-  metricsAddValue("DcPower", 230, metrics, MacAddress);
-  metricsAddValue("DcVoltage", 70.5, metrics, MacAddress);
-  metricsAddValue("DcInputCurrent", 8.5, metrics, MacAddress);
-  metricsAddValue("AcFreq", 50.00, metrics, MacAddress);
-  metricsAddValue("AcVoltage", 230.0, metrics, MacAddress);
-  metricsAddValue("AcPower", 0.00, metrics, MacAddress);
-  metricsAddValue("EnergyToday", 0.3, metrics, MacAddress);
-  metricsAddValue("EnergyTotal", 49.1, metrics, MacAddress);
-  metricsAddValue("OperatingTime", 123456, metrics, MacAddress);
-  metricsAddValue("Temperature", 21.12, metrics, MacAddress);
-  metricsAddValue("AccumulatedEnergy", 320, metrics, MacAddress);
+  metricsAddValue("Status", 1, metrics, MacAddress, Hostname);
+  metricsAddValue("DcPower", 230, metrics, MacAddress, Hostname);
+  metricsAddValue("DcVoltage", 70.5, metrics, MacAddress, Hostname);
+  metricsAddValue("DcInputCurrent", 8.5, metrics, MacAddress, Hostname);
+  metricsAddValue("AcFreq", 50.00, metrics, MacAddress, Hostname);
+  metricsAddValue("AcVoltage", 230.0, metrics, MacAddress, Hostname);
+  metricsAddValue("AcPower", 0.00, metrics, MacAddress, Hostname);
+  metricsAddValue("EnergyToday", 0.3, metrics, MacAddress, Hostname);
+  metricsAddValue("EnergyTotal", 49.1, metrics, MacAddress, Hostname);
+  metricsAddValue("OperatingTime", 123456, metrics, MacAddress, Hostname);
+  metricsAddValue("Temperature", 21.12, metrics, MacAddress, Hostname);
+  metricsAddValue("AccumulatedEnergy", 320, metrics, MacAddress, Hostname);
 #endif  // SIMULATE_INVERTER
-  metricsAddValue("Cnt", _PacketCnt, metrics, MacAddress);
+  metricsAddValue("Cnt", _PacketCnt, metrics, MacAddress, Hostname);
 }
 
 void Growatt::RegisterCommand(const String& command,
