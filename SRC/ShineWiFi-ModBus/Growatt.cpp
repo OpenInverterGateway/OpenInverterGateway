@@ -430,7 +430,10 @@ double Growatt::getRegValue(sGrowattModbusReg_t* reg) {
   return result;
 }
 
-void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
+void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress, String Hostname) {
+    if (!Hostname.isEmpty()) {
+        doc["Hostname"] = Hostname;
+    }
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
     doc[_Protocol.InputRegisters[i].name] =
