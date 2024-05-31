@@ -72,6 +72,40 @@ void Growatt::InitProtocol() {
 #else
 #error "Unsupported Growatt Modbus version"
 #endif
+  // validate that all input registers are in ascending order
+  // and that all registers are covered by a fragment.
+  int lastIReg = -1;
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+    int regCount = _Protocol.InputRegisters[i].size == SIZE_16BIT ||
+                           _Protocol.InputRegisters[i].size == SIZE_16BIT_S
+                       ? 1
+                       : 2;
+    if (_Protocol.InputRegisters[i].address <= lastIReg) {
+      Log.print(F("WARN InitProtocol: InputRegister address "));
+      Log.print(_Protocol.InputRegisters[i].address);
+      Log.print(
+          F(" is not defined in ascending order to previous InputRegister "
+            "address "));
+      Log.println(lastIReg);
+    }
+    bool fragFound = false;
+    for (int j = 0; j < _Protocol.InputFragmentCount; j++) {
+      if (_Protocol.InputRegisters[i].address >=
+              _Protocol.InputReadFragments[j].StartAddress &&
+          _Protocol.InputRegisters[i].address + regCount <=
+              _Protocol.InputReadFragments[j].StartAddress +
+                  _Protocol.InputReadFragments[j].FragmentSize) {
+        fragFound = true;
+        break;
+      }
+    }
+    if (!fragFound) {
+      Log.print(F("WARN InitProtocol: InputRegister address "));
+      Log.print(_Protocol.InputRegisters[i].address);
+      Log.println(F(" is not covered by any InputReadFragment"));
+    }
+    lastIReg = _Protocol.InputRegisters[i].address;
+  }
 }
 
 void Growatt::begin(Stream& serial) {
