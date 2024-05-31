@@ -629,7 +629,7 @@ void Growatt::metricsAddValue(String name, double value, StringStream& metrics,
   metrics.print("{mac=\"");
   metrics.print(MacAddress);
 #if ENABLE_METRICS_NAME_LABEL == 1
-  metrics.print(",name=\"");
+  metrics.print("\",name=\"");
   metrics.print(Hostname);
 #endif
   metrics.printf("\"} %g\n", value);
