@@ -33,6 +33,10 @@
     #include "ShineMqtt.h"
 #endif
 
+#if OTA_SUPPORTED == 1
+    #include <ArduinoOTA.h>
+#endif
+
 Preferences prefs;
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
@@ -328,6 +332,11 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     httpServer.begin();
+
+    #if OTA_SUPPORTED == 1 && defined(OTA_PASSWORD)
+        ArduinoOTA.setPassword(OTA_PASSWORD);
+        ArduinoOTA.begin();
+    #endif
 }
 
 #if MQTT_SUPPORTED == 1
@@ -698,6 +707,11 @@ void loop()
                 delay(3000);
                 ESP.restart();
             }
+        #endif
+
+        #if OTA_SUPPORTED == 1
+            // check for OTA updates
+            ArduinoOTA.handle();
         #endif
 
         RefreshTimer = now;
