@@ -10,11 +10,11 @@
 #include <stdbool.h>
 
 typedef struct {
-  String mqttserver;
-  String mqttport;
-  String mqtttopic;
-  String mqttuser;
-  String mqttpwd;
+  String server;
+  String port;
+  String topic;
+  String user;
+  String pwd;
 } MqttConfig;
 
 class ShineMqtt {
