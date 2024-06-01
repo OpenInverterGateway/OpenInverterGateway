@@ -469,7 +469,7 @@ void sendJson(ShineJsonDocument&  doc)
 void sendJsonSite(void)
 {
     StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
-    Inverter.CreateJson(doc, WiFi.macAddress());
+    Inverter.CreateJson(doc, WiFi.macAddress(), Config.hostname);
 
     sendJson(doc);
 }
@@ -503,7 +503,7 @@ boolean sendMqttJson(void)
 {
     StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
 
-    Inverter.CreateJson(doc, WiFi.macAddress());
+    Inverter.CreateJson(doc, WiFi.macAddress(), "");
     return shineMqtt.mqttPublish(doc);
 }
 #endif
