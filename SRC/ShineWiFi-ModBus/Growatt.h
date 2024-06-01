@@ -30,7 +30,7 @@ class Growatt {
   bool ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result);
   bool WriteHoldingReg(uint16_t adr, uint16_t value);
   bool WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value);
-  void CreateJson(ShineJsonDocument& doc, String MacAddress);
+  void CreateJson(ShineJsonDocument& doc, String MacAddress, String Hostname);
   void CreateUIJson(ShineJsonDocument& doc);
   void CreateMetrics(StringStream& metrics, String MacAddress);
 
