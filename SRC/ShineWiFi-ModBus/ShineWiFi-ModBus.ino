@@ -319,7 +319,10 @@ void setup()
     #if ENABLE_MODBUS_COMMUNICATION == 1 
     httpServer.on("/postCommunicationModbus", sendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
-    #endif 
+    #endif
+    #if ENABLE_HTTP_COMMAND_ENDPOINT == 1
+        httpServer.onNotFound(handleNotFound);
+    #endif
     httpServer.on("/", sendMainPage);
     #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", sendDebug);
@@ -443,6 +446,35 @@ void sendPostSite(void)
 {
     httpServer.send(200, "text/html", SendPostSite_page);
 }
+
+#if ENABLE_HTTP_COMMAND_ENDPOINT == 1
+void handleInverterCommand()
+{
+    StaticJsonDocument<1024> req;
+    StaticJsonDocument<1024> res;
+    const String& cmd = httpServer.uri().substring(9);
+    const String& postData = httpServer.arg(F("plain")).length() > 0 ? httpServer.arg(F("plain")) : F("{}");
+    Log.print(F("handleInverterCommand: cmd "));
+    Log.println(cmd);
+
+    Inverter.HandleCommand(cmd, (byte*) postData.c_str(), postData.length(), req, res);
+
+    httpServer.setContentLength(measureJson(res));
+    httpServer.send(200, F("application/json"), "");
+    WiFiClient client = httpServer.client();
+    WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
+    serializeJson(res, bufferedWifiClient);
+}
+
+void handleNotFound() {
+    if (httpServer.uri().startsWith(F("/command/")) &&
+        httpServer.uri().length() > 9) {
+        handleInverterCommand();
+        return;
+    }
+    httpServer.send(404, F("text/plain"), String(F("Not found: ") + httpServer.uri()));
+}
+#endif
 
 void handlePostData()
 {
