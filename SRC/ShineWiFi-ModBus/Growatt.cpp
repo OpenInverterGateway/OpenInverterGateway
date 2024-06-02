@@ -466,7 +466,8 @@ void Growatt::CreateJson(ShineJsonDocument& doc, String MacAddress) {
 
 void Growatt::CreateUIJson(ShineJsonDocument& doc) {
 #if SIMULATE_INVERTER != 1
-  const char* unitStr[] = {"", "W", "kWh", "V", "A", "s", "%", "Hz", "°C"};
+  const char* unitStr[] = {"",  "W", "kWh", "V",  "A",
+                           "s", "%", "Hz",  "°C", "VA"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
 
