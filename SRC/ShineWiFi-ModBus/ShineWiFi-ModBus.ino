@@ -316,7 +316,8 @@ void setup()
     httpServer.on("/uiStatus", sendUiJsonSite);
     httpServer.on("/metrics", sendMetrics);
     httpServer.on("/startAp", startConfigAccessPoint);
-    #if ENABLE_MODBUS_COMMUNICATION == 1 
+    httpServer.on("/reboot", rebootESP);
+    #if ENABLE_MODBUS_COMMUNICATION == 1
     httpServer.on("/postCommunicationModbus", sendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     #endif 
@@ -425,6 +426,12 @@ void startConfigAccessPoint(void)
     httpServer.send(200, "text/html", msg);
     delay(2000);
     StartedConfigAfterBoot = true;
+}
+
+void rebootESP(void) {
+    httpServer.send(200, F("text/html"), F("<html><body>Rebooting...</body></html>"));
+    delay(2000);
+    ESP.restart();
 }
 
 #ifdef ENABLE_WEB_DEBUG
