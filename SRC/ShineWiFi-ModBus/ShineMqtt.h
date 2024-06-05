@@ -31,7 +31,7 @@ class ShineMqtt {
 
  private:
   WiFiClient& wifiClient;
-  long previousConnectTryMillis = 0;
+  unsigned long previousConnectTryMillis = 0;
   MqttConfig mqttconfig;
   PubSubClient mqttclient;
   Growatt& inverter;
