@@ -397,14 +397,17 @@ void sendUiJsonSite(void)
 void sendMetrics(void)
 {
     StringStream metrics;
+    char writeBuffer[BUFFER_SIZE];
+
     Inverter.CreateMetrics(metrics, WiFi.macAddress());
 
     httpServer.setContentLength(metrics.available());
     httpServer.send(200, "text/plain", "");
     WiFiClient client = httpServer.client();
-    WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
-    while (metrics.available())
-        bufferedWifiClient.write(metrics.read());
+    while (metrics.available()) {
+        int len = metrics.readBytes(writeBuffer, BUFFER_SIZE);
+        client.write(writeBuffer, len);
+    }
 }
 
 #if MQTT_SUPPORTED == 1
