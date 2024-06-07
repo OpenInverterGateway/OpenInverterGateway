@@ -86,17 +86,17 @@ struct {
 } customWMParams;
 
 static const struct {
-    String hostname = "/hostname";
-    String static_ip = "/staticip";
-    String static_netmask = "/staticnetmask";
-    String static_gateway = "/staticgateway";
-    String static_dns = "/staticdns";
+    const char* hostname = "/hostname";
+    const char* static_ip = "/staticip";
+    const char* static_netmask = "/staticnetmask";
+    const char* static_gateway = "/staticgateway";
+    const char* static_dns = "/staticdns";
 #if MQTT_SUPPORTED == 1
-    String mqtt_server = "/mqtts";
-    String mqtt_port = "/mqttp";
-    String mqtt_topic = "/mqttt";
-    String mqtt_user = "/mqttu";
-    String mqtt_pwd = "/mqttw";
+    const char* mqtt_server = "/mqtts";
+    const char* mqtt_port = "/mqttp";
+    const char* mqtt_topic = "/mqttt";
+    const char* mqtt_user = "/mqttu";
+    const char* mqtt_pwd = "/mqttw";
 #endif
 } ConfigFiles;
 
@@ -169,33 +169,33 @@ void setupWifiManagerConfigMenu();
 
 void loadConfig()
 {
-    Config.hostname = prefs.getString(ConfigFiles.hostname.c_str(), HOSTNAME);
-    Config.static_ip = prefs.getString(ConfigFiles.static_ip.c_str(), "");
-    Config.static_netmask = prefs.getString(ConfigFiles.static_netmask.c_str(), "");
-    Config.static_gateway = prefs.getString(ConfigFiles.static_gateway.c_str(), "");
-    Config.static_dns = prefs.getString(ConfigFiles.static_dns.c_str(), "");
+    Config.hostname = prefs.getString(ConfigFiles.hostname, HOSTNAME);
+    Config.static_ip = prefs.getString(ConfigFiles.static_ip, "");
+    Config.static_netmask = prefs.getString(ConfigFiles.static_netmask, "");
+    Config.static_gateway = prefs.getString(ConfigFiles.static_gateway, "");
+    Config.static_dns = prefs.getString(ConfigFiles.static_dns, "");
 #if MQTT_SUPPORTED == 1
-    Config.mqtt.server = prefs.getString(ConfigFiles.mqtt_server.c_str(), "10.1.2.3");
-    Config.mqtt.port = prefs.getString(ConfigFiles.mqtt_port.c_str(), "1883");
-    Config.mqtt.topic = prefs.getString(ConfigFiles.mqtt_topic.c_str(), "energy/solar");
-    Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user.c_str(), "");
-    Config.mqtt.pwd = prefs.getString(ConfigFiles.mqtt_pwd.c_str(), "");
+    Config.mqtt.server = prefs.getString(ConfigFiles.mqtt_server, "10.1.2.3");
+    Config.mqtt.port = prefs.getString(ConfigFiles.mqtt_port, "1883");
+    Config.mqtt.topic = prefs.getString(ConfigFiles.mqtt_topic, "energy/solar");
+    Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user, "");
+    Config.mqtt.pwd = prefs.getString(ConfigFiles.mqtt_pwd, "");
 #endif
 }
 
 void saveConfig()
 {
-    prefs.putString(ConfigFiles.hostname.c_str(), Config.hostname);
-    prefs.putString(ConfigFiles.static_ip.c_str(), Config.static_ip);
-    prefs.putString(ConfigFiles.static_netmask.c_str(), Config.static_netmask);
-    prefs.putString(ConfigFiles.static_gateway.c_str(), Config.static_gateway);
-    prefs.putString(ConfigFiles.static_dns.c_str(), Config.static_dns);
+    prefs.putString(ConfigFiles.hostname, Config.hostname);
+    prefs.putString(ConfigFiles.static_ip, Config.static_ip);
+    prefs.putString(ConfigFiles.static_netmask, Config.static_netmask);
+    prefs.putString(ConfigFiles.static_gateway, Config.static_gateway);
+    prefs.putString(ConfigFiles.static_dns, Config.static_dns);
 #if MQTT_SUPPORTED == 1
-    prefs.putString(ConfigFiles.mqtt_server.c_str(), Config.mqtt.server);
-    prefs.putString(ConfigFiles.mqtt_port.c_str(), Config.mqtt.port);
-    prefs.putString(ConfigFiles.mqtt_topic.c_str(), Config.mqtt.topic);
-    prefs.putString(ConfigFiles.mqtt_user.c_str(), Config.mqtt.user);
-    prefs.putString(ConfigFiles.mqtt_pwd.c_str(), Config.mqtt.pwd);
+    prefs.putString(ConfigFiles.mqtt_server, Config.mqtt.server);
+    prefs.putString(ConfigFiles.mqtt_port, Config.mqtt.port);
+    prefs.putString(ConfigFiles.mqtt_topic, Config.mqtt.topic);
+    prefs.putString(ConfigFiles.mqtt_user, Config.mqtt.user);
+    prefs.putString(ConfigFiles.mqtt_pwd, Config.mqtt.pwd);
 #endif
 }
 
