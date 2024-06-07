@@ -118,6 +118,7 @@ bool Growatt::ReadInputRegisters() {
    */
   uint16_t registerAddress;
   uint8_t res;
+  int j = 0;
 
   // read each fragment separately
   for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
@@ -133,7 +134,7 @@ bool Growatt::ReadInputRegisters() {
 #ifdef DEBUG_MODBUS_OUTPUT
       Log.println(F("ok"));
 #endif
-      for (int j = 0; j < _Protocol.InputRegisterCount; j++) {
+      for (; j < _Protocol.InputRegisterCount; j++) {
         // make sure the register we try to read is in the fragment
         if (_Protocol.InputRegisters[j].address >=
             _Protocol.InputReadFragments[i].StartAddress) {
