@@ -76,44 +76,40 @@ std::tuple<bool, String> updateDateTime(const JsonDocument& req,
   }
 };
 
-std::tuple<bool, String> getActivePowerRate(const JsonDocument& req,
+std::tuple<bool, String> getPowerActiveRate(const JsonDocument& req,
                                             JsonDocument& res, Growatt& inverter) {
-  uint16_t activePowerRate;
+  uint16_t value;
 
 #if SIMULATE_INVERTER != 1
-  bool success = inverter.ReadHoldingReg(3, &activePowerRate);
-#else
-  activePowerRate = 100;
-
-  bool success = true;
+  if (!inverter.ReadHoldingReg(3, &value)) {
+    return std::make_tuple(false, "Failed to read active rate");
+  }
 #endif
 
-  if (success) {
-    res["value"] = activePowerRate;
-    return std::make_tuple(true, "Successfully read active power rate");
-  } else {
-    return std::make_tuple(false, "Failed to read active power rate");
-  }
+  res["value"] = value;
+
+  return std::make_tuple(true, "Successfully read active rate");
 };
 
-std::tuple<bool, String> setActivePowerRate(const JsonDocument& req,
+std::tuple<bool, String> setPowerActiveRate(const JsonDocument& req,
                                             JsonDocument& res, Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
 
-#if SIMULATE_INVERTER != 1
-  uint16_t activePowerRate = req["value"].as<uint16_t>();
+  uint16_t value = req["value"].as<uint16_t>();
 
-  bool success = inverter.WriteHoldingReg(3, activePowerRate);
-#else
-  bool success = true;
-#endif
-  if (success) {
-    return std::make_tuple(true, "Successfully updated active power rate");
-  } else {
-    return std::make_tuple(false, "Failed to write active power rate");
+  if (!((value >= 0 && value <= 100) || value == 255)) {
+    return std::make_tuple(false, "'value' field not in range");
   }
+
+#if SIMULATE_INVERTER != 1
+  if (!inverter.WriteHoldingReg(3, value)) {
+    return std::make_tuple(false, "Failed to write active rate");
+  }
+#endif
+
+  return std::make_tuple(true, "Successfully updated active rate");
 };
 
 std::tuple<String, String> getTimeSlot(uint16_t start, uint16_t stop) {
@@ -602,8 +598,8 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   inverter.RegisterCommand("gridfirst/set/stopsoc", setGridFirstStopSOC);
   inverter.RegisterCommand("gridfirst/set/timeslot", setGridFirstTimeSlot);
 
-  inverter.RegisterCommand("power/get/activerate", getActivePowerRate);
-  inverter.RegisterCommand("power/set/activerate", setActivePowerRate);
+  inverter.RegisterCommand("power/get/activerate", getPowerActiveRate);
+  inverter.RegisterCommand("power/set/activerate", setPowerActiveRate);
 
   Log.print(F("init_growatt124: input registers "));
   Log.print(Protocol.InputRegisterCount);
