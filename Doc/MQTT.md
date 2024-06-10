@@ -224,4 +224,7 @@ Get battery first state:
 
     mosquitto_pub -h <ip> -u <mqttuser> -P <mqttpw> -m "{\"correlationId\": \"ha-batteryfirst-get\"}" -t energytest/solar/command/batteryfirst/get
 
- 
+Example how to limit output power in percent via mosquitto_pub from cli:
+
+    mosquitto_pub -h <mqttip> -u <mqttuser> -P <mqttpw> \
+    -t "<base-topic>/command/power/set/activeRate" -m "{ \"value\": 50 }"
