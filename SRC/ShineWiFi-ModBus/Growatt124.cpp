@@ -602,8 +602,8 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   inverter.RegisterCommand("gridfirst/set/stopsoc", setGridFirstStopSOC);
   inverter.RegisterCommand("gridfirst/set/timeslot", setGridFirstTimeSlot);
 
-  inverter.RegisterCommand("activepowerrate/get", getActivePowerRate);
-  inverter.RegisterCommand("activepowerrate/set", setActivePowerRate);
+  inverter.RegisterCommand("power/get/activerate", getActivePowerRate);
+  inverter.RegisterCommand("power/set/activerate", setActivePowerRate);
 
   Log.print(F("init_growatt124: input registers "));
   Log.print(Protocol.InputRegisterCount);
