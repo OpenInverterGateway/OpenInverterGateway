@@ -64,8 +64,6 @@ typedef enum {
   P124_INPUT_REGISTER_COUNT
 } eP124InputRegisters_t;
 
-typedef enum {
-  P124_Active_P_Rate
-} eP124HoldingRegisters_t;
+typedef enum { P124_Active_P_Rate } eP124HoldingRegisters_t;
 
 void init_growatt124(sProtocolDefinition_t &Protocol, Growatt &inverter);
