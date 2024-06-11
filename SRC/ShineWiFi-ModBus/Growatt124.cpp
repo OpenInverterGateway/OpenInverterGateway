@@ -77,7 +77,8 @@ std::tuple<bool, String> updateDateTime(const JsonDocument& req,
 };
 
 std::tuple<bool, String> getPowerActiveRate(const JsonDocument& req,
-                                            JsonDocument& res, Growatt& inverter) {
+                                            JsonDocument& res,
+                                            Growatt& inverter) {
   uint16_t value;
 
 #if SIMULATE_INVERTER != 1
@@ -92,7 +93,8 @@ std::tuple<bool, String> getPowerActiveRate(const JsonDocument& req,
 };
 
 std::tuple<bool, String> setPowerActiveRate(const JsonDocument& req,
-                                            JsonDocument& res, Growatt& inverter) {
+                                            JsonDocument& res,
+                                            Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -571,12 +573,12 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
 
   // definition of holding registers
   Protocol.HoldingRegisterCount = 1;
-  
+
   // FRAGMENT 1: BEGIN
   Protocol.HoldingRegisters[P124_Active_P_Rate] = sGrowattModbusReg_t{
       3, 0, SIZE_16BIT, F("ActivePowerRate"), 1, 1, PERCENTAGE, true, false};
   // FRAGMENT 1: END
-  
+
   Protocol.HoldingFragmentCount = 1;
   Protocol.HoldingReadFragments[0] = sGrowattReadFragment_t{3, 1};
 
