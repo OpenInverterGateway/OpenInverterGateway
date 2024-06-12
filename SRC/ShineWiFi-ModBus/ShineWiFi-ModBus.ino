@@ -33,6 +33,10 @@
     #include "ShineMqtt.h"
 #endif
 
+#if OTA_SUPPORTED == 1
+    #include <ArduinoOTA.h>
+#endif
+
 Preferences prefs;
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
@@ -316,7 +320,8 @@ void setup()
     httpServer.on("/uiStatus", sendUiJsonSite);
     httpServer.on("/metrics", sendMetrics);
     httpServer.on("/startAp", startConfigAccessPoint);
-    #if ENABLE_MODBUS_COMMUNICATION == 1 
+    httpServer.on("/reboot", rebootESP);
+    #if ENABLE_MODBUS_COMMUNICATION == 1
     httpServer.on("/postCommunicationModbus", sendPostSite);
     httpServer.on("/postCommunicationModbus_p", HTTP_POST, handlePostData);
     #endif
@@ -331,6 +336,11 @@ void setup()
     Inverter.InitProtocol();
     InverterReconnect();
     httpServer.begin();
+
+    #if OTA_SUPPORTED == 1 && defined(OTA_PASSWORD)
+        ArduinoOTA.setPassword(OTA_PASSWORD);
+        ArduinoOTA.begin();
+    #endif
 }
 
 #if MQTT_SUPPORTED == 1
@@ -400,14 +410,17 @@ void sendUiJsonSite(void)
 void sendMetrics(void)
 {
     StringStream metrics;
+    char writeBuffer[BUFFER_SIZE];
+
     Inverter.CreateMetrics(metrics, WiFi.macAddress());
 
     httpServer.setContentLength(metrics.available());
     httpServer.send(200, "text/plain", "");
     WiFiClient client = httpServer.client();
-    WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
-    while (metrics.available())
-        bufferedWifiClient.write(metrics.read());
+    while (metrics.available()) {
+        int len = metrics.readBytes(writeBuffer, BUFFER_SIZE);
+        client.write(writeBuffer, len);
+    }
 }
 
 #if MQTT_SUPPORTED == 1
@@ -428,6 +441,12 @@ void startConfigAccessPoint(void)
     httpServer.send(200, "text/html", msg);
     delay(2000);
     StartedConfigAfterBoot = true;
+}
+
+void rebootESP(void) {
+    httpServer.send(200, F("text/html"), F("<html><body>Rebooting...</body></html>"));
+    delay(2000);
+    ESP.restart();
 }
 
 #ifdef ENABLE_WEB_DEBUG
@@ -576,10 +595,10 @@ void handlePostData()
 // -------------------------------------------------------
 // Main loop
 // -------------------------------------------------------
-long ButtonTimer = 0;
-long LEDTimer = 0;
-long RefreshTimer = 0;
-long WifiRetryTimer = 0;
+unsigned long ButtonTimer = 0;
+unsigned long LEDTimer = 0;
+unsigned long RefreshTimer = 0;
+unsigned long WifiRetryTimer = 0;
 
 void loop()
 {
@@ -588,7 +607,7 @@ void loop()
     #endif
 
     Log.loop();
-    long now = millis();
+    unsigned long now = millis();
     char readoutSucceeded;
 
 #ifdef AP_BUTTON_PRESSED
@@ -727,6 +746,11 @@ void loop()
                 delay(3000);
                 ESP.restart();
             }
+        #endif
+
+        #if OTA_SUPPORTED == 1
+            // check for OTA updates
+            ArduinoOTA.handle();
         #endif
 
         RefreshTimer = now;
