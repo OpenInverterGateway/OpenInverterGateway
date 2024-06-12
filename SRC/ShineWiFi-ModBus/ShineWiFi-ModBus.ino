@@ -136,7 +136,7 @@ void WiFi_Reconnect()
         Log.print(F("local IP:"));
         Log.println(WiFi.localIP());
         Log.print(F("Hostname: "));
-        Log.println(DEFAULT_HOSTNAME);
+        Log.println(Config.hostname);
 
         Log.println(F("WiFi reconnected"));
 
