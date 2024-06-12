@@ -469,8 +469,8 @@ void sendPostSite(void)
 #if ENABLE_HTTP_COMMAND_ENDPOINT == 1
 void handleInverterCommand()
 {
-    StaticJsonDocument<1024> req;
-    StaticJsonDocument<1024> res;
+    StaticJsonDocument<512> req;
+    StaticJsonDocument<512> res;
     const String& cmd = httpServer.uri().substring(9);
     const String& postData = httpServer.arg(F("plain")).length() > 0 ? httpServer.arg(F("plain")) : F("{}");
     Log.print(F("handleInverterCommand: cmd "));
