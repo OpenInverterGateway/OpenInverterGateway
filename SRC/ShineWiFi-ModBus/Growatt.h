@@ -32,7 +32,8 @@ class Growatt {
   bool WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value);
   void CreateJson(ShineJsonDocument& doc, String MacAddress, String Hostname);
   void CreateUIJson(ShineJsonDocument& doc, String Hostname);
-  void CreateMetrics(StringStream& metrics, String MacAddress);
+  void CreateMetrics(StringStream& metrics, const String& MacAddress,
+                     const String& Hostname);
 
  private:
   eDevice_t _eDevice;
@@ -44,8 +45,8 @@ class Growatt {
   double roundByResolution(const double& value, const float& resolution);
   double getRegValue(sGrowattModbusReg_t* reg);
   void camelCaseToSnakeCase(String input, char* output);
-  void metricsAddValue(String name, double value, StringStream& metrics,
-                       String MacAddress);
+  void metricsAddValue(const String& name, double value, StringStream& metrics,
+                       const String& labels);
   std::tuple<bool, String> handleEcho(const JsonDocument& req,
                                       JsonDocument& res, Growatt& inverter);
   std::tuple<bool, String> handleCommandList(const JsonDocument& req,
