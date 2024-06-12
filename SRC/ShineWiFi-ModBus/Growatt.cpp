@@ -580,8 +580,9 @@ void Growatt::CreateUIJson(ShineJsonDocument& doc, String Hostname) {
 void Growatt::camelCaseToSnakeCase(String input, char* output) {
   int outputIndex = 0;
   for (uint i = 0; input[i] != '\0'; i++) {
-    if (i > 0 && i < input.length() - 1 && isUpperCase(input[i]) &&
-        (isLowerCase(input[i - 1]) || isLowerCase(input[i + 1]))) {
+    if (i > 0 && isUpperCase(input[i]) &&
+        (isLowerCase(input[i - 1]) ||
+         (i < input.length() - 1 && isLowerCase(input[i + 1])))) {
       output[outputIndex++] = '_';
     }
     output[outputIndex++] = toLowerCase(input[i]);
