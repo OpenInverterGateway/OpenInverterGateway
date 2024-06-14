@@ -28,6 +28,11 @@
 // Enable direct modbus read/write support via the WebGUI. Enabling this is a potential security issue.
 #define ENABLE_MODBUS_COMMUNICATION 0
 
+// Define a NTP Server and TZ Info to automatically adjust the inverter date/time.
+// TZ Info can be found at: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+#define DEFAULT_NTP_SERVER "europe.pool.ntp.org"
+#define DEFAULT_TZ_INFO "CET-1CEST,M3.5.0,M10.5.0/3"
+
 // Setting this define to 1 will ping the default gateway periodically
 // if the ping is not successful, the wifi connection will be reestablished
 #define PINGER_SUPPORTED 0

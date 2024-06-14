@@ -37,6 +37,11 @@
     #include <ArduinoOTA.h>
 #endif
 
+#if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
+    #include <time.h>
+    extern "C" uint8_t sntp_getreachability(uint8_t);
+#endif
+
 Preferences prefs;
 Growatt Inverter;
 bool StartedConfigAfterBoot = false;
@@ -403,6 +408,10 @@ void setup()
         ArduinoOTA.setPassword(OTA_PASSWORD);
         ArduinoOTA.begin();
     #endif
+
+    #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
+        configTime(DEFAULT_TZ_INFO, DEFAULT_NTP_SERVER);
+    #endif
 }
 
 
@@ -645,6 +654,9 @@ unsigned long ButtonTimer = 0;
 unsigned long LEDTimer = 0;
 unsigned long RefreshTimer = 0;
 unsigned long WifiRetryTimer = 0;
+#if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
+unsigned long nextNTPSync = 60000; // allow for Wifi to connect and first SNTP sync to happen
+#endif
 
 void loop()
 {
@@ -797,6 +809,29 @@ void loop()
         #if OTA_SUPPORTED == 1
             // check for OTA updates
             ArduinoOTA.handle();
+        #endif
+
+        #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
+        if (now > nextNTPSync) {
+            int reachable = sntp_getreachability(0);
+            Log.print(F("NTP server: "));
+            Log.print(DEFAULT_NTP_SERVER);
+            Log.print(F(" reachable "));
+            Log.println(reachable & 1);
+            if (reachable & 1) { // last SNTP request was successful
+                StaticJsonDocument<128> req, res;
+                char buff[32];
+                struct tm tm;
+                time_t t = time(NULL);
+                localtime_r(&t, &tm);
+                strftime(buff, sizeof(buff), "{\"value\":\"%Y-%m-%d %T\"}", &tm);
+                Log.print(F("Trying to set inverter datetime: "));
+                Log.println(buff);
+                Inverter.HandleCommand("datetime/set", (byte*) &buff, strlen(buff), req, res);
+                Log.println(String(res["message"]));
+            }
+            nextNTPSync = now + 3600000;
+        }
         #endif
 
         RefreshTimer = now;
