@@ -660,7 +660,7 @@ unsigned long LEDTimer = 0;
 unsigned long RefreshTimer = 0;
 unsigned long WifiRetryTimer = 0;
 #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
-unsigned long nextNTPSync = 60000; // allow for Wifi to connect and first SNTP sync to happen
+unsigned long lastNTPSync = 0;
 #endif
 
 void loop()
@@ -817,7 +817,9 @@ void loop()
         #endif
 
         #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
-        if (now > nextNTPSync) {
+        // wait 1h between inverter time syncs and wait 60s after
+        // ESP startup for Wifi to connect and first NTP sync to happen.
+        if (now - lastNTPSync > 3600000 && now > 60000) {
             int reachable = sntp_getreachability(0);
             Log.print(F("NTP server: "));
             Log.print(DEFAULT_NTP_SERVER);
@@ -835,7 +837,7 @@ void loop()
                 Inverter.HandleCommand("datetime/set", (byte*) &buff, strlen(buff), req, res);
                 Log.println(res["message"].as<String>());
             }
-            nextNTPSync = now + 3600000;
+            lastNTPSync = now;
         }
         #endif
 
