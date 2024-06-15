@@ -410,7 +410,12 @@ void setup()
     #endif
 
     #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
-        configTime(DEFAULT_TZ_INFO, DEFAULT_NTP_SERVER);
+        #ifdef ESP32
+            configTime(0, 0, DEFAULT_NTP_SERVER);
+            setenv("TZ", DEFAULT_TZ_INFO, 1);
+        #else
+            configTime(DEFAULT_TZ_INFO, DEFAULT_NTP_SERVER);
+        #endif
     #endif
 }
 
@@ -828,7 +833,7 @@ void loop()
                 Log.print(F("Trying to set inverter datetime: "));
                 Log.println(buff);
                 Inverter.HandleCommand("datetime/set", (byte*) &buff, strlen(buff), req, res);
-                Log.println(String(res["message"]));
+                Log.println(res["message"].as<String>());
             }
             nextNTPSync = now + 3600000;
         }
