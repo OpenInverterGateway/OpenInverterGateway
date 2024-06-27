@@ -6,6 +6,14 @@
 #define JSON_DOCUMENT_SIZE 2048
 #define BUFFER_SIZE 256
 
+#if JSON_DOCUMENT_SIZE > 2048
+#define ShineJsonDocument(variable) \
+  DynamicJsonDocument variable(JSON_DOCUMENT_SIZE)
+#else
+#define ShineJsonDocument(variable) \
+  StaticJsonDocument<JSON_DOCUMENT_SIZE> variable
+#endif
+
 typedef enum {
   Undef_stick = 0,
   ShineWiFi_S = 1,  // Serial DB9-Connector, 9600Bd, Protocol v3.05 (2013)
