@@ -503,6 +503,7 @@ void handleInverterCommand()
 
 void handleNotFound() {
     if (httpServer.uri().startsWith(F("/command/")) &&
+        // Combined with requiring Content-Type application/json this avoids CORS attacks
         httpServer.method() == HTTP_POST &&
         httpServer.uri().length() > 9) {
         handleInverterCommand();
