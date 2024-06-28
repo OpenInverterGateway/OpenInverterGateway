@@ -127,8 +127,6 @@ void WiFi_Reconnect()
     {
         digitalWrite(LED_GN, 0);
 
-        wm.autoConnect();
-
         while (WiFi.status() != WL_CONNECTED)
         {
             delay(200);
