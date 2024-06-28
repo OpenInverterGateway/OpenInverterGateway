@@ -154,10 +154,11 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
 }
 
 void ShineMqtt::updateMqttLed() {
-  if (!this->mqttclient.connected())
+  if (mqttEnabled() && !this->mqttclient.connected()) {
     digitalWrite(LED_RT, 1);
-  else
+  } else {
     digitalWrite(LED_RT, 0);
+  }
 }
 
 void ShineMqtt::loop() { this->mqttclient.loop(); }
