@@ -34,6 +34,7 @@ class Growatt {
   void CreateUIJson(ShineJsonDocument& doc, String Hostname);
   void CreateMetrics(StringStream& metrics, const String& MacAddress,
                      const String& Hostname);
+  static void camelCaseToSnakeCase(String input, char* output);
 
  private:
   eDevice_t _eDevice;
@@ -44,7 +45,6 @@ class Growatt {
   eDevice_t _InitModbusCommunication();
   double roundByResolution(const double& value, const float& resolution);
   double getRegValue(sGrowattModbusReg_t* reg);
-  void camelCaseToSnakeCase(String input, char* output);
   void metricsAddValue(const String& name, double value, StringStream& metrics,
                        const String& labels);
   std::tuple<bool, String> handleEcho(const JsonDocument& req,
