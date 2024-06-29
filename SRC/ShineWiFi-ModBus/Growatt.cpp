@@ -637,6 +637,25 @@ void Growatt::CreateMetrics(StringStream& metrics, const String& MacAddress,
   metricsAddValue("AccumulatedEnergy", 320, metrics, labels);
 #endif  // SIMULATE_INVERTER
   metricsAddValue("Cnt", _PacketCnt, metrics, labels);
+  metricsAddValue("Uptime", millis() / 1000, metrics, labels);
+  metricsAddValue("WifiRSSI", WiFi.RSSI(), metrics, labels);
+
+  metricsAddValue("HeapFree", ESP.getFreeHeap(), metrics, labels);
+#ifdef ESP32
+  metricsAddValue("HeapSize", ESP.getHeapSize(), metrics, labels);
+  metricsAddValue("HeapMaxAlloc", ESP.getMaxAllocHeap(), metrics, labels);
+  metricsAddValue("HeapMinFree", ESP.getMinFreeHeap(), metrics, labels);
+  metricsAddValue("HeapFragmentation",
+                  100 - (100 * ESP.getMaxAllocHeap() / ESP.getFreeHeap()),
+                  metrics, labels);
+#else
+  static uint32_t heap_min_free = ESP.getFreeHeap();
+  heap_min_free = min(ESP.getFreeHeap(), heap_min_free);
+  metricsAddValue("HeapMaxAlloc", ESP.getMaxFreeBlockSize(), metrics, labels);
+  metricsAddValue("HeapMinFree", heap_min_free, metrics, labels);
+  metricsAddValue("HeapFragmentation", ESP.getHeapFragmentation(), metrics,
+                  labels);
+#endif
 }
 
 void Growatt::RegisterCommand(const String& command,
