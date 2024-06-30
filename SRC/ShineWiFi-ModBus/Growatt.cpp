@@ -93,6 +93,7 @@ void Growatt::begin(Stream& serial) {
     delay(1000);
     Serial.begin(115200);
     Modbus.begin(1, serial);
+    Modbus.setResponseTimeout(250);
     res = Modbus.readInputRegisters(0, 1);
     if (res == Modbus.ku8MBSuccess) {
       _eDevice = ShineWiFi_X;  // USB
