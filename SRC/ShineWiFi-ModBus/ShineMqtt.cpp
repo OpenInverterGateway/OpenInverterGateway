@@ -38,6 +38,7 @@ String ShineMqtt::getId() {
 }
 
 boolean ShineMqtt::mqttEnabled() { return !this->mqttconfig.server.isEmpty(); }
+boolean ShineMqtt::mqttConnected() { return this->mqttclient.connected(); }
 
 // -------------------------------------------------------
 // Check the Mqtt status and reconnect if necessary
@@ -151,13 +152,6 @@ void ShineMqtt::onMqttMessage(char* topic, byte* payload, unsigned int length) {
 
   this->inverter.HandleCommand(command, payload, length, req, res);
   mqttPublish(res, this->mqttconfig.topic + "/result");
-}
-
-void ShineMqtt::updateMqttLed() {
-  if (!this->mqttclient.connected())
-    digitalWrite(LED_RT, 1);
-  else
-    digitalWrite(LED_RT, 0);
 }
 
 void ShineMqtt::loop() { this->mqttclient.loop(); }

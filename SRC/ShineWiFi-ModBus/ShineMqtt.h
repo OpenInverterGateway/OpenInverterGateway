@@ -25,8 +25,8 @@ class ShineMqtt {
   boolean mqttPublish(const String& JsonString);
   boolean mqttPublish(JsonDocument& doc, String topic = "");
   boolean mqttEnabled();
+  boolean mqttConnected();
   void onMqttMessage(char* topic, byte* payload, unsigned int length);
-  void updateMqttLed();
   void loop();
 
  private:
