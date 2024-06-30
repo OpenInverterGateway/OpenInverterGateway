@@ -29,6 +29,7 @@ ModbusMaster Modbus;
 Growatt::Growatt() {
   _eDevice = Undef_stick;
   _PacketCnt = 0;
+  _HoldingRegistersRequireUpdate = true;
 
   handlers = std::map<String, CommandHandlerFunc>();
 
@@ -207,6 +208,7 @@ bool Growatt::ReadHoldingRegisters() {
       return false;
     }
   }
+  _HoldingRegistersRequireUpdate = false;
   return true;
 }
 
@@ -218,7 +220,10 @@ bool Growatt::ReadData() {
    */
 
   _PacketCnt++;
-  _GotData = ReadInputRegisters() && ReadHoldingRegisters();
+  _GotData = ReadInputRegisters();
+  if (_GotData && _HoldingRegistersRequireUpdate) {
+    _GotData &= ReadHoldingRegisters();
+  }
   return _GotData;
 }
 
@@ -324,12 +329,13 @@ bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result) {
 }
 
 bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value) {
-/**
- * @brief write 16b holding register
- * @param adr address of the register
- * @param value value to write to the register
- * @returns true if successful
- */
+  /**
+   * @brief write 16b holding register
+   * @param adr address of the register
+   * @param value value to write to the register
+   * @returns true if successful
+   */
+  _HoldingRegistersRequireUpdate = true;
 #if SIMULATE_INVERTER != 1
   uint8_t res = Modbus.writeSingleRegister(adr, value);
   if (res == Modbus.ku8MBSuccess) {
@@ -352,6 +358,7 @@ bool Growatt::WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value) {
   for (int i = 0; i < size; i++) {
     Modbus.setTransmitBuffer(i, value[i]);
   }
+  _HoldingRegistersRequireUpdate = true;
   uint8_t res = Modbus.writeMultipleRegisters(adr, size);
   if (res == Modbus.ku8MBSuccess) {
     return true;

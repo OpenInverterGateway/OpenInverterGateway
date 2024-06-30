@@ -39,6 +39,7 @@ class Growatt {
   eDevice_t _eDevice;
   bool _GotData;
   uint32_t _PacketCnt;
+  bool _HoldingRegistersRequireUpdate;
   std::map<String, CommandHandlerFunc> handlers;
 
   eDevice_t _InitModbusCommunication();
