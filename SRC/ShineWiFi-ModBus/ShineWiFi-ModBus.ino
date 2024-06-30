@@ -60,7 +60,7 @@ byte btnPressed = 0;
 #endif
 
 #define NUM_OF_RETRIES 5
-char u8RetryCounter = NUM_OF_RETRIES;
+boolean readoutSucceeded = false;
 
 uint16_t u16PacketCnt = 0;
 #if PINGER_SUPPORTED == 1
@@ -119,6 +119,25 @@ struct {
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
 
 // -------------------------------------------------------
+// Set the red led in case of error
+// -------------------------------------------------------
+void updateRedLed() {
+    uint8_t state = 0;
+    if (!readoutSucceeded) {
+        state = 1;
+    }
+    if (Inverter.GetWiFiStickType() == Undef_stick) {
+        state = 1;
+    }
+    #if MQTT_SUPPORTED == 1
+      if (shineMqtt.mqttEnabled() && !shineMqtt.mqttConnected()) {
+        state = 1;
+      }
+    #endif
+    digitalWrite(LED_RT, state);
+}
+
+// -------------------------------------------------------
 // Check the WiFi status and reconnect if necessary
 // -------------------------------------------------------
 void WiFi_Reconnect()
@@ -143,7 +162,7 @@ void WiFi_Reconnect()
 
         Log.println(F("WiFi reconnected"));
 
-        digitalWrite(LED_RT, 1);
+        updateRedLed();
     }
 }
 
@@ -701,7 +720,6 @@ void loop()
 
     Log.loop();
     unsigned long now = millis();
-    char readoutSucceeded;
 
 #ifdef AP_BUTTON_PRESSED
     if ((now - ButtonTimer) > BUTTON_TIMER)
@@ -783,7 +801,8 @@ void loop()
     {
         if ((WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
         {
-            readoutSucceeded = 0;
+            uint8_t u8RetryCounter = NUM_OF_RETRIES;
+            readoutSucceeded = false;
             while ((u8RetryCounter) && !(readoutSucceeded))
             {
                 #if SIMULATE_INVERTER == 1
@@ -804,9 +823,8 @@ void loop()
                     #endif
                     handleWdtReset(mqttSuccess);
 
-                    digitalWrite(LED_RT, 0); // clear red led if everything is ok
                     // leave while-loop
-                    readoutSucceeded = 1;
+                    readoutSucceeded = true;
                 }
                 else
                 {
@@ -821,16 +839,12 @@ void loop()
                         #if MQTT_SUPPORTED == 1
                             shineMqtt.mqttPublish(String(F("{\"InverterStatus\": -1 }")));
                         #endif
-                        digitalWrite(LED_RT, 1); // set red led in case of error
                     }
                 }
             }
-            u8RetryCounter = NUM_OF_RETRIES;
         }
 
-        #if MQTT_SUPPORTED == 1
-        shineMqtt.updateMqttLed();
-        #endif
+        updateRedLed();
 
         #if PINGER_SUPPORTED == 1
             //frequently check if gateway is reachable
