@@ -6,7 +6,13 @@
 #define JSON_DOCUMENT_SIZE 2048
 #define BUFFER_SIZE 256
 
-typedef StaticJsonDocument<JSON_DOCUMENT_SIZE> ShineJsonDocument;
+#if JSON_DOCUMENT_SIZE > 2048
+#define ShineJsonDocument(variable) \
+  DynamicJsonDocument variable(JSON_DOCUMENT_SIZE)
+#else
+#define ShineJsonDocument(variable) \
+  StaticJsonDocument<JSON_DOCUMENT_SIZE> variable
+#endif
 
 typedef enum {
   Undef_stick = 0,

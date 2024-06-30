@@ -469,7 +469,7 @@ void setupMenu(bool enableCustomParams){
     wm.setMenu(menu); // custom menu, pass vector
 }
 
-void sendJson(ShineJsonDocument&  doc)
+void sendJson(JsonDocument& doc)
 {
     httpServer.setContentLength(measureJson(doc));
     httpServer.send(200, "application/json", "");
@@ -480,7 +480,7 @@ void sendJson(ShineJsonDocument&  doc)
 
 void sendJsonSite(void)
 {
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    ShineJsonDocument(doc);
     Inverter.CreateJson(doc, WiFi.macAddress(), Config.hostname);
 
     sendJson(doc);
@@ -488,7 +488,7 @@ void sendJsonSite(void)
 
 void sendUiJsonSite(void)
 {
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    ShineJsonDocument(doc);
     Inverter.CreateUIJson(doc, Config.hostname);
 
     sendJson(doc);
@@ -513,7 +513,7 @@ void sendMetrics(void)
 #if MQTT_SUPPORTED == 1
 boolean sendMqttJson(void)
 {
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    ShineJsonDocument(doc);
 
     Inverter.CreateJson(doc, WiFi.macAddress(), "");
     return shineMqtt.mqttPublish(doc);
