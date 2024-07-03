@@ -33,7 +33,7 @@ class Growatt {
   void CreateJson(ShineJsonDocument& doc, const String& MacAddress,
                   const String& Hostname);
   void CreateUIJson(ShineJsonDocument& doc, const String& Hostname);
-  void CreateMetrics(StringStream& metrics, const String& MacAddress,
+  void CreateMetrics(String& metrics, const String& MacAddress,
                      const String& Hostname);
 
  private:
@@ -46,7 +46,8 @@ class Growatt {
   double roundByResolution(const double& value, const float& resolution);
   double getRegValue(sGrowattModbusReg_t* reg);
   void camelCaseToSnakeCase(const String& input, char* output);
-  void metricsAddValue(const String& name, double value, StringStream& metrics,
+  void metricsAddValue(const String& name, const double& value,
+                       const float& resolution, String& metrics,
                        const String& labels);
   std::tuple<bool, String> handleEcho(const JsonDocument& req,
                                       JsonDocument& res, Growatt& inverter);
