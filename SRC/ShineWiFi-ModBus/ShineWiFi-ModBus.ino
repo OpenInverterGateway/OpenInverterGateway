@@ -505,6 +505,11 @@ void sendJson(ShineJsonDocument&  doc)
 
 void sendJsonSite(void)
 {
+    if (!readoutSucceeded) {
+        httpServer.send(503, F("text/plain"), F("Service Unavailable"));
+        return;
+    }
+
     StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
     Inverter.CreateJson(doc, WiFi.macAddress(), Config.hostname);
 
