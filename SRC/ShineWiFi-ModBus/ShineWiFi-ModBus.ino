@@ -430,6 +430,7 @@ void setup()
     #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", sendDebug);
     #endif
+    httpServer.onNotFound(handleNotFound);
 
     Inverter.InitProtocol();
     InverterReconnect();
@@ -689,6 +690,31 @@ void handlePostData()
         httpServer.send(200, F("text/plain"), msg);
         return;
     }
+}
+
+bool sendSingleValue(void)
+{
+    if (!readoutSucceeded) {
+        httpServer.send(503, F("text/plain"), F("Service Unavailable"));
+        return true;
+    }
+    const String& key = httpServer.uri().substring(7);
+    double value;
+    if (Inverter.GetSingleValueByName(key, value)) {
+        httpServer.send(200, "text/plain", String(value));
+        return true;
+    }
+    return false;
+}
+
+void handleNotFound() {
+    if (httpServer.uri().startsWith(F("/value/")) &&
+        httpServer.uri().length() > 7) {
+        if (sendSingleValue()) {
+            return;
+        }
+    }
+    httpServer.send(404, F("text/plain"), String(F("Not found: ") + httpServer.uri()));
 }
 
 #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
