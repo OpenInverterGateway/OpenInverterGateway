@@ -521,18 +521,26 @@ void sendUiJsonSite(void)
 
 void sendMetrics(void)
 {
-    StringStream metrics;
-    char writeBuffer[BUFFER_SIZE];
+    if (!readoutSucceeded) {
+        httpServer.send(503, F("text/plain"), F("Service Unavailable"));
+        return;
+    }
+    static unsigned maxMetricsSize = 0;
+    String metrics;
+    if (maxMetricsSize) {
+        metrics.reserve(maxMetricsSize);
+    }
 
     Inverter.CreateMetrics(metrics, WiFi.macAddress(), Config.hostname);
 
-    httpServer.setContentLength(metrics.available());
+    httpServer.setContentLength(metrics.length());
     httpServer.send(200, "text/plain", "");
     WiFiClient client = httpServer.client();
-    while (metrics.available()) {
-        int len = metrics.readBytes(writeBuffer, BUFFER_SIZE);
-        client.write(writeBuffer, len);
+    for (uint16_t i = 0; i < metrics.length(); i += TCP_MSS) {
+        int len = min(TCP_MSS, (int)metrics.length() - i);
+        client.write(metrics.c_str() + i, len);
     }
+    maxMetricsSize = max(maxMetricsSize, metrics.length());
 }
 
 #if MQTT_SUPPORTED == 1

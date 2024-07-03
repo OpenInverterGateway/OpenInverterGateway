@@ -592,19 +592,18 @@ void Growatt::camelCaseToSnakeCase(const String& input, char* output) {
   output[outputIndex] = '\0';
 }
 
-void Growatt::metricsAddValue(const String& name, double value,
-                              StringStream& metrics, const String& labels) {
+void Growatt::metricsAddValue(const String& name, const double& value,
+                              const float& resolution, String& metrics,
+                              const String& labels) {
+  const String svalue =
+      (resolution == 1) ? String((int32_t)value) : String(value);
   char nameSnakeCase[name.length() + 10];
   camelCaseToSnakeCase(name, nameSnakeCase);
-
-  metrics.print("growatt_");
-  metrics.print(nameSnakeCase);
-  metrics.print("{");
-  metrics.print(labels);
-  metrics.printf("} %g\n", value);
+  metrics +=
+      "growatt_" + String(nameSnakeCase) + "{" + labels + "} " + svalue + "\n";
 }
 
-void Growatt::CreateMetrics(StringStream& metrics, const String& MacAddress,
+void Growatt::CreateMetrics(String& metrics, const String& MacAddress,
                             const String& Hostname) {
   String labels;
   if (Hostname == DEFAULT_HOSTNAME) {
@@ -615,46 +614,48 @@ void Growatt::CreateMetrics(StringStream& metrics, const String& MacAddress,
 #if SIMULATE_INVERTER != 1
   for (int i = 0; i < _Protocol.InputRegisterCount; i++)
     metricsAddValue(_Protocol.InputRegisters[i].name,
-                    getRegValue(&_Protocol.InputRegisters[i]), metrics, labels);
+                    getRegValue(&_Protocol.InputRegisters[i]),
+                    _Protocol.InputRegisters[i].resolution, metrics, labels);
 
   for (int i = 0; i < _Protocol.HoldingRegisterCount; i++)
     metricsAddValue(_Protocol.HoldingRegisters[i].name,
-                    getRegValue(&_Protocol.HoldingRegisters[i]), metrics,
-                    labels);
+                    getRegValue(&_Protocol.HoldingRegisters[i]),
+                    _Protocol.HoldingRegisters[i].resolution, metrics, labels);
 
 #else
 #warning simulating the inverter
-  metricsAddValue("Status", 1, metrics, labels);
-  metricsAddValue("DcPower", 230, metrics, labels);
-  metricsAddValue("DcVoltage", 70.5, metrics, labels);
-  metricsAddValue("DcInputCurrent", 8.5, metrics, labels);
-  metricsAddValue("AcFreq", 50.00, metrics, labels);
-  metricsAddValue("AcVoltage", 230.0, metrics, labels);
-  metricsAddValue("AcPower", 0.00, metrics, labels);
-  metricsAddValue("EnergyToday", 0.3, metrics, labels);
-  metricsAddValue("EnergyTotal", 49.1, metrics, labels);
-  metricsAddValue("OperatingTime", 123456, metrics, labels);
-  metricsAddValue("Temperature", 21.12, metrics, labels);
-  metricsAddValue("AccumulatedEnergy", 320, metrics, labels);
+  metricsAddValue("Status", 1, 1, metrics, labels);
+  metricsAddValue("DcPower", 230, 0.1, metrics, labels);
+  metricsAddValue("DcVoltage", 70.5, 0.1, metrics, labels);
+  metricsAddValue("DcInputCurrent", 8.5, 0.1, metrics, labels);
+  metricsAddValue("AcFreq", 50.00, 0.01, metrics, labels);
+  metricsAddValue("AcVoltage", 230.0, 0.1, metrics, labels);
+  metricsAddValue("AcPower", 0.0, 0.1, metrics, labels);
+  metricsAddValue("EnergyToday", 0.3, 0.1, metrics, labels);
+  metricsAddValue("EnergyTotal", 49.1, 0.1, metrics, labels);
+  metricsAddValue("OperatingTime", 123456, 0.1, metrics, labels);
+  metricsAddValue("Temperature", 21.12, 0.1, metrics, labels);
+  metricsAddValue("AccumulatedEnergy", 320, 0.1, metrics, labels);
 #endif  // SIMULATE_INVERTER
-  metricsAddValue("Cnt", _PacketCnt, metrics, labels);
-  metricsAddValue("Uptime", millis() / 1000, metrics, labels);
-  metricsAddValue("WifiRSSI", WiFi.RSSI(), metrics, labels);
+  metricsAddValue("Cnt", _PacketCnt, 1, metrics, labels);
+  metricsAddValue("Uptime", millis() / 1000, 1, metrics, labels);
+  metricsAddValue("WifiRSSI", WiFi.RSSI(), 1, metrics, labels);
 
-  metricsAddValue("HeapFree", ESP.getFreeHeap(), metrics, labels);
+  metricsAddValue("HeapFree", ESP.getFreeHeap(), 1, metrics, labels);
 #ifdef ESP32
-  metricsAddValue("HeapSize", ESP.getHeapSize(), metrics, labels);
-  metricsAddValue("HeapMaxAlloc", ESP.getMaxAllocHeap(), metrics, labels);
-  metricsAddValue("HeapMinFree", ESP.getMinFreeHeap(), metrics, labels);
+  metricsAddValue("HeapSize", ESP.getHeapSize(), 1, metrics, labels);
+  metricsAddValue("HeapMaxAlloc", ESP.getMaxAllocHeap(), 1, metrics, labels);
+  metricsAddValue("HeapMinFree", ESP.getMinFreeHeap(), 1, metrics, labels);
   metricsAddValue("HeapFragmentation",
-                  100 - (100 * ESP.getMaxAllocHeap() / ESP.getFreeHeap()),
+                  100 - (100 * ESP.getMaxAllocHeap() / ESP.getFreeHeap()), 1,
                   metrics, labels);
 #else
   static uint32_t heap_min_free = ESP.getFreeHeap();
   heap_min_free = min(ESP.getFreeHeap(), heap_min_free);
-  metricsAddValue("HeapMaxAlloc", ESP.getMaxFreeBlockSize(), metrics, labels);
-  metricsAddValue("HeapMinFree", heap_min_free, metrics, labels);
-  metricsAddValue("HeapFragmentation", ESP.getHeapFragmentation(), metrics,
+  metricsAddValue("HeapMaxAlloc", ESP.getMaxFreeBlockSize(), 1, metrics,
+                  labels);
+  metricsAddValue("HeapMinFree", heap_min_free, 1, metrics, labels);
+  metricsAddValue("HeapFragmentation", ESP.getHeapFragmentation(), 1, metrics,
                   labels);
 #endif
 }
