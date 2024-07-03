@@ -432,6 +432,22 @@ double Growatt::getRegValue(sGrowattModbusReg_t* reg) {
   return result;
 }
 
+bool Growatt::GetSingleValueByName(const String& name, double& value) {
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+    if (name.equalsIgnoreCase(_Protocol.InputRegisters[i].name)) {
+      value = getRegValue(&_Protocol.InputRegisters[i]);
+      return true;
+    }
+  }
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+    if (name.equalsIgnoreCase(_Protocol.HoldingRegisters[i].name)) {
+      value = getRegValue(&_Protocol.HoldingRegisters[i]);
+      return true;
+    }
+  }
+  return false;
+}
+
 void Growatt::CreateJson(ShineJsonDocument& doc, const String& MacAddress,
                          const String& Hostname) {
   if (!Hostname.isEmpty()) {

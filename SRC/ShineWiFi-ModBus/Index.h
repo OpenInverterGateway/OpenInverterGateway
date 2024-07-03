@@ -122,7 +122,8 @@ copies or substantial portions of the Software. -->
                         }
                         // init dataview
                         var element = document.createElement("p");
-                        element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
+                        element.innerHTML = "<a href=\"/value/" + key + "\">" + key + "</a>: " +
+                                            obj[key][0] + "&#8239;" + obj[key][1];
                         element.setAttribute("id", key);
                         container.appendChild(element);
                     }
@@ -140,7 +141,8 @@ copies or substantial portions of the Software. -->
                         }
                         // update data view
                         var element = document.getElementById(key);
-                        element.innerHTML = key + ": " + obj[key][0] + "&#8239;" + obj[key][1];
+                        element.innerHTML = "<a href=\"/value/" + key + "\">" + key + "</a>: " +
+                                            obj[key][0] + "&#8239;" + obj[key][1];
                         powerchart.update();
                     }
                 }
