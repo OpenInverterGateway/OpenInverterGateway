@@ -359,6 +359,9 @@ void setup()
     setupWifiManagerConfigMenu();
 
     digitalWrite(LED_BL, 1);
+    digitalWrite(LED_RT, 0);
+    digitalWrite(LED_GN, 0);
+
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
     
     int connect_timeout_seconds = 15;
