@@ -73,8 +73,6 @@ uint16_t u16PacketCnt = 0;
     WebServer httpServer(80);
 #endif
 
-WiFiManager wm;
-
 struct {
     WiFiManagerParameter* hostname = NULL;
     WiFiManagerParameter* static_ip = NULL;
@@ -103,6 +101,7 @@ static const struct {
     const char* mqtt_user = "/mqttu";
     const char* mqtt_pwd = "/mqttw";
 #endif
+    const char* force_ap = "/forceap";
 } ConfigFiles;
 
 struct {
@@ -114,6 +113,7 @@ struct {
 #if MQTT_SUPPORTED == 1
   MqttConfig mqtt;
 #endif
+  bool force_ap;
 } Config;
 
 #define CONFIG_PORTAL_MAX_TIME_SECONDS 300
@@ -187,7 +187,7 @@ void InverterReconnect(void)
 void loadConfig();
 void saveConfig();
 void saveParamCallback();
-void setupWifiManagerConfigMenu();
+void setupWifiManagerConfigMenu(WiFiManager& wm);
 
 void loadConfig()
 {
@@ -323,6 +323,8 @@ void resetWdt()
 
 void setup()
 {
+    WiFiManager wm;
+
     Log.println("Setup()");
 
     configureLogging();
@@ -356,14 +358,26 @@ void setup()
     Log.begin();
     startWdt();
 
-    setupWifiManagerConfigMenu();
+    setupWifiManagerConfigMenu(wm);
 
     digitalWrite(LED_BL, 1);
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
-    
-    int connect_timeout_seconds = 15;
+
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-    wm.setConnectTimeout(connect_timeout_seconds);
+
+    #ifdef AP_BUTTON_PRESSED
+        if (AP_BUTTON_PRESSED) {
+            Config.force_ap = true;
+        }
+    #endif
+    if (Config.force_ap) {
+        prefs.putBool(ConfigFiles.force_ap, false);
+        wm.startConfigPortal("GrowattConfig", APPassword);
+        Log.println(F("GrowattConfig finished"));
+        digitalWrite(LED_BL, 0);
+        delay(3000);
+        ESP.restart();
+    }
 
     // Set static ip
     if (!Config.static_ip.isEmpty() && !Config.static_netmask.isEmpty()) {
@@ -386,8 +400,11 @@ void setup()
             wm.setSTAStaticIPConfig(ip, gateway, netmask);
         }
     }
+
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
+    int connect_timeout_seconds = 15;
+    wm.setConnectTimeout(connect_timeout_seconds);
     bool res = wm.autoConnect("GrowattConfig", APPassword); // password protected wificonfig ap
 
     if (!res)
@@ -443,7 +460,7 @@ void setup()
 }
 
 
-void setupWifiManagerConfigMenu() {
+void setupWifiManagerConfigMenu(WiFiManager& wm) {
     customWMParams.hostname = new WiFiManagerParameter("hostname", "hostname (no spaces or special chars)", Config.hostname.c_str(), 30);
     customWMParams.static_ip = new WiFiManagerParameter("staticip", "ip", Config.static_ip.c_str(), 15);
     customWMParams.static_netmask = new WiFiManagerParameter("staticnetmask", "netmask", Config.static_netmask.c_str(), 15);
@@ -473,7 +490,7 @@ void setupWifiManagerConfigMenu() {
 
     wm.setSaveParamsCallback(saveParamCallback);
 
-    setupMenu(true);
+    setupMenu(wm, true);
 }
 
 /**
@@ -481,7 +498,7 @@ void setupWifiManagerConfigMenu() {
  * 
  * @param enableCustomParams enable custom params aka. mqtt settings
  */
-void setupMenu(bool enableCustomParams){
+void setupMenu(WiFiManager& wm, bool enableCustomParams){
     Log.println(F("Setting up WiFiManager menu"));
     std::vector<const char*> menu = { "wifi","wifinoscan","update"};
     if(enableCustomParams){
@@ -748,17 +765,7 @@ void loop()
 
     if (StartedConfigAfterBoot == true)
     {
-        digitalWrite(LED_BL, 1);
-        httpServer.stop();
-        Log.println(F("Config after boot started"));
-        #ifndef KEEP_AP_CONFIG_CONNECTION
-        ShineWifiDisconnect();
-        #endif
-        
-        wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
-        wm.startConfigPortal("GrowattConfig", APPassword);
-        Log.println(F("GrowattConfig finished"));
-        digitalWrite(LED_BL, 0);
+        prefs.putBool(ConfigFiles.force_ap, true);
         delay(3000);
         ESP.restart();
     }
