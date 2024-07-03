@@ -714,7 +714,7 @@ void handleNotFound() {
             return;
         }
     }
-    httpServer.send(404, F("text/plain"), String(F("Not found: ") + httpServer.uri()));
+    httpServer.send(404, F("text/plain"), String("Not found: " + httpServer.uri()));
 }
 
 #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
