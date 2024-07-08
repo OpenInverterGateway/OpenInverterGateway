@@ -534,6 +534,11 @@ void Growatt::CreateUIJson(JsonDocument& doc, const String& Hostname) {
                            "Hz", "°C", "VA",  "mA", "kOhm", "var"};
   const char* statusStr[] = {"(Waiting)", "(Normal Operation)", "", "(Error)"};
   const int statusStrLength = sizeof(statusStr) / sizeof(char*);
+  const char* priorityStr[] = {"(Load First)", "(Battery First)",
+                               "(Grid First)"};
+  const int priorityStrLength = sizeof(priorityStr) / sizeof(char*);
+  const char* bdcModeStr[] = {"(idle)", "(charging)", "(discharging)"};
+  const int bdcModeStrLength = sizeof(bdcModeStr) / sizeof(char*);
 
   if (!Hostname.isEmpty()) {
     JsonArray arr = doc.createNestedArray("Hostname");
@@ -550,10 +555,17 @@ void Growatt::CreateUIJson(JsonDocument& doc, const String& Hostname) {
       // value
       arr.add(getRegValue(&_Protocol.InputRegisters[i]));
 
-      if (String(_Protocol.InputRegisters[i].name) == F("InverterStatus") &&
+      if ((String(_Protocol.InputRegisters[i].name) == F("InverterStatus") ||
+           String(_Protocol.InputRegisters[i].name) == F("BDCSysState")) &&
           _Protocol.InputRegisters[i].value < statusStrLength) {
         arr.add(statusStr[_Protocol.InputRegisters[i].value]);  // use unit for
                                                                 // status
+      } else if (String(_Protocol.InputRegisters[i].name) == F("BDCSysMode") &&
+                 _Protocol.InputRegisters[i].value < bdcModeStrLength) {
+        arr.add(bdcModeStr[_Protocol.InputRegisters[i].value]);
+      } else if (String(_Protocol.InputRegisters[i].name) == F("Priority") &&
+                 _Protocol.InputRegisters[i].value < priorityStrLength) {
+        arr.add(priorityStr[_Protocol.InputRegisters[i].value]);
       } else {
         arr.add(unitStr[_Protocol.InputRegisters[i].unit]);  // unit
       }
