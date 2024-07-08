@@ -494,6 +494,22 @@ void Growatt::CreateJson(JsonDocument& doc, const String& MacAddress,
 #endif  // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
+  doc["Uptime"] = millis() / 1000;
+  doc["WifiRSSI"] = WiFi.RSSI();
+  doc["HeapFree"] = ESP.getFreeHeap();
+#ifdef ESP32
+  doc["HeapSize"] = ESP.getHeapSize();
+  doc["HeapMaxAlloc"] = ESP.getMaxAllocHeap();
+  doc["HeapMinFree"] = ESP.getMinFreeHeap();
+  doc["HeapFragmentation"] =
+      100 - (100 * ESP.getMaxAllocHeap() / ESP.getFreeHeap());
+#else
+  static uint32_t heap_min_free = ESP.getFreeHeap();
+  heap_min_free = min(ESP.getFreeHeap(), heap_min_free);
+  doc["HeapMaxAlloc"] = ESP.getMaxFreeBlockSize();
+  doc["HeapMinFree"] = heap_min_free;
+  doc["HeapFragmentation"] = ESP.getHeapFragmentation();
+#endif
 
   if (doc.overflowed()) {
     Log.println(
