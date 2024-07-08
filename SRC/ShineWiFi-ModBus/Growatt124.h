@@ -67,3 +67,14 @@ typedef enum {
 typedef enum { P124_Active_P_Rate } eP124HoldingRegisters_t;
 
 void init_growatt124(sProtocolDefinition_t &Protocol, Growatt &inverter);
+
+std::tuple<bool, String> getDateTime(const JsonDocument& req, JsonDocument& res,
+                                     Growatt& inverter);
+std::tuple<bool, String> updateDateTime(const JsonDocument& req,
+                                        JsonDocument& res, Growatt& inverter);
+std::tuple<bool, String> getPowerActiveRate(const JsonDocument& req,
+                                            JsonDocument& res,
+                                            Growatt& inverter);
+std::tuple<bool, String> setPowerActiveRate(const JsonDocument& req,
+                                            JsonDocument& res,
+                                            Growatt& inverter);
