@@ -60,6 +60,7 @@ See the short descriptions to the devices (including some pictures) in the "Doc"
 * Growatt MOD 12KTL3-X (Protocol 124 via USB)
 * Growatt MID 25-40KTL3-X (Protocol 120 via USB)
 * Growatt SPH 4000-10000STL3-X BH (Protocol 124 via Serial)
+* Growatt MID 15KTL3-XH (Protocol 3000 via USB)
 * And others ....
 
 ## Modbus Protocol Versions
@@ -68,6 +69,7 @@ The documentation from Growatt on the Modbus interface is available, search for 
 The older inverters apparently use Protocol v3.05 from year 2013.
 The newer inverters apparently use protocol v1.05 from year 2018.
 There is also a new protocol version v1.24 from 2020. (used with SPH4-10KTL3 BH-UP inverter)
+TL-XH hybrid inverters use version v1.24 with a different set of input and holding registers.
 
 ## JSON Format Data
 For IoT applications the raw data can now read in JSON format (application/json) by calling `http://<ip>/status`
