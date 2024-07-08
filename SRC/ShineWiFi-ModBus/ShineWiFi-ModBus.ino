@@ -514,7 +514,7 @@ void sendJsonSite(void)
         return;
     }
 
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    DynamicJsonDocument doc(JSON_DOCUMENT_SIZE);
     Inverter.CreateJson(doc, WiFi.macAddress(), Config.hostname);
 
     sendJson(doc);
@@ -522,7 +522,7 @@ void sendJsonSite(void)
 
 void sendUiJsonSite(void)
 {
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    DynamicJsonDocument doc(JSON_DOCUMENT_SIZE);
     Inverter.CreateUIJson(doc, Config.hostname);
 
     sendJson(doc);
@@ -555,7 +555,7 @@ void sendMetrics(void)
 #if MQTT_SUPPORTED == 1
 boolean sendMqttJson(void)
 {
-    StaticJsonDocument<JSON_DOCUMENT_SIZE> doc;
+    DynamicJsonDocument doc(JSON_DOCUMENT_SIZE);
 
     Inverter.CreateJson(doc, WiFi.macAddress(), "");
     return shineMqtt.mqttPublish(doc);
