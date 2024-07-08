@@ -448,7 +448,23 @@ bool Growatt::GetSingleValueByName(const String& name, double& value) {
   return false;
 }
 
-void Growatt::CreateJson(ShineJsonDocument& doc, const String& MacAddress,
+bool Growatt::GetSingleValueByName(const String& name, double& value) {
+  for (int i = 0; i < _Protocol.InputRegisterCount; i++) {
+    if (name.equalsIgnoreCase(_Protocol.InputRegisters[i].name)) {
+      value = getRegValue(&_Protocol.InputRegisters[i]);
+      return true;
+    }
+  }
+  for (int i = 0; i < _Protocol.HoldingRegisterCount; i++) {
+    if (name.equalsIgnoreCase(_Protocol.HoldingRegisters[i].name)) {
+      value = getRegValue(&_Protocol.HoldingRegisters[i]);
+      return true;
+    }
+  }
+  return false;
+}
+
+void Growatt::CreateJson(JsonDocument& doc, const String& MacAddress,
                          const String& Hostname) {
   if (!Hostname.isEmpty()) {
     doc["Hostname"] = Hostname;
@@ -481,12 +497,12 @@ void Growatt::CreateJson(ShineJsonDocument& doc, const String& MacAddress,
 
   if (doc.overflowed()) {
     Log.println(
-        F("WARN CreateJson: ShineJsonDocument overflowed! Output will be "
+        F("WARN CreateJson: JsonDocument overflowed! Output will be "
           "truncated."));
   }
 }
 
-void Growatt::CreateUIJson(ShineJsonDocument& doc, const String& Hostname) {
+void Growatt::CreateUIJson(JsonDocument& doc, const String& Hostname) {
 #if SIMULATE_INVERTER != 1
   const char* unitStr[] = {"",  "W", "kWh", "V",  "A",
                            "s", "%", "Hz",  "°C", "VA"};
@@ -590,7 +606,7 @@ void Growatt::CreateUIJson(ShineJsonDocument& doc, const String& Hostname) {
 
   if (doc.overflowed()) {
     Log.println(
-        F("WARN CreateUIJson: ShineJsonDocument overflowed! Output will be "
+        F("WARN CreateUIJson: JsonDocument overflowed! Output will be "
           "truncated."));
   }
 }

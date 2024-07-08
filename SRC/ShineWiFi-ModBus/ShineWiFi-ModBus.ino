@@ -498,7 +498,7 @@ void setupMenu(bool enableCustomParams){
     wm.setMenu(menu); // custom menu, pass vector
 }
 
-void sendJson(ShineJsonDocument&  doc)
+void sendJson(JsonDocument& doc)
 {
     httpServer.setContentLength(measureJson(doc));
     httpServer.send(200, "application/json", "");
