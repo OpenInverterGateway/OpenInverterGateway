@@ -336,13 +336,6 @@ void setup()
 
     prefs.begin("ShineWifi");
 
-    #if ENABLE_DOUBLE_RESET == 1
-        if (drd->detectDoubleReset()) {
-        Log.println(F("Double reset detected"));
-            StartedConfigAfterBoot = true;
-        }
-    #endif
-
     loadConfig();
     setupWifiHost();
 
@@ -370,6 +363,13 @@ void setup()
 
     #ifdef AP_BUTTON_PRESSED
         if (AP_BUTTON_PRESSED) {
+            Log.println(F("AP Button pressed during power up"));
+            Config.force_ap = true;
+        }
+    #endif
+    #if ENABLE_DOUBLE_RESET == 1
+        if (drd->detectDoubleReset()) {
+            Log.println(F("Double reset detected"));
             Config.force_ap = true;
         }
     #endif
