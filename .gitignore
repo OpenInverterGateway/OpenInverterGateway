@@ -14,3 +14,4 @@ platformio-local.ini
 # VisualStudioCode
 .vscode/*
 *.code-workspace
+node_modules
