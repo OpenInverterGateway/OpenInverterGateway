@@ -203,6 +203,7 @@ void loadConfig()
     Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user, "");
     Config.mqtt.pwd = prefs.getString(ConfigFiles.mqtt_pwd, "");
 #endif
+    Config.force_ap = prefs.getBool(ConfigFiles.force_ap, false);
 }
 
 void saveConfig()
@@ -360,6 +361,9 @@ void setup()
     // Set a timeout so the ESP doesn't hang waiting to be configured, for instance after a power failure
 
     wm.setConfigPortalTimeout(CONFIG_PORTAL_MAX_TIME_SECONDS);
+
+    Log.print("force_ap: ");
+    Log.println(Config.force_ap);
 
     #ifdef AP_BUTTON_PRESSED
         if (AP_BUTTON_PRESSED) {
@@ -807,6 +811,7 @@ void loop()
 
     if (StartedConfigAfterBoot == true)
     {
+        Log.println("StartedConfigAfterBoot");
         prefs.putBool(ConfigFiles.force_ap, true);
         delay(3000);
         ESP.restart();
