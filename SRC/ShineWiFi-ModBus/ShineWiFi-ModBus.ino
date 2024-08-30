@@ -850,46 +850,26 @@ void loop()
     {
         if ((WiFi.status() == WL_CONNECTED) && (Inverter.GetWiFiStickType()))
         {
-            uint8_t u8RetryCounter = NUM_OF_RETRIES;
-            readoutSucceeded = false;
-            while ((u8RetryCounter) && !(readoutSucceeded))
+            #if SIMULATE_INVERTER == 1
+                readoutSucceeded = true;
+            #else
+                readoutSucceeded = Inverter.ReadData(NUM_OF_RETRIES); // get new data from inverter
+            #endif
+            if (readoutSucceeded)
             {
-                #if SIMULATE_INVERTER == 1
-                if (1) // do it always
-                #else
-                if (Inverter.ReadData()) // get new data from inverter
+                boolean mqttSuccess = false;
+                #if MQTT_SUPPORTED == 1
+                if (shineMqtt.mqttEnabled()) {
+                    mqttSuccess = sendMqttJson();
+                }
                 #endif
-                {
-                    Log.println(F("ReadData() successful"));
-                    u16PacketCnt++;
-                    u8RetryCounter = NUM_OF_RETRIES;
-                    boolean mqttSuccess = false;
-
-                    #if MQTT_SUPPORTED == 1
-                    if (shineMqtt.mqttEnabled()) {
-                        mqttSuccess = sendMqttJson();
-                    }
-                    #endif
-                    handleWdtReset(mqttSuccess);
-
-                    // leave while-loop
-                    readoutSucceeded = true;
-                }
-                else
-                {
-                    Log.println(F("ReadData() NOT successful"));
-                    if (u8RetryCounter)
-                    {
-                        u8RetryCounter--;
-                    }
-                    else
-                    {
-                        Log.println(F("Retry counter"));
-                        #if MQTT_SUPPORTED == 1
-                            shineMqtt.mqttPublish(String(F("{\"InverterStatus\": -1 }")));
-                        #endif
-                    }
-                }
+                handleWdtReset(mqttSuccess);
+            }
+            else
+            {
+                #if MQTT_SUPPORTED == 1
+                    shineMqtt.mqttPublish(String(F("{\"InverterStatus\": -1 }")));
+                #endif
             }
         }
 
