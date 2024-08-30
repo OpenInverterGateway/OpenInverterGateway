@@ -447,6 +447,10 @@ void setup()
     #ifdef ENABLE_WEB_DEBUG
         httpServer.on("/debug", sendDebug);
     #endif
+    #if ENABLE_HTTP_COMMAND_ENDPOINT == 1
+        const char* Headers[] = {"Content-Type"};
+        httpServer.collectHeaders(Headers, sizeof(Headers)/ sizeof(Headers[0]));
+    #endif
     httpServer.onNotFound(handleNotFound);
 
     Inverter.InitProtocol();
@@ -724,6 +728,39 @@ bool sendSingleValue(void)
     return false;
 }
 
+#if ENABLE_HTTP_COMMAND_ENDPOINT == 1
+void handleInverterCommand()
+{
+    StaticJsonDocument<512> req, res;
+    const String& cmd = httpServer.uri().substring(9);
+    const String& postData = httpServer.arg(F("plain")).length() > 0 ? httpServer.arg(F("plain")) : F("{}");
+
+    // expect Content-Type application/json to avoid CORS attacks
+    bool hasJsonContentType = false;
+    for (int i = 0; i < httpServer.headers(); i++) {
+        if (httpServer.headerName(i) == F("Content-Type") &&
+            httpServer.header(i) == F("application/json")) {
+            hasJsonContentType = true;
+        }
+    }
+    if (!hasJsonContentType) {
+        httpServer.send(415, F("text/plain"), String(F("Unsupported media type")));
+        return;
+    }
+
+    Log.print(F("handleInverterCommand: "));
+    Log.println(cmd);
+
+    Inverter.HandleCommand(cmd, (byte*) postData.c_str(), postData.length(), req, res);
+
+    httpServer.setContentLength(measureJson(res));
+    httpServer.send(200, F("application/json"), "");
+    WiFiClient client = httpServer.client();
+    WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
+    serializeJson(res, bufferedWifiClient);
+}
+#endif
+
 void handleNotFound() {
     if (httpServer.uri().startsWith(F("/value/")) &&
         httpServer.uri().length() > 7) {
@@ -731,6 +768,15 @@ void handleNotFound() {
             return;
         }
     }
+    #if ENABLE_HTTP_COMMAND_ENDPOINT == 1
+        if (httpServer.uri().startsWith(F("/command/")) &&
+            // Combined with requiring Content-Type application/json this avoids CORS attacks
+            httpServer.method() == HTTP_POST &&
+            httpServer.uri().length() > 9) {
+            handleInverterCommand();
+            return;
+        }
+    #endif
     httpServer.send(404, F("text/plain"), String("Not found: " + httpServer.uri()));
 }
 
