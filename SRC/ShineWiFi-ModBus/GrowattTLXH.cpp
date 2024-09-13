@@ -307,7 +307,7 @@ void init_growattTLXH(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputRegisters[P3000_IPF] = sGrowattModbusReg_t{
       3100, 0, SIZE_16BIT, F("InverterOutputPFNow"), 1, 1, NONE, false, false};
   Protocol.InputRegisters[P3000_REALOPPERCENT] = sGrowattModbusReg_t{
-      3101,       0,    SIZE_16BIT, F("RealOutputPercent"), 1, 1,
+      3101,       0,    SIZE_16BIT_S, F("RealOutputPercent"), 1, 1,
       PERCENTAGE, true, false};
   Protocol.InputRegisters[P3000_OPFULLWATT] = sGrowattModbusReg_t{
       3102,    0,    SIZE_32BIT, F("OutputMaxpowerLimited"), 0.1, 0.1,
