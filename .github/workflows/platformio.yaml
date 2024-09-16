@@ -39,6 +39,7 @@ jobs:
     - name: Run PlatformIO
       run: pio run -e ShineWifiX -e ShineWifiS -e lolin32 -e nodemcu-32s -e d1
     - name: Adjust firmware filename
+      if: startsWith(github.ref, 'refs/tags/')
       run: |
         mkdir release
         mv .pio/build/lolin32/firmware.bin release/firmware-lolin32.bin
@@ -47,13 +48,19 @@ jobs:
         mv .pio/build/nodemcu-32s/firmware.bin release/firmware-nodemcu-32s.bin
         mv .pio/build/d1/firmware.bin release/firmware-d1.bin
     - name: Prepare config for TLXH inverters
+      if: startsWith(github.ref, 'refs/tags/')
       run: |
         sed -i -e "s/GROWATT_MODBUS_VERSION 124/GROWATT_MODBUS_VERSION 3000/g" "SRC/ShineWiFi-ModBus/Config.h"
     - name: Run PlatformIO for TLXH inverters
-      run: pio run -e ShineWifiX
+      if: startsWith(github.ref, 'refs/tags/')
+      run: pio run -e ShineWifiX -e lolin32 -e nodemcu-32s -e d1
     - name: Adjust firmware filename for TLXH inverters
+      if: startsWith(github.ref, 'refs/tags/')
       run: |
+        mv .pio/build/lolin32/firmware.bin release/firmware-lolin32-TLXH.bin
         mv .pio/build/ShineWifiX/firmware.bin release/firmware-ShineWifiX-TLXH.bin
+        mv .pio/build/nodemcu-32s/firmware.bin release/firmware-nodemcu-32s-TLXH.bin
+        mv .pio/build/d1/firmware.bin release/firmware-d1-TLXH.bin
     - name: Release
       uses: fnkr/github-action-ghr@v1
       if: startsWith(github.ref, 'refs/tags/')
