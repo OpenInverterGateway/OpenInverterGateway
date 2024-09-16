@@ -200,7 +200,7 @@ void loadConfig()
     Config.static_gateway = prefs.getString(ConfigFiles.static_gateway, "");
     Config.static_dns = prefs.getString(ConfigFiles.static_dns, "");
 #if MQTT_SUPPORTED == 1
-    Config.mqtt.server = prefs.getString(ConfigFiles.mqtt_server, "10.1.2.3");
+    Config.mqtt.server = prefs.getString(ConfigFiles.mqtt_server, "");
     Config.mqtt.port = prefs.getString(ConfigFiles.mqtt_port, "1883");
     Config.mqtt.topic = prefs.getString(ConfigFiles.mqtt_topic, "energy/solar");
     Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user, "");
