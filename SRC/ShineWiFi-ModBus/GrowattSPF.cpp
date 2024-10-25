@@ -82,7 +82,7 @@ void init_growattSPF(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputRegisters[SPF_AC_INVA] = sGrowattModbusReg_t{
       38, 0, SIZE_32BIT, F("ACInVA"), 0.1, 0.1, VA, true, false};  // #26
   Protocol.InputRegisters[SPF_BATT_PWR] = sGrowattModbusReg_t{
-      77, 0, SIZE_32BIT, F("BattPwr"), 0.1, 0.1, POWER_W, true, false};  // #27
+      77, 0, SIZE_32BIT_S, F("BattPwr"), 0.1, 0.1, POWER_W, true, false};  // #27
 
   Protocol.InputFragmentCount = 2;
   Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 40};
