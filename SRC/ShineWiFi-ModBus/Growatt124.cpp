@@ -606,5 +606,5 @@ void init_growatt124(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Log.print(F("init_growatt124: input registers "));
   Log.print(Protocol.InputRegisterCount);
   Log.print(F(" holding registers "));
-  Log.print(Protocol.HoldingFragmentCount);
+  Log.println(Protocol.HoldingFragmentCount);
 }
