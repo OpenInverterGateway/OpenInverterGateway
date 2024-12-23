@@ -2,7 +2,7 @@
 
 const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
-<html>
+<html lang="en">
 
 <!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
 
@@ -46,8 +46,6 @@ copies or substantial portions of the Software. -->
   <a onClick="return confirm('Starting config AP will disconnect you from the device. Are you sure?');" href="./startAp">Start Config AP</a> -
   <a onClick="return confirm('This will reboot the Wifi Stick. Are you sure?');" href="./reboot">Reboot</a> -
   <a href="./postCommunicationModbus">RW Modbus</a>
-
-</body>
 
 <script>
     let initialised = false;
@@ -153,6 +151,7 @@ copies or substantial portions of the Software. -->
         xhttp.send();
     }, 5000);
 </script>
+</body>
 </html>
 )=====";
 
