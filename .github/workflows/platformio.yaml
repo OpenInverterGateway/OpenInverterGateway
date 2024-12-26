@@ -36,6 +36,18 @@ jobs:
     - name: Prepare config
       run: |
         cp "SRC/ShineWiFi-ModBus/Config.h.example" "SRC/ShineWiFi-ModBus/Config.h"
+    - name: Set up node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: SRC/frontend/package-lock.json
+    - name: Download frontend dependencies
+      run: npm ci
+      working-directory: SRC/frontend
+    - name: Build frontend
+      run: npm run build
+      working-directory: SRC/frontend
     - name: Run PlatformIO
       run: pio run -e ShineWifiX -e ShineWifiS -e lolin32 -e nodemcu-32s -e d1
     - name: Adjust firmware filename

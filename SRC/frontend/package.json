@@ -1,0 +1,12 @@
+{
+  "name": "gw-inverter-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "progmemgen index.html post.html ../ShineWiFi-ModBus/Index.h"
+  },
+  "devDependencies": {
+    "progmemgen": "github:crasu/progmemgen"
+  }
+}
