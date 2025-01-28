@@ -33,7 +33,7 @@ Implemented Features:
 * Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
 * TLS support for esp32
 * Debugging via Web and Telnet
-* Power limiting (allows zero export)
+* Power limiting (allows zero export) -> find Documentation in /Doc/MQTT.md
 
 Not supported:
 * It does not make use the RTC or SPI Flash of these boards.
