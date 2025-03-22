@@ -425,6 +425,9 @@ void setup()
         }
     }
 
+    // register HOSTNAME also in DNS
+    wm.setHostname(Config.hostname);
+
     // Automatically connect using saved credentials,
     // if connection fails, it starts an access point with the specified name ("GrowattConfig")
     int connect_timeout_seconds = 15;
