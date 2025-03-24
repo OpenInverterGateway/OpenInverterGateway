@@ -23,12 +23,59 @@ copies or substantial portions of the Software. -->
             max-width: 800px;
             height: 400px;
             margin: 0 auto;
+            font-family: Arial;
         }
 
         h2 {
-            font-family: Arial;
             font-size: 2.5rem;
             text-align: center;
+        }
+
+        div {
+            font-size: 1rem;
+            padding: 10px 0px 10px 0px;
+        }
+
+        .linkButtonBar {
+            text-align: center;
+            padding: 20px 0px 20px 0px;
+        }
+
+        .linkButton {
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            border: solid 1px #91ca5f;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            background: #6eb92b;
+            color: #FFF;
+            padding: 8px 12px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2px;
+            font-size: .8rem;
+            text-align: center;
+        }
+
+        .yellow {
+            border: solid 1px rgb(202, 189, 95);
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            background:rgb(185, 178, 43);
+        }
+
+        .red {
+            border: solid 1px rgb(202, 95, 95);
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+            background:rgb(185, 43, 43);
         }
     </style>
 </head>
@@ -37,15 +84,18 @@ copies or substantial portions of the Software. -->
     <h2>Growatt Inverter</h2>
 
     <div><canvas id="powerChart"></canvas></div>
-    <div id="DataContainer"></div>
 
-  <a href="./status">Json</a> -
-  <a href="./uiStatus">UI Json</a> -
-  <a href="./metrics">Metrics</a> -
-  <a href="./debug">Log</a> -
-  <a onClick="return confirm('Starting config AP will disconnect you from the device. Are you sure?');" href="./startAp">Start Config AP</a> -
-  <a onClick="return confirm('This will reboot the Wifi Stick. Are you sure?');" href="./reboot">Reboot</a> -
-  <a href="./postCommunicationModbus">RW Modbus</a>
+    <div class="linkButtonBar">
+        <a href="./status" class="linkButton">Json</a>
+        <a href="./uiStatus" class="linkButton">UI Json</a>
+        <a href="./metrics" class="linkButton">Metrics</a>
+        <a href="./debug" class="linkButton">Log</a>
+        <a onClick="return confirm('Starting config AP will disconnect you from the device. Are you sure?');" href="./startAp" class="linkButton yellow">Start Config AP</a>
+        <a onClick="return confirm('This will reboot the Wifi Stick. Are you sure?');" href="./reboot" class="linkButton yellow">Reboot</a>
+        <a href="./postCommunicationModbus" class="linkButton red">RW Modbus</a>
+    </div>
+
+    <div id="DataContainer"></div>
 
 <script>
     let initialised = false;
