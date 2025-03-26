@@ -636,7 +636,7 @@ void sendMainPage(void)
 void sendChartJS(void)
 {
     httpServer.sendHeader("Content-Encoding", "gzip", true);
-    httpServer.send(200, "text/javascript", chart_umd_js_gz, chart_umd_js_gz_len);
+    httpServer.send(200, "text/javascript", chart_umd_js_gz);
 }
 
 void sendPostSite(void)
