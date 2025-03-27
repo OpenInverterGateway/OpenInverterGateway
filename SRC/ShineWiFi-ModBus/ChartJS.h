@@ -1,11 +1,11 @@
 #pragma once
 /*
-howto get this gziped javascript header file
-  wget -O chart.umd.js https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js
-  gzip -k chart.umd.js
-  xxd -i chart.umd.js.gz > ChartJS.h
-than add PROGMEM again like before ;-)
-*/
+ * howto get this gziped javascript header file
+ * wget -O chart.umd.js https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.js
+ * gzip -k chart.umd.js
+ * xxd -i chart.umd.js.gz > ChartJS.h
+ * than add const and PROGMEM again like before ;-)
+ */
 const char chart_umd_js_gz[] PROGMEM = {
   0x1f, 0x8b, 0x08, 0x08, 0x9e, 0x78, 0xe0, 0x67, 0x00, 0x03, 0x63, 0x68,
   0x61, 0x72, 0x74, 0x2e, 0x75, 0x6d, 0x64, 0x2e, 0x6a, 0x73, 0x00, 0xcc,
