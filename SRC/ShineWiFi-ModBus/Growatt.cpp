@@ -31,6 +31,7 @@ ModbusMaster Modbus;
 Growatt::Growatt() {
   _eDevice = Undef_stick;
   _PacketCnt = 0;
+  _PacketCntFailed = 0;
 
   handlers = std::map<String, CommandHandlerFunc>();
 
@@ -116,7 +117,7 @@ eDevice_t Growatt::GetWiFiStickType() {
   return _eDevice;
 }
 
-bool Growatt::ReadInputRegisters() {
+bool Growatt::ReadInputRegisters(uint8_t& i) {
   /**
    * @brief Read the input registers from the inverter
    * @returns true if data was read successfully, false otherwise
@@ -126,7 +127,7 @@ bool Growatt::ReadInputRegisters() {
   int j = 0;
 
   // read each fragment separately
-  for (int i = 0; i < _Protocol.InputFragmentCount; i++) {
+  for (; i < _Protocol.InputFragmentCount; i++) {
 #ifdef DEBUG_MODBUS_OUTPUT
     Log.printf("Modbus: read Segment from 0x%02X with len: %d ...",
                _Protocol.InputReadFragments[i].StartAddress,
@@ -180,7 +181,7 @@ bool Growatt::ReadInputRegisters() {
   return true;
 }
 
-bool Growatt::ReadHoldingRegisters() {
+bool Growatt::ReadHoldingRegisters(uint8_t& i) {
   /**
    * @brief Read the holding registers from the inverter
    * @returns true if data was read successfully, false otherwise
@@ -189,7 +190,7 @@ bool Growatt::ReadHoldingRegisters() {
   uint8_t res;
 
   // read each fragment separately
-  for (int i = 0; i < _Protocol.HoldingFragmentCount; i++) {
+  for (; i < _Protocol.HoldingFragmentCount; i++) {
     res = Modbus.readHoldingRegisters(
         _Protocol.HoldingReadFragments[i].StartAddress,
         _Protocol.HoldingReadFragments[i].FragmentSize);
@@ -221,15 +222,45 @@ bool Growatt::ReadHoldingRegisters() {
   return true;
 }
 
-bool Growatt::ReadData() {
+bool Growatt::ReadData(uint8_t maxRetries) {
   /**
    * @brief Reads the data from the inverter and updates the internal data
    * structures
    * @returns true if data was read successfully, false otherwise
    */
-
-  _PacketCnt++;
-  _GotData = ReadInputRegisters() && ReadHoldingRegisters();
+  uint8_t inputFragOffs = 0;
+  uint8_t holdingFragOffs = 0;
+  uint8_t retryCnt = 0;
+  unsigned long readStart = millis();
+  bool res;
+  while (inputFragOffs < _Protocol.InputFragmentCount &&
+         retryCnt < maxRetries) {
+    _PacketCnt++;
+    res = ReadInputRegisters(inputFragOffs);
+    if (!res) {
+      _PacketCntFailed++;
+      retryCnt++;
+    }
+  }
+  while (holdingFragOffs < _Protocol.HoldingFragmentCount &&
+         retryCnt < maxRetries) {
+    _PacketCnt++;
+    res = ReadHoldingRegisters(holdingFragOffs);
+    if (!res) {
+      _PacketCntFailed++;
+      retryCnt++;
+    }
+  }
+  _GotData = retryCnt < maxRetries;
+  if (_GotData) {
+    Log.print(F("ReadData() successful after "));
+  } else {
+    Log.print(F("ReadData() NOT successful after "));
+  }
+  Log.print(retryCnt);
+  Log.print(F(" retries in "));
+  Log.print(millis() - readStart);
+  Log.println(F("ms"));
   return _GotData;
 }
 
@@ -240,7 +271,7 @@ sGrowattModbusReg_t Growatt::GetInputRegister(uint16_t reg) {
    * @returns the register value
    */
   if (_GotData == false) {
-    ReadData();
+    ReadData(1);
   }
   return _Protocol.InputRegisters[reg];
 }
@@ -252,7 +283,7 @@ sGrowattModbusReg_t Growatt::GetHoldingRegister(uint16_t reg) {
    * @returns the register value
    */
   if (_GotData == false) {
-    ReadData();
+    ReadData(1);
   }
   return _Protocol.HoldingRegisters[reg];
 }
@@ -488,6 +519,7 @@ void Growatt::CreateJson(JsonDocument& doc, const String& MacAddress,
 #endif  // SIMULATE_INVERTER
   doc["Mac"] = MacAddress;
   doc["Cnt"] = _PacketCnt;
+  doc["CntFailed"] = _PacketCntFailed;
   doc["Uptime"] = millis() / 1000;
   doc["WifiRSSI"] = WiFi.RSSI();
   doc["HeapFree"] = ESP.getFreeHeap();
@@ -692,6 +724,7 @@ void Growatt::CreateMetrics(String& metrics, const String& MacAddress,
   metricsAddValue("AccumulatedEnergy", 320, 0.1, metrics, labels);
 #endif  // SIMULATE_INVERTER
   metricsAddValue("Cnt", _PacketCnt, 1, metrics, labels);
+  metricsAddValue("CntFailed", _PacketCntFailed, 1, metrics, labels);
   metricsAddValue("Uptime", millis() / 1000, 1, metrics, labels);
   metricsAddValue("WifiRSSI", WiFi.RSSI(), 1, metrics, labels);
 
