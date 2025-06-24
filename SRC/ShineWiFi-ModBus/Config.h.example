@@ -30,6 +30,9 @@
 // Enable direct modbus read/write support via the WebGUI. Enabling this is a potential security issue.
 #define ENABLE_MODBUS_COMMUNICATION 0
 
+// Enable http interface to inverter commands. Enabling this is a potential security issue.
+#define ENABLE_HTTP_COMMAND_ENDPOINT 0
+
 // Define a NTP Server and TZ Info to automatically adjust the inverter date/time.
 // TZ Info can be found at: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 #define DEFAULT_NTP_SERVER "europe.pool.ntp.org"
