@@ -89,10 +89,22 @@ copies or substantial portions of the Software. -->
         <a href="./status" class="linkButton">Json</a>
         <a href="./uiStatus" class="linkButton">UI Json</a>
         <a href="./metrics" class="linkButton">Metrics</a>
+        )====="
+        #ifdef ENABLE_WEB_DEBUG
+        R"=====(
         <a href="./debug" class="linkButton">Log</a>
+        )====="
+        #endif
+        R"=====(
         <a onClick="return confirm('Starting config AP will disconnect you from the device. Are you sure?');" href="./startAp" class="linkButton yellow">Start Config AP</a>
         <a onClick="return confirm('This will reboot the Wifi Stick. Are you sure?');" href="./reboot" class="linkButton yellow">Reboot</a>
-        <a href="./postCommunicationModbus" class="linkButton red">RW Modbus</a>
+        )====="
+        #if ENABLE_MODBUS_COMMUNICATION == 1
+        R"=====(
+        <a href="./postCommunicationModbus" class="linkButton red">Modbus Access</a>
+        )====="
+        #endif
+        R"=====(
     </div>
 
     <div id="DataContainer"></div>
