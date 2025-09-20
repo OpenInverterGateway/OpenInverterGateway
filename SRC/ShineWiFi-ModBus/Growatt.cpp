@@ -15,6 +15,8 @@
 #include "Growatt124.h"
 #elif GROWATT_MODBUS_VERSION == 305
 #include "Growatt305.h"
+#elif GROWATT_MODBUS_VERSION == 307
+#include "Growatt307.h"
 #elif GROWATT_MODBUS_VERSION == 3000
 #include "GrowattTLXH.h"
 #elif GROWATT_MODBUS_VERSION == 5000
@@ -67,6 +69,8 @@ void Growatt::InitProtocol() {
   init_growatt124(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 305
   init_growatt305(_Protocol, *this);
+#elif GROWATT_MODBUS_VERSION == 307
+  init_growatt307(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 3000
   init_growattTLXH(_Protocol, *this);
 #elif GROWATT_MODBUS_VERSION == 5000
