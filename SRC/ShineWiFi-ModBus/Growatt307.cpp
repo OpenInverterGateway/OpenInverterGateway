@@ -13,8 +13,8 @@ static bool verifyRegisters307(Growatt& inverter, uint16_t addr, uint16_t count,
   const int RETRY_DELAY_MS = 50;
 
   for (int i = 0; i < MAX_RETRIES; ++i) {
-    uint16_t readback[10] = {0}; // Sufficient for our use cases
-    if (count > 10) return false; // Safety check
+    uint16_t readback[10] = {0};   // Sufficient for our use cases
+    if (count > 10) return false;  // Safety check
 
     if (inverter.ReadHoldingRegFrag(addr, count, readback)) {
       bool match = true;
@@ -52,17 +52,17 @@ String formatTimeSlotInfo307(uint16_t start, uint16_t stop, uint16_t enabled) {
 
 // Helper function to format date/time registers to ISO string
 String formatDateTime307(uint16_t year, uint16_t month, uint16_t day,
-                        uint16_t hour, uint16_t minute, uint16_t second) {
+                         uint16_t hour, uint16_t minute, uint16_t second) {
   char buf[64];
   // Year in register is 2-digit (e.g., 24 for 2024)
   uint16_t fullYear = year < 100 ? 2000 + year : year;
-  snprintf(buf, sizeof(buf), "%04u-%02u-%02u %02u:%02u:%02u",
-           fullYear, month, day, hour, minute, second);
+  snprintf(buf, sizeof(buf), "%04u-%02u-%02u %02u:%02u:%02u", fullYear, month,
+           day, hour, minute, second);
   return String(buf);
 }
 
-std::tuple<bool, String> getDateTime307(const JsonDocument& req, JsonDocument& res,
-                                     Growatt& inverter) {
+std::tuple<bool, String> getDateTime307(const JsonDocument& req,
+                                        JsonDocument& res, Growatt& inverter) {
   uint16_t year, month, day, hour, minute, second;
 
 #if SIMULATE_INVERTER != 1
@@ -95,7 +95,8 @@ std::tuple<bool, String> getDateTime307(const JsonDocument& req, JsonDocument& r
 };
 
 std::tuple<bool, String> updateDateTime307(const JsonDocument& req,
-                                        JsonDocument& res, Growatt& inverter) {
+                                           JsonDocument& res,
+                                           Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -129,8 +130,8 @@ std::tuple<bool, String> updateDateTime307(const JsonDocument& req,
 };
 
 std::tuple<bool, String> getPowerActiveRate307(const JsonDocument& req,
-                                            JsonDocument& res,
-                                            Growatt& inverter) {
+                                               JsonDocument& res,
+                                               Growatt& inverter) {
   uint16_t value;
 
 #if SIMULATE_INVERTER != 1
@@ -145,8 +146,8 @@ std::tuple<bool, String> getPowerActiveRate307(const JsonDocument& req,
 };
 
 std::tuple<bool, String> setPowerActiveRate307(const JsonDocument& req,
-                                            JsonDocument& res,
-                                            Growatt& inverter) {
+                                               JsonDocument& res,
+                                               Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -168,8 +169,8 @@ std::tuple<bool, String> setPowerActiveRate307(const JsonDocument& req,
 };
 
 std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
-                                        JsonDocument& res,
-                                        Growatt& inverter) {
+                                            JsonDocument& res,
+                                            Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   uint16_t limit = 1000;  // Default to unlimited (100.0%)
   if (req.containsKey("limit")) {
@@ -178,7 +179,7 @@ std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
   }
 
   // Atomic write: HR122 (enable flag), HR123 (limit value)
-  uint16_t vals[2] = { 1, limit };
+  uint16_t vals[2] = {1, limit};
   if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
     return std::make_tuple(false, "Failed to write HR122+HR123 (enable)");
   }
@@ -192,11 +193,11 @@ std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setExportDisable307(const JsonDocument& req,
-                                         JsonDocument& res,
-                                         Growatt& inverter) {
+                                             JsonDocument& res,
+                                             Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   // Atomic write: Clear both flag and limit
-  uint16_t vals[2] = { 0, 0 };
+  uint16_t vals[2] = {0, 0};
   if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
     return std::make_tuple(false, "Failed to write HR122+HR123 (disable)");
   }
@@ -220,7 +221,7 @@ std::tuple<bool, String> setExportLimit307(const JsonDocument& req,
 
 #if SIMULATE_INVERTER != 1
   // Ensure flag=1 and write atomically
-  uint16_t vals[2] = { 1, limit };
+  uint16_t vals[2] = {1, limit};
   if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
     return std::make_tuple(false, "Failed to write HR122+HR123 (set limit)");
   }
@@ -248,7 +249,8 @@ std::tuple<String, String> getTimeSlot307(uint16_t start, uint16_t stop) {
 }
 
 std::tuple<bool, String> getBatteryFirst307(const JsonDocument& req,
-                                         JsonDocument& res, Growatt& inverter) {
+                                            JsonDocument& res,
+                                            Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   uint16_t settings[3];
   if (!inverter.ReadHoldingRegFrag(1090, 3, settings)) {
@@ -300,8 +302,8 @@ std::tuple<bool, String> getBatteryFirst307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setBatteryFirstPowerRate307(const JsonDocument& req,
-                                                  JsonDocument& res,
-                                                  Growatt& inverter) {
+                                                     JsonDocument& res,
+                                                     Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -317,8 +319,8 @@ std::tuple<bool, String> setBatteryFirstPowerRate307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setBatteryFirstStopSOC307(const JsonDocument& req,
-                                                JsonDocument& res,
-                                                Growatt& inverter) {
+                                                   JsonDocument& res,
+                                                   Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -333,9 +335,8 @@ std::tuple<bool, String> setBatteryFirstStopSOC307(const JsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setBatteryFirstACChargeEnabled307(const JsonDocument& req,
-                                                        JsonDocument& res,
-                                                        Growatt& inverter) {
+std::tuple<bool, String> setBatteryFirstACChargeEnabled307(
+    const JsonDocument& req, JsonDocument& res, Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -351,8 +352,9 @@ std::tuple<bool, String> setBatteryFirstACChargeEnabled307(const JsonDocument& r
   return std::make_tuple(true, "success");
 }
 
-std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& res,
-                                     Growatt& inverter, uint16_t startReg) {
+std::tuple<bool, String> setTimeSlot307(const JsonDocument& req,
+                                        JsonDocument& res, Growatt& inverter,
+                                        uint16_t startReg) {
   if (!req.containsKey("start")) {
     return std::make_tuple(false, "'start' field is required");
   }
@@ -391,9 +393,11 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& r
   int stop_minutes = stop_str.substring(3, 5).toInt();
 
   // Validate time bounds
-  if (start_hours < 0 || start_hours > 23 || start_minutes < 0 || start_minutes > 59 ||
-      stop_hours < 0 || stop_hours > 23 || stop_minutes < 0 || stop_minutes > 59) {
-    return std::make_tuple(false, "Invalid time values (hours: 0-23, minutes: 0-59)");
+  if (start_hours < 0 || start_hours > 23 || start_minutes < 0 ||
+      start_minutes > 59 || stop_hours < 0 || stop_hours > 23 ||
+      stop_minutes < 0 || stop_minutes > 59) {
+    return std::make_tuple(false,
+                           "Invalid time values (hours: 0-23, minutes: 0-59)");
   }
 
   uint16_t time_start = (start_hours << 8) | start_minutes;
@@ -419,13 +423,13 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& r
 }
 
 std::tuple<bool, String> setBatteryFirstTimeSlot307(const JsonDocument& req,
-                                                 JsonDocument& res,
-                                                 Growatt& inverter) {
+                                                    JsonDocument& res,
+                                                    Growatt& inverter) {
   return setTimeSlot307(req, res, inverter, 1100);
 }
 
 std::tuple<bool, String> getGridFirst307(const JsonDocument& req,
-                                      JsonDocument& res, Growatt& inverter) {
+                                         JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   uint16_t settings[2];  // Only reading 2 registers
   if (!inverter.ReadHoldingRegFrag(1070, 2, settings)) {
@@ -474,8 +478,8 @@ std::tuple<bool, String> getGridFirst307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setGridFirstPowerRate307(const JsonDocument& req,
-                                               JsonDocument& res,
-                                               Growatt& inverter) {
+                                                  JsonDocument& res,
+                                                  Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -491,8 +495,8 @@ std::tuple<bool, String> setGridFirstPowerRate307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setGridFirstStopSOC307(const JsonDocument& req,
-                                             JsonDocument& res,
-                                             Growatt& inverter) {
+                                                JsonDocument& res,
+                                                Growatt& inverter) {
   if (!req.containsKey("value")) {
     return std::make_tuple(false, "'value' field is required");
   }
@@ -508,8 +512,8 @@ std::tuple<bool, String> setGridFirstStopSOC307(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setGridFirstTimeSlot307(const JsonDocument& req,
-                                              JsonDocument& res,
-                                              Growatt& inverter) {
+                                                 JsonDocument& res,
+                                                 Growatt& inverter) {
   return setTimeSlot307(req, res, inverter, 1080);
 }
 
@@ -699,7 +703,8 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.InputFragmentCount = 5;
   Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 50};
   Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 43};
-  Protocol.InputReadFragments[2] = sGrowattReadFragment_t{118, 1};  // Current mode
+  Protocol.InputReadFragments[2] =
+      sGrowattReadFragment_t{118, 1};  // Current mode
   Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1009, 55};
   Protocol.InputReadFragments[4] = sGrowattReadFragment_t{1124, 4};
 
@@ -728,70 +733,98 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.HoldingRegisters[P307_H_EXPORT_LIMIT_ENABLED] = sGrowattModbusReg_t{
       122, 0, SIZE_16BIT, F("ExportLimitFlag"), 1, 1, NONE, true, false};
   Protocol.HoldingRegisters[P307_H_EXPORT_LIMIT_VALUE] = sGrowattModbusReg_t{
-      123, 0, SIZE_16BIT, F("ExportLimitValue"), 0.1, 0.1, PERCENTAGE, true, false};
+      123,        0,    SIZE_16BIT, F("ExportLimitValue"), 0.1, 0.1,
+      PERCENTAGE, true, false};
 
   // FRAGMENT 4: Grid First settings
   Protocol.HoldingRegisters[P307_H_GRID_FIRST_POWER_RATE] = sGrowattModbusReg_t{
-      1070, 0, SIZE_16BIT, F("GridFirstPwrRate"), 1, 1, PERCENTAGE, true, false};
+      1070,       0,    SIZE_16BIT, F("GridFirstPwrRate"), 1, 1,
+      PERCENTAGE, true, false};
   Protocol.HoldingRegisters[P307_H_GRID_FIRST_STOP_SOC] = sGrowattModbusReg_t{
       1071, 0, SIZE_16BIT, F("GridFirstSOC"), 1, 1, PERCENTAGE, true, false};
 
   // FRAGMENT 5: Grid First time slots
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_START] = sGrowattModbusReg_t{
-      1080, 0, SIZE_16BIT, F("GridSlot1Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_START] =
+      sGrowattModbusReg_t{1080, 0,     SIZE_16BIT, F("GridSlot1Start"), 1, 1,
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_STOP] = sGrowattModbusReg_t{
       1081, 0, SIZE_16BIT, F("GridSlot1Stop"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_ENABLED] = sGrowattModbusReg_t{
-      1082, 0, SIZE_16BIT, F("GridSlot1En"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_START] = sGrowattModbusReg_t{
-      1083, 0, SIZE_16BIT, F("GridSlot2Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_ENABLED] =
+      sGrowattModbusReg_t{1082, 0,     SIZE_16BIT, F("GridSlot1En"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_START] =
+      sGrowattModbusReg_t{1083, 0,     SIZE_16BIT, F("GridSlot2Start"), 1, 1,
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_STOP] = sGrowattModbusReg_t{
       1084, 0, SIZE_16BIT, F("GridSlot2Stop"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_ENABLED] = sGrowattModbusReg_t{
-      1085, 0, SIZE_16BIT, F("GridSlot2En"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_START] = sGrowattModbusReg_t{
-      1086, 0, SIZE_16BIT, F("GridSlot3Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_ENABLED] =
+      sGrowattModbusReg_t{1085, 0,     SIZE_16BIT, F("GridSlot2En"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_START] =
+      sGrowattModbusReg_t{1086, 0,     SIZE_16BIT, F("GridSlot3Start"), 1, 1,
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_STOP] = sGrowattModbusReg_t{
       1087, 0, SIZE_16BIT, F("GridSlot3Stop"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_ENABLED] = sGrowattModbusReg_t{
-      1088, 0, SIZE_16BIT, F("GridSlot3En"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_ENABLED] =
+      sGrowattModbusReg_t{1088, 0,     SIZE_16BIT, F("GridSlot3En"), 1, 1,
+                          NONE, false, false};
 
   // FRAGMENT 6: Battery First settings
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_POWER_RATE] = sGrowattModbusReg_t{
-      1090, 0, SIZE_16BIT, F("BattFirstPwrRate"), 1, 1, PERCENTAGE, true, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_STOP_SOC] = sGrowattModbusReg_t{
-      1091, 0, SIZE_16BIT, F("BattFirstSOC"), 1, 1, PERCENTAGE, true, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_AC_CHARGE] = sGrowattModbusReg_t{
-      1092, 0, SIZE_16BIT, F("BattFirstACChrg"), 1, 1, NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_POWER_RATE] =
+      sGrowattModbusReg_t{1090, 0, SIZE_16BIT, F("BattFirstPwrRate"),
+                          1,    1, PERCENTAGE, true,
+                          false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_STOP_SOC] =
+      sGrowattModbusReg_t{1091,       0,    SIZE_16BIT, F("BattFirstSOC"), 1, 1,
+                          PERCENTAGE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_AC_CHARGE] =
+      sGrowattModbusReg_t{1092, 0,    SIZE_16BIT, F("BattFirstACChrg"), 1, 1,
+                          NONE, true, false};
 
   // FRAGMENT 7: Battery First time slots
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_START] = sGrowattModbusReg_t{
-      1100, 0, SIZE_16BIT, F("BattSlot1Start"), 1, 1, NONE, true, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_STOP] = sGrowattModbusReg_t{
-      1101, 0, SIZE_16BIT, F("BattSlot1Stop"), 1, 1, NONE, true, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_ENABLED] = sGrowattModbusReg_t{
-      1102, 0, SIZE_16BIT, F("BattSlot1En"), 1, 1, NONE, true, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_START] = sGrowattModbusReg_t{
-      1103, 0, SIZE_16BIT, F("BattSlot2Start"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_STOP] = sGrowattModbusReg_t{
-      1104, 0, SIZE_16BIT, F("BattSlot2Stop"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_ENABLED] = sGrowattModbusReg_t{
-      1105, 0, SIZE_16BIT, F("BattSlot2En"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_START] = sGrowattModbusReg_t{
-      1106, 0, SIZE_16BIT, F("BattSlot3Start"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_STOP] = sGrowattModbusReg_t{
-      1107, 0, SIZE_16BIT, F("BattSlot3Stop"), 1, 1, NONE, false, false};
-  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_ENABLED] = sGrowattModbusReg_t{
-      1108, 0, SIZE_16BIT, F("BattSlot3En"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_START] =
+      sGrowattModbusReg_t{1100, 0,    SIZE_16BIT, F("BattSlot1Start"), 1, 1,
+                          NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_STOP] =
+      sGrowattModbusReg_t{1101, 0,    SIZE_16BIT, F("BattSlot1Stop"), 1, 1,
+                          NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_ENABLED] =
+      sGrowattModbusReg_t{1102, 0,    SIZE_16BIT, F("BattSlot1En"), 1, 1,
+                          NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_START] =
+      sGrowattModbusReg_t{1103, 0,     SIZE_16BIT, F("BattSlot2Start"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_STOP] =
+      sGrowattModbusReg_t{1104, 0,     SIZE_16BIT, F("BattSlot2Stop"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_ENABLED] =
+      sGrowattModbusReg_t{1105, 0,     SIZE_16BIT, F("BattSlot2En"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_START] =
+      sGrowattModbusReg_t{1106, 0,     SIZE_16BIT, F("BattSlot3Start"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_STOP] =
+      sGrowattModbusReg_t{1107, 0,     SIZE_16BIT, F("BattSlot3Stop"), 1, 1,
+                          NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_ENABLED] =
+      sGrowattModbusReg_t{1108, 0,     SIZE_16BIT, F("BattSlot3En"), 1, 1,
+                          NONE, false, false};
 
   Protocol.HoldingFragmentCount = 7;
-  Protocol.HoldingReadFragments[0] = sGrowattReadFragment_t{3, 1};      // Active Power Rate
-  Protocol.HoldingReadFragments[1] = sGrowattReadFragment_t{45, 6};     // Date/Time
-  Protocol.HoldingReadFragments[2] = sGrowattReadFragment_t{122, 2};    // Export Limit (122-123)
-  Protocol.HoldingReadFragments[3] = sGrowattReadFragment_t{1070, 2};   // Grid First settings
-  Protocol.HoldingReadFragments[4] = sGrowattReadFragment_t{1080, 9};   // Grid First time slots
-  Protocol.HoldingReadFragments[5] = sGrowattReadFragment_t{1090, 3};   // Battery First settings
-  Protocol.HoldingReadFragments[6] = sGrowattReadFragment_t{1100, 9};   // Battery First time slots
+  Protocol.HoldingReadFragments[0] =
+      sGrowattReadFragment_t{3, 1};  // Active Power Rate
+  Protocol.HoldingReadFragments[1] =
+      sGrowattReadFragment_t{45, 6};  // Date/Time
+  Protocol.HoldingReadFragments[2] =
+      sGrowattReadFragment_t{122, 2};  // Export Limit (122-123)
+  Protocol.HoldingReadFragments[3] =
+      sGrowattReadFragment_t{1070, 2};  // Grid First settings
+  Protocol.HoldingReadFragments[4] =
+      sGrowattReadFragment_t{1080, 9};  // Grid First time slots
+  Protocol.HoldingReadFragments[5] =
+      sGrowattReadFragment_t{1090, 3};  // Battery First settings
+  Protocol.HoldingReadFragments[6] =
+      sGrowattReadFragment_t{1100, 9};  // Battery First time slots
 
   // definition of commands
   inverter.RegisterCommand("datetime/get", getDateTime307);
@@ -800,7 +833,8 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   inverter.RegisterCommand("batteryfirst/get", getBatteryFirst307);
   inverter.RegisterCommand("batteryfirst/set/powerrate",
                            setBatteryFirstPowerRate307);
-  inverter.RegisterCommand("batteryfirst/set/stopsoc", setBatteryFirstStopSOC307);
+  inverter.RegisterCommand("batteryfirst/set/stopsoc",
+                           setBatteryFirstStopSOC307);
   inverter.RegisterCommand("batteryfirst/set/acchargeenabled",
                            setBatteryFirstACChargeEnabled307);
   inverter.RegisterCommand("batteryfirst/set/timeslot",

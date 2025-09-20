@@ -103,47 +103,48 @@ typedef enum {
 
 void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter);
 
-std::tuple<bool, String> getDateTime307(const JsonDocument& req, JsonDocument& res,
-                                     Growatt& inverter);
-std::tuple<bool, String> updateDateTime307(const JsonDocument& req,
+std::tuple<bool, String> getDateTime307(const JsonDocument& req,
                                         JsonDocument& res, Growatt& inverter);
+std::tuple<bool, String> updateDateTime307(const JsonDocument& req,
+                                           JsonDocument& res,
+                                           Growatt& inverter);
 std::tuple<bool, String> getPowerActiveRate307(const JsonDocument& req,
-                                            JsonDocument& res,
-                                            Growatt& inverter);
+                                               JsonDocument& res,
+                                               Growatt& inverter);
 std::tuple<bool, String> setPowerActiveRate307(const JsonDocument& req,
+                                               JsonDocument& res,
+                                               Growatt& inverter);
+std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
                                             JsonDocument& res,
                                             Growatt& inverter);
-std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
-                                        JsonDocument& res,
-                                        Growatt& inverter);
 std::tuple<bool, String> setExportDisable307(const JsonDocument& req,
-                                         JsonDocument& res,
-                                         Growatt& inverter);
+                                             JsonDocument& res,
+                                             Growatt& inverter);
 std::tuple<bool, String> setExportLimit307(const JsonDocument& req,
                                            JsonDocument& res,
                                            Growatt& inverter);
 std::tuple<bool, String> getBatteryFirst307(const JsonDocument& req,
-                                         JsonDocument& res, Growatt& inverter);
+                                            JsonDocument& res,
+                                            Growatt& inverter);
 std::tuple<bool, String> setBatteryFirstPowerRate307(const JsonDocument& req,
+                                                     JsonDocument& res,
+                                                     Growatt& inverter);
+std::tuple<bool, String> setBatteryFirstStopSOC307(const JsonDocument& req,
+                                                   JsonDocument& res,
+                                                   Growatt& inverter);
+std::tuple<bool, String> setBatteryFirstACChargeEnabled307(
+    const JsonDocument& req, JsonDocument& res, Growatt& inverter);
+std::tuple<bool, String> setBatteryFirstTimeSlot307(const JsonDocument& req,
+                                                    JsonDocument& res,
+                                                    Growatt& inverter);
+std::tuple<bool, String> getGridFirst307(const JsonDocument& req,
+                                         JsonDocument& res, Growatt& inverter);
+std::tuple<bool, String> setGridFirstPowerRate307(const JsonDocument& req,
                                                   JsonDocument& res,
                                                   Growatt& inverter);
-std::tuple<bool, String> setBatteryFirstStopSOC307(const JsonDocument& req,
+std::tuple<bool, String> setGridFirstStopSOC307(const JsonDocument& req,
                                                 JsonDocument& res,
                                                 Growatt& inverter);
-std::tuple<bool, String> setBatteryFirstACChargeEnabled307(const JsonDocument& req,
-                                                        JsonDocument& res,
-                                                        Growatt& inverter);
-std::tuple<bool, String> setBatteryFirstTimeSlot307(const JsonDocument& req,
+std::tuple<bool, String> setGridFirstTimeSlot307(const JsonDocument& req,
                                                  JsonDocument& res,
                                                  Growatt& inverter);
-std::tuple<bool, String> getGridFirst307(const JsonDocument& req,
-                                      JsonDocument& res, Growatt& inverter);
-std::tuple<bool, String> setGridFirstPowerRate307(const JsonDocument& req,
-                                               JsonDocument& res,
-                                               Growatt& inverter);
-std::tuple<bool, String> setGridFirstStopSOC307(const JsonDocument& req,
-                                             JsonDocument& res,
-                                             Growatt& inverter);
-std::tuple<bool, String> setGridFirstTimeSlot307(const JsonDocument& req,
-                                              JsonDocument& res,
-                                              Growatt& inverter);

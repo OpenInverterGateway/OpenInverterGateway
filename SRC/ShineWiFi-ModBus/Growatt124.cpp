@@ -115,8 +115,7 @@ std::tuple<bool, String> setPowerActiveRate(const JsonDocument& req,
 };
 
 std::tuple<bool, String> setExportEnable(const JsonDocument& req,
-                                        JsonDocument& res,
-                                        Growatt& inverter) {
+                                         JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   if (!inverter.WriteHoldingReg(123, 1000)) {
     return std::make_tuple(false, "Failed to enable export");
@@ -126,8 +125,8 @@ std::tuple<bool, String> setExportEnable(const JsonDocument& req,
 }
 
 std::tuple<bool, String> setExportDisable(const JsonDocument& req,
-                                         JsonDocument& res,
-                                         Growatt& inverter) {
+                                          JsonDocument& res,
+                                          Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
   if (!inverter.WriteHoldingReg(123, 0)) {
     return std::make_tuple(false, "Failed to disable export");
