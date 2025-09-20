@@ -5,9 +5,64 @@
 #include "Growatt307.h"
 #include <TLog.h>
 
+// Helper function to verify register writes with retry
+// Some Growatt firmwares commit values after a short delay
+static bool verifyRegisters307(Growatt& inverter, uint16_t addr, uint16_t count,
+                               const uint16_t* expected) {
+  const int MAX_RETRIES = 3;
+  const int RETRY_DELAY_MS = 50;
+
+  for (int i = 0; i < MAX_RETRIES; ++i) {
+    uint16_t readback[10] = {0}; // Sufficient for our use cases
+    if (count > 10) return false; // Safety check
+
+    if (inverter.ReadHoldingRegFrag(addr, count, readback)) {
+      bool match = true;
+      for (uint16_t j = 0; j < count; ++j) {
+        if (readback[j] != expected[j]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) return true;
+    }
+
+    if (i < MAX_RETRIES - 1) {
+      delay(RETRY_DELAY_MS);
+    }
+  }
+  return false;
+}
+
+// Helper function to format time register value to "HH:MM" string
+String formatTimeSlot307(uint16_t timeReg) {
+  int hours = (timeReg >> 8) & 0xFF;
+  int minutes = timeReg & 0xFF;
+  char buf[6];
+  snprintf(buf, sizeof(buf), "%02d:%02d", hours, minutes);
+  return String(buf);
+}
+
+// Helper function to format complete time slot info
+String formatTimeSlotInfo307(uint16_t start, uint16_t stop, uint16_t enabled) {
+  String result = formatTimeSlot307(start) + "-" + formatTimeSlot307(stop);
+  result += enabled ? " (ON)" : " (OFF)";
+  return result;
+}
+
+// Helper function to format date/time registers to ISO string
+String formatDateTime307(uint16_t year, uint16_t month, uint16_t day,
+                        uint16_t hour, uint16_t minute, uint16_t second) {
+  char buf[20];
+  // Year in register is 2-digit (e.g., 24 for 2024)
+  uint16_t fullYear = year < 100 ? 2000 + year : year;
+  snprintf(buf, sizeof(buf), "%04u-%02u-%02u %02u:%02u:%02u",
+           fullYear, month, day, hour, minute, second);
+  return String(buf);
+}
+
 std::tuple<bool, String> getDateTime307(const JsonDocument& req, JsonDocument& res,
                                      Growatt& inverter) {
-  String respStr;
   uint16_t year, month, day, hour, minute, second;
 
 #if SIMULATE_INVERTER != 1
@@ -22,20 +77,17 @@ std::tuple<bool, String> getDateTime307(const JsonDocument& req, JsonDocument& r
     second = result[5];
   }
 #else
-  year = 2023;
-  month = 06;
-  day = 22;
-  hour = 18;
+  year = 24;  // 2024
+  month = 1;
+  day = 20;
+  hour = 14;
   minute = 30;
-  second = 15;
+  second = 45;
   bool success = true;
 #endif
 
   if (success) {
-    char buf[30];
-    snprintf(buf, sizeof(buf), "%04hu-%02hu-%02hu %02hu:%02hu:%02hu", year,
-             month, day, hour, minute, second);
-    res["value"] = buf;
+    res["value"] = formatDateTime307(year, month, day, hour, minute, second);
     return std::make_tuple(true, "Successfully read date/time");
   } else {
     return std::make_tuple(false, "Failed to read date/time");
@@ -101,8 +153,9 @@ std::tuple<bool, String> setPowerActiveRate307(const JsonDocument& req,
 
   uint16_t value = req["value"].as<uint16_t>();
 
+  // Valid range: 0-100% or 255 (follow schedule/unlimited)
   if (!((value >= 0 && value <= 100) || value == 255)) {
-    return std::make_tuple(false, "'value' field not in range");
+    return std::make_tuple(false, "'value' field not in range (0-100 or 255)");
   }
 
 #if SIMULATE_INVERTER != 1
@@ -118,22 +171,21 @@ std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
                                         JsonDocument& res,
                                         Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
-  // Default to "unlimited" (100.0%) unless caller provides a limit
-  uint16_t limit = 1000;                 // 0..1000 => 0..100.0%
+  uint16_t limit = 1000;  // Default to unlimited (100.0%)
   if (req.containsKey("limit")) {
     limit = req["limit"].as<uint16_t>();
     if (limit > 1000) limit = 1000;
   }
 
-  // 1) Enable the export limiting feature flag first
-  if (!inverter.WriteHoldingReg(202, 1)) {
-    return std::make_tuple(false, "Failed to write HR202=1 (enable)");
+  // Atomic write: HR122 (enable flag), HR123 (limit value)
+  uint16_t vals[2] = { 1, limit };
+  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
+    return std::make_tuple(false, "Failed to write HR122+HR123 (enable)");
   }
-  // 2) Set the cap value
-  if (!inverter.WriteHoldingReg(201, limit)) {
-    // Optional rollback
-    (void)inverter.WriteHoldingReg(202, 0);
-    return std::make_tuple(false, "Failed to write HR201 (limit)");
+
+  // Verify the write succeeded
+  if (!verifyRegisters307(inverter, 122, 2, vals)) {
+    return std::make_tuple(false, "Export enable verify failed (122/123)");
   }
 #endif
   return std::make_tuple(true, "Export limit enabled");
@@ -143,11 +195,16 @@ std::tuple<bool, String> setExportDisable307(const JsonDocument& req,
                                          JsonDocument& res,
                                          Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
-  // Turn the feature off; optionally clear the limit
-  if (!inverter.WriteHoldingReg(202, 0)) {
-    return std::make_tuple(false, "Failed to write HR202=0 (disable)");
+  // Atomic write: Clear both flag and limit
+  uint16_t vals[2] = { 0, 0 };
+  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
+    return std::make_tuple(false, "Failed to write HR122+HR123 (disable)");
   }
-  (void)inverter.WriteHoldingReg(201, 0);   // optional cleanup
+
+  // Verify the write succeeded
+  if (!verifyRegisters307(inverter, 122, 2, vals)) {
+    return std::make_tuple(false, "Export disable verify failed (122/123)");
+  }
 #endif
   return std::make_tuple(true, "Export limit disabled");
 }
@@ -162,12 +219,15 @@ std::tuple<bool, String> setExportLimit307(const JsonDocument& req,
   if (limit > 1000) limit = 1000;
 
 #if SIMULATE_INVERTER != 1
-  // Ensure feature is enabled; harmless if already 1
-  if (!inverter.WriteHoldingReg(202, 1)) {
-    return std::make_tuple(false, "Failed to ensure HR202=1");
+  // Ensure flag=1 and write atomically
+  uint16_t vals[2] = { 1, limit };
+  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
+    return std::make_tuple(false, "Failed to write HR122+HR123 (set limit)");
   }
-  if (!inverter.WriteHoldingReg(201, limit)) {
-    return std::make_tuple(false, "Failed to write HR201 (limit)");
+
+  // Verify the write succeeded
+  if (!verifyRegisters307(inverter, 122, 2, vals)) {
+    return std::make_tuple(false, "Export limit verify failed (122/123)");
   }
 #endif
   res["limit"] = limit;
@@ -307,13 +367,9 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& r
     return std::make_tuple(false, "'enabled' field is required");
   }
 
-#if SIMULATE_INVERTER != 1
-  bool enabled = req["enabled"].as<bool>();
-#endif
-
   if (start_str.length() != 5 || stop_str.length() != 5 ||
       start_str[2] != ':' || stop_str[2] != ':') {
-    return std::make_tuple(false, "Invalid time format");
+    return std::make_tuple(false, "Invalid time format (must be HH:MM)");
   }
 
   if (!req.containsKey("slot")) {
@@ -327,11 +383,18 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& r
   }
 
 #if SIMULATE_INVERTER != 1
+  bool enabled = req["enabled"].as<bool>();
+
   int start_hours = start_str.substring(0, 2).toInt();
   int start_minutes = start_str.substring(3, 5).toInt();
-
   int stop_hours = stop_str.substring(0, 2).toInt();
   int stop_minutes = stop_str.substring(3, 5).toInt();
+
+  // Validate time bounds
+  if (start_hours < 0 || start_hours > 23 || start_minutes < 0 || start_minutes > 59 ||
+      stop_hours < 0 || stop_hours > 23 || stop_minutes < 0 || stop_minutes > 59) {
+    return std::make_tuple(false, "Invalid time values (hours: 0-23, minutes: 0-59)");
+  }
 
   uint16_t time_start = (start_hours << 8) | start_minutes;
   uint16_t time_stop = (stop_hours << 8) | stop_minutes;
@@ -344,6 +407,11 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req, JsonDocument& r
   uint16_t timeslot_start_addr = startReg + ((slot - 1) * 3);
   if (!inverter.WriteHoldingRegFrag(timeslot_start_addr, 3, timeslot_raw)) {
     return std::make_tuple(false, "Failed to write timeslot");
+  }
+
+  // Verify the write succeeded
+  if (!verifyRegisters307(inverter, timeslot_start_addr, 3, timeslot_raw)) {
+    return std::make_tuple(false, "Timeslot verify failed");
   }
 #endif
 
@@ -359,7 +427,7 @@ std::tuple<bool, String> setBatteryFirstTimeSlot307(const JsonDocument& req,
 std::tuple<bool, String> getGridFirst307(const JsonDocument& req,
                                       JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
-  uint16_t settings[3];
+  uint16_t settings[2];  // Only reading 2 registers
   if (!inverter.ReadHoldingRegFrag(1070, 2, settings)) {
     return std::make_tuple(false, "Failed to read grid first settings");
   }
@@ -623,22 +691,107 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
       POWER_KWH, true, false};
   // FRAGMENT 4: END
 
-  Protocol.InputFragmentCount = 4;
+  // FRAGMENT 5: Current Mode Register
+  Protocol.InputRegisters[P307_CURRENT_MODE] = sGrowattModbusReg_t{
+      118, 0, SIZE_16BIT, F("CurrentMode"), 1, 1, NONE, true, false};
+  // 0=Load-first, 1=Battery-first, 2=Grid-first
+
+  Protocol.InputFragmentCount = 5;
   Protocol.InputReadFragments[0] = sGrowattReadFragment_t{0, 50};
   Protocol.InputReadFragments[1] = sGrowattReadFragment_t{53, 43};
-  Protocol.InputReadFragments[2] = sGrowattReadFragment_t{1009, 55};
-  Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1124, 4};
+  Protocol.InputReadFragments[2] = sGrowattReadFragment_t{118, 1};  // Current mode
+  Protocol.InputReadFragments[3] = sGrowattReadFragment_t{1009, 55};
+  Protocol.InputReadFragments[4] = sGrowattReadFragment_t{1124, 4};
 
   // definition of holding registers
-  Protocol.HoldingRegisterCount = 1;
+  Protocol.HoldingRegisterCount = P307_HOLDING_REGISTER_COUNT;
 
-  // FRAGMENT 1: BEGIN
+  // FRAGMENT 1: Active Power Rate
   Protocol.HoldingRegisters[P307_Active_P_Rate] = sGrowattModbusReg_t{
       3, 0, SIZE_16BIT, F("ActivePowerRate"), 1, 1, PERCENTAGE, true, false};
-  // FRAGMENT 1: END
 
-  Protocol.HoldingFragmentCount = 1;
-  Protocol.HoldingReadFragments[0] = sGrowattReadFragment_t{3, 1};
+  // FRAGMENT 2: System Date/Time
+  Protocol.HoldingRegisters[P307_H_SYSTEM_YEAR] = sGrowattModbusReg_t{
+      45, 0, SIZE_16BIT, F("SystemYear"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_SYSTEM_MONTH] = sGrowattModbusReg_t{
+      46, 0, SIZE_16BIT, F("SystemMonth"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_SYSTEM_DAY] = sGrowattModbusReg_t{
+      47, 0, SIZE_16BIT, F("SystemDay"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_SYSTEM_HOUR] = sGrowattModbusReg_t{
+      48, 0, SIZE_16BIT, F("SystemHour"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_SYSTEM_MINUTE] = sGrowattModbusReg_t{
+      49, 0, SIZE_16BIT, F("SystemMinute"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_SYSTEM_SECOND] = sGrowattModbusReg_t{
+      50, 0, SIZE_16BIT, F("SystemSecond"), 1, 1, NONE, false, false};
+
+  // FRAGMENT 3: Export Limit (122-123 for protocol 3.07)
+  Protocol.HoldingRegisters[P307_H_EXPORT_LIMIT_ENABLED] = sGrowattModbusReg_t{
+      122, 0, SIZE_16BIT, F("ExportLimitFlag"), 1, 1, NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_EXPORT_LIMIT_VALUE] = sGrowattModbusReg_t{
+      123, 0, SIZE_16BIT, F("ExportLimitValue"), 0.1, 0.1, PERCENTAGE, true, false};
+
+  // FRAGMENT 4: Grid First settings
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_POWER_RATE] = sGrowattModbusReg_t{
+      1070, 0, SIZE_16BIT, F("GridFirstPwrRate"), 1, 1, PERCENTAGE, true, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_STOP_SOC] = sGrowattModbusReg_t{
+      1071, 0, SIZE_16BIT, F("GridFirstSOC"), 1, 1, PERCENTAGE, true, false};
+
+  // FRAGMENT 5: Grid First time slots
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_START] = sGrowattModbusReg_t{
+      1080, 0, SIZE_16BIT, F("GridSlot1Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_STOP] = sGrowattModbusReg_t{
+      1081, 0, SIZE_16BIT, F("GridSlot1Stop"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT1_ENABLED] = sGrowattModbusReg_t{
+      1082, 0, SIZE_16BIT, F("GridSlot1En"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_START] = sGrowattModbusReg_t{
+      1083, 0, SIZE_16BIT, F("GridSlot2Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_STOP] = sGrowattModbusReg_t{
+      1084, 0, SIZE_16BIT, F("GridSlot2Stop"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT2_ENABLED] = sGrowattModbusReg_t{
+      1085, 0, SIZE_16BIT, F("GridSlot2En"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_START] = sGrowattModbusReg_t{
+      1086, 0, SIZE_16BIT, F("GridSlot3Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_STOP] = sGrowattModbusReg_t{
+      1087, 0, SIZE_16BIT, F("GridSlot3Stop"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_GRID_FIRST_SLOT3_ENABLED] = sGrowattModbusReg_t{
+      1088, 0, SIZE_16BIT, F("GridSlot3En"), 1, 1, NONE, false, false};
+
+  // FRAGMENT 6: Battery First settings
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_POWER_RATE] = sGrowattModbusReg_t{
+      1090, 0, SIZE_16BIT, F("BattFirstPwrRate"), 1, 1, PERCENTAGE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_STOP_SOC] = sGrowattModbusReg_t{
+      1091, 0, SIZE_16BIT, F("BattFirstSOC"), 1, 1, PERCENTAGE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_AC_CHARGE] = sGrowattModbusReg_t{
+      1092, 0, SIZE_16BIT, F("BattFirstACChrg"), 1, 1, NONE, true, false};
+
+  // FRAGMENT 7: Battery First time slots
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_START] = sGrowattModbusReg_t{
+      1100, 0, SIZE_16BIT, F("BattSlot1Start"), 1, 1, NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_STOP] = sGrowattModbusReg_t{
+      1101, 0, SIZE_16BIT, F("BattSlot1Stop"), 1, 1, NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_ENABLED] = sGrowattModbusReg_t{
+      1102, 0, SIZE_16BIT, F("BattSlot1En"), 1, 1, NONE, true, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_START] = sGrowattModbusReg_t{
+      1103, 0, SIZE_16BIT, F("BattSlot2Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_STOP] = sGrowattModbusReg_t{
+      1104, 0, SIZE_16BIT, F("BattSlot2Stop"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_ENABLED] = sGrowattModbusReg_t{
+      1105, 0, SIZE_16BIT, F("BattSlot2En"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_START] = sGrowattModbusReg_t{
+      1106, 0, SIZE_16BIT, F("BattSlot3Start"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_STOP] = sGrowattModbusReg_t{
+      1107, 0, SIZE_16BIT, F("BattSlot3Stop"), 1, 1, NONE, false, false};
+  Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT3_ENABLED] = sGrowattModbusReg_t{
+      1108, 0, SIZE_16BIT, F("BattSlot3En"), 1, 1, NONE, false, false};
+
+  Protocol.HoldingFragmentCount = 7;
+  Protocol.HoldingReadFragments[0] = sGrowattReadFragment_t{3, 1};      // Active Power Rate
+  Protocol.HoldingReadFragments[1] = sGrowattReadFragment_t{45, 6};     // Date/Time
+  Protocol.HoldingReadFragments[2] = sGrowattReadFragment_t{122, 2};    // Export Limit (122-123)
+  Protocol.HoldingReadFragments[3] = sGrowattReadFragment_t{1070, 2};   // Grid First settings
+  Protocol.HoldingReadFragments[4] = sGrowattReadFragment_t{1080, 9};   // Grid First time slots
+  Protocol.HoldingReadFragments[5] = sGrowattReadFragment_t{1090, 3};   // Battery First settings
+  Protocol.HoldingReadFragments[6] = sGrowattReadFragment_t{1100, 9};   // Battery First time slots
 
   // definition of commands
   inverter.RegisterCommand("datetime/get", getDateTime307);

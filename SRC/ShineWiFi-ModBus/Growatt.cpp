@@ -200,11 +200,10 @@ bool Growatt::ReadHoldingRegisters() {
     if (res == Modbus.ku8MBSuccess) {
       for (int j = 0; j < _Protocol.HoldingRegisterCount; j++) {
         if (_Protocol.HoldingRegisters[j].address >=
-            _Protocol.HoldingReadFragments[i].StartAddress) {
-          if (_Protocol.HoldingRegisters[j].address >=
-              _Protocol.HoldingReadFragments[i].StartAddress +
-                  _Protocol.HoldingReadFragments[i].FragmentSize)
-            break;
+            _Protocol.HoldingReadFragments[i].StartAddress &&
+            _Protocol.HoldingRegisters[j].address <
+            _Protocol.HoldingReadFragments[i].StartAddress +
+                _Protocol.HoldingReadFragments[i].FragmentSize) {
           registerAddress = _Protocol.HoldingRegisters[j].address -
                             _Protocol.HoldingReadFragments[i].StartAddress;
           if (_Protocol.HoldingRegisters[j].size == SIZE_16BIT ||

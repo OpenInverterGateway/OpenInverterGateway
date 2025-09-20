@@ -81,7 +81,7 @@ typedef struct {
   uint16_t HoldingRegisterCount;
   uint8_t HoldingFragmentCount;
   sGrowattModbusReg_t InputRegisters[125];
-  sGrowattModbusReg_t HoldingRegisters[10];
+  sGrowattModbusReg_t HoldingRegisters[35];  // Increased for 307 protocol
   sGrowattReadFragment_t InputReadFragments[10];
   sGrowattReadFragment_t HoldingReadFragments[10];
 } sProtocolDefinition_t;
