@@ -1,46 +1,61 @@
 # OpenInverterGateway
 
-Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom build sticks (ESP8266/ESP32).
-
-# How to install
-
-* Download a precompiled release from [here](https://github.com/OpenInverterGateway/OpenInverterGateway/releases) (hardcoded to default [settings](https://github.com/OpenInverterGateway/OpenInverterGateway/blob/master/SRC/ShineWiFi-ModBus/Config.h.example)/growatt protocol 1.24)
-
-Or
-
-* Checkout this repo
-* Setup platform.io
-* Open the project folder and choose the correct env for your hardware
-* Rename and adapt [Config.h.example](https://github.com/OpenInverterGateway/OpenInverterGateway/blob/master/SRC/ShineWiFi-ModBus/Config.h.example) to Config.h with your compile time settings
-
-After you obtained an image you want to flash:
-
-* Flash to an esp32/esp8266 or to a shineX/S-stick ([details](https://github.com/OpenInverterGateway/OpenInverterGateway/blob/master/Doc/)).
-* Connect to the setup wifi called GrowattConfig (PW: growsolar) and configure the firmware via the webinterface at http://192.168.4.1
-* If you need to reconfigure the stick later on you have to either press the ap button (configured in Config.h) or reset the stick twice within 2-10sec
+Firmware replacement for Growatt ShineWiFi-S (serial), ShineWiFi-X (USB) or custom-built sticks (ESP8266/ESP32).
 
 ## Features
-Implemented Features:
-* Built-in simple Webserver
-* The inverter is queried using Modbus Protocol
-* The data received will be transmitted by MQTT to a server of your choice.
+
+* Graphical UI using a built-in webserver with live visualization. [Screenshots](#screenshot).
+* The inverter is queried using Modbus protocol.
+* Inverter data is made available via
+* The data received will be transmitted using MQTT to a server of your choice.
 * The data received is also provided as JSON and Prometheus format
-* Show a simple live graph visualization  (`http://<ip>`) with help from highcharts.com
-* Firmware update via wifiManager
-* It supports basic access to arbitrary modbus data
-* It tries to autodetect which stick type to use
-* Wifi manager with own access point for initial configuration of Wifi and MQTT server (IP: 192.168.4.1, SSID: GrowattConfig, Pass: growsolar)
-* Currently Growatt v1.20, v1.24 and v3.05 protocols are implemented and can be easily extended/changed to fit anyone's needs
-* TLS support for esp32
+* Firmware update via [WifiManager](https://github.com/tzapu/WiFiManager)
+* Basic access to arbitrary modbus data
+* Tries to autodetect which stick type to use
+* Configuration access point for initial configuration of Wifi and MQTT server ([IP, SSID, Password](#flashing--hardware))
+* Supports Growatt protocol versions v1.20, v1.24 and v3.05
+* Other Growatt protocol versions can easily be implemented / modified
+* TLS support for ESP32
 * Debugging via Web and Telnet
 * Power limiting (allows zero export)
 
-Not supported:
-* It does not make use the RTC or SPI Flash of these boards.
-* It does not communicate to Growatt Cloud at all.
-* The ShineWifi-LAN stick is not supported. But there is another project for [this](https://github.com/mwalle/shinelanx-modbus)
+## Screenshot
 
-## Supported sticks/microcontrollers
+<p align="center"><img width="500px" alt="creenshot of the OpenInverterGateway Web UI" class="recess" src="./Doc/Screenshot.png" /></p>
+
+## How to install
+
+### Use the precompiled release
+
+> [!IMPORTANT]
+> The precompiled version will only work if your inverter uses version 1.24 of the
+> Growatt Protocol ([here is why](SRC/ShineWiFi-ModBus/Config.h.example#L16)).
+> You can start with it, but **you will likely need to compile OpenInverterGateway yourself**.
+
+1. Download a [precompiled release from the GitHub release page](https://github.com/OpenInverterGateway/OpenInverterGateway/releases/)
+   matching your hardware.
+2. Follow the [flashing / hardware section below](#flashing--hardware).
+
+### Compile a release yourself
+
+1. Download / clone this repo.
+2. Setup [PlatformIO](https://platformio.org/).
+3. Open the project folder and choose the correct environment for your hardware by opening i.e.the **Project Tasks > ShineWiFiX** section.
+4. Rename the [`Config.h.example`](SRC/ShineWiFi-ModBus/Config.h.example) to `Config.h` and adapt it according to your requirements.
+5. Compile using the **Build** task from PlatformIO.
+6. Follow the [flashing / hardware section below](#flashing--hardware).
+
+### Flashing / Hardware
+
+1. Flash the image to your hardware (ESP32 / ESP8266esp32 / ShineWifiX-S / ShineWifi-X / …). [Details on how to do this are provided in the documentation](/Doc/).
+2. A configuration WiFi access point (SSID: `GrowattConfig`, Pass: `growsolar`) will be available.
+   Connect to it and [configure the firmware via web interface at http://192.168.4.1](http://192.168.4.1).
+3. If you need to reconfigure the stick, you have to either
+   * Press the AP button on the front (configured with `ENABLE_AP_BUTTON` in `Config.h`)
+   * Reset the stick twice within 2-10 seconds.
+
+## Hardware compatability
+
 * ShineWifi-S with a Growatt Inverter connected via serial (Modbus over RS232 with level shifter)
 * ShineWifi-X with a Growatt Inverter connected via USB (USB-Serial Chip from Exar)
 * Wemos-D1 with a Growatt Inverter connected via USB (USB-Serial Chip: CH340)
@@ -48,12 +63,21 @@ Not supported:
 * ShineWifi-T (untested, please give feedback)
 * Lolin32 (ESP32) with a Growatt Inverter connected via USB
 
-I tested several ESP8266-boards with builtin USB-Serial converters so far only boards with CH340 do work (CP21XX and FTDI chips do not work). Almost all ESP8266 modules with added 9-Pin Serial port and level shifter should work with little soldering via Serial.
+I tested several ESP8266 boards with built-in USB-Serial converters.
+So far, only boards with the CH340 chipset do work (CP21XX and FTDI chips do not work).
+Almost all ESP8266 modules with added 9 pin serial port and level shifter should work with little soldering via serial.
 
-See the short descriptions to the devices (including some pictures) in the "Doc" directory.
+Check out the [documentation for more details including pictures](Doc/).
+
+### Caveats
+
+* It does not make use the RTC or SPI Flash of these boards.
+* It does not communicate to Growatt Cloud at all.
+* The ShineLAN-X stick is not supported. However, there is [another project with support for that stick](https://github.com/mwalle/shinelanx-modbus).
 
 ## Supported Inverters
-* Growatt 1000-3000S 
+
+* Growatt 1000-3000S
 * Growatt MIC 600-3300TL-X (Protocol 124 via USB/Protocol 120 via Serial)
 * Growatt MID 3-25KTL3-X (Protocol 124 via USB)
 * Growatt MOD 3-15KTL3-X-H (Protocol 120 via USB)
@@ -61,9 +85,10 @@ See the short descriptions to the devices (including some pictures) in the "Doc"
 * Growatt MID 25-40KTL3-X (Protocol 120 via USB)
 * Growatt SPH 4000-10000STL3-X BH (Protocol 124 via Serial)
 * Growatt MID 15KTL3-XH (Protocol 3000 via USB)
-* And others ....
+* And others …
 
 ## Modbus Protocol Versions
+
 The documentation from Growatt on the Modbus interface is available, search for "Growatt PV Inverter Modbus RS485 RTU Protocol" on Google.
 
 The older inverters apparently use Protocol v3.05 from year 2013.
@@ -71,33 +96,35 @@ The newer inverters apparently use protocol v1.05 from year 2018.
 There is also a new protocol version v1.24 from 2020. (used with SPH4-10KTL3 BH-UP inverter)
 TL-XH hybrid inverters use version v1.24 with a different set of input and holding registers.
 
-## JSON Format Data
-For IoT applications the raw data can now read in JSON format (application/json) by calling `http://<ip>/status`
+## HTTP JSON Endpoint
 
-## Prometheus Format Metrics
-If you want to scrape the metrics with a Prometheus server, you can use the endpoint `http://<ip>/metrics`. A possible configuration is described [here](Doc/Prometheus.md).
+For IoT applications, the raw data can be read in JSON format (`Content-Type: application/json`) by calling `http://<ip>/status`.
 
-## Homeassistant configuration
+## Prometheus Scrape Endpoint
 
-Homeassistant config is described [here](Doc/MQTT.md)
+If you want to scrape the metrics with a Prometheus server, you can use the endpoint `http://<ip>/metrics`.
+A possible configuration is described [in the documentation](Doc/Prometheus.md).
+
+## [Home Assistant configuration](Doc/MQTT.md)
+
+## Read / write arbitrary Modbus data
+
+To make use of this feature, `#define ENABLE_MODBUS_COMMUNICATION 1` must be set in `Config.h` (default: `0`).
+Then, once compiled and flashed, access `/postCommunicationModbus`.
 
 ## Debugging
 
-If you turned on `ENABLE_WEB_DEBUG` in the Config.h (see Config.h.example) there is a debug site under `http://<ip>/debug`. You can turn on `ENABLE_TELNET_DEBUG` to get the debug messages via a telnet client. `telnet <ip>`
+There are several ways to debug OpenInverterGateway:
 
-To enable even more messages, take a look to `DEBUG_MODBUS_OUTPUT`.
+* Define `ENABLE_WEB_DEBUG` to enable a debug HTTP endpoint available at `http://<ip>/debug`.
+* Define `ENABLE_TELNET_DEBUG` to enable a debug Telnet endpoint. Access using `telnet <IP_OF_OPEN_INVERTER_GATEWAY>`, i.e. `telnet 192.168.178.91`.
+* Define `DEBUG_MODBUS_OUTPUT` to enable debug more for Modbus communication.
 
-## Change log
+These values must be set in your `Config.h`.
+Check [`Config.h.example`](./SRC/ShineWiFi-ModBus/Config.h.example) for examples.
 
-See [here](CHANGELOG.md)
+## [Changelog](CHANGELOG.md)
 
 ## Acknowledgements
 
-This arduino sketch will replace the original firmware of the Growatt ShineWiFi stick.
-
-This project is based on Jethro Kairys work on the Modbus interface
-https://github.com/jkairys/growatt-esp8266
-
-Some keywords:
-
-ESP8266, ESP-07S, Growatt 1000S, Growatt 600TL, ShineWifi, Arduino, MQTT, JSON, Modbus, Rest
+This project is based on [Jethro Kairys work on the Modbus interface](https://github.com/jkairys/growatt-esp8266).

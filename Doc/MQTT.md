@@ -12,8 +12,10 @@ Now let's create a user for mqtt broker to use from Growatt datalogger.
 
 1. Go to Settings -> People -> Users. Press `Add User`, username: `growatt`, password: `your password`, mark it as `local only`.
 
-Time to configure MQTT settings on Growatt datalogger. If it's already in your network go to its IP address and press `Start config access point`,
-or press AP button on the datalogger (see specific info for your logger how to enable AP mode). Connect to `Growatt` network, go to <http://192.168.4.1>
+Time to configure MQTT settings on Growatt datalogger.
+If it's already in your network go to its IP address and press `Start config access point` or press AP button on the datalogger
+(see specific info for your logger how to enable AP mode).
+Connect to `Growatt` network, go to <http://192.168.4.1>
 
 Choose `Setup` and set the mqtt parameters:
 
@@ -24,11 +26,14 @@ Choose `Setup` and set the mqtt parameters:
 
 Save the settings.
 
-Disconnect from AP, it should eventually turn off AP and reconnect to your home wifi and start sending data. You can check if it is successful going to ip-address of your Growatt device and checking logs.  
+Disconnect from AP.
+It should eventually turn off AP and reconnect to your home WiFi and start sending data.
+You can check if it is successful going to IP address of your Growatt device and checking logs.  
 
 ## MQTT inside Homeassistant configuration
 
-This will put the inverter on the energy dashboard. Add it to your `/config/configuration.yaml`. (You have SSH Add-on for Home assistant installed and can SSH to it).
+This will put the inverter on the energy dashboard. Add it to your `/config/configuration.yaml`.
+(You have SSH Add-on for Home assistant installed and can SSH to it).
 
 Different protocol versions send different packages thus might need different configuration.
 
@@ -124,23 +129,26 @@ To receive responses to commands you can use templates.
       message: "{{ trigger.payload_json.message }}"
 ```
 
-You could create an automation triggered by a binary sensor on the success JSON attribute if you want to be notified when a command has failed for example.
+You could create an automation triggered by a binary sensor on the success JSON attribute if you want to be notified when
+a command has failed for example.
 
-The following mqtt commands are defined for protocol 1.24:
+The following MQTT commands are defined for protocol 1.24:
 
-    datetime/get
-    datetime/set
-    batteryfirst/get
-    batteryfirst/set/powerrate
-    batteryfirst/set/stopsoc
-    batteryfirst/set/acchargeenabled
-    batteryfirst/set/timeslot
-    gridfirst/get
-    gridfirst/set/powerrate
-    gridfirst/set/stopsoc
-    gridfirst/set/timeslot
-    power/get/activerate
-    power/set/activerate
+```plaintext
+datetime/get
+datetime/set
+batteryfirst/get
+batteryfirst/set/powerrate
+batteryfirst/set/stopsoc
+batteryfirst/set/acchargeenabled
+batteryfirst/set/timeslot
+gridfirst/get
+gridfirst/set/powerrate
+gridfirst/set/stopsoc
+gridfirst/set/timeslot
+power/get/activerate
+power/set/activerate
+```
 
 ### Version for protocol 3.05
 
@@ -212,19 +220,26 @@ mqtt:
       state_topic: "energy/solar"
       value_template: "{{ value_json.Temperature }}"
 ```
+
 ## Direct Access
 
-Using mosquitto_sub/mosquitto_pub directly from the cli.
+Using `mosquitto_sub` / `mosquitto_pub` directly from the cli.
 
-Subscribe to mqtt events from the stick:
+Subscribe to MQTT events from the stick:
 
-    mosquitto_sub -h <ip> -u <mqttuser> -P <mqttpw> -t "energytest/" -v
+```shell
+mosquitto_sub -h <ip> -u <mqttuser> -P <mqttpw> -t "energytest/" -v
+```
 
 Get battery first state:
 
-    mosquitto_pub -h <ip> -u <mqttuser> -P <mqttpw> -m "{\"correlationId\": \"ha-batteryfirst-get\"}" -t energytest/solar/command/batteryfirst/get
+```shell
+mosquitto_pub -h <ip> -u <mqttuser> -P <mqttpw> -m "{\"correlationId\": \"ha-batteryfirst-get\"}" -t energytest/solar/command/batteryfirst/get
+```
 
-Example how to limit output power in percent via mosquitto_pub from cli:
+Example how to limit output power in percent via `mosquitto_pub` from cli:
 
-    mosquitto_pub -h <mqttip> -u <mqttuser> -P <mqttpw> \
+```shell
+mosquitto_pub -h <mqttip> -u <mqttuser> -P <mqttpw> \
     -t "<base-topic>/command/power/set/activeRate" -m "{ \"value\": 50 }"
+```
