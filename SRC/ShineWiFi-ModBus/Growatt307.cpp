@@ -38,7 +38,7 @@ static bool verifyRegisters307(Growatt& inverter, uint16_t addr, uint16_t count,
 String formatTimeSlot307(uint16_t timeReg) {
   int hours = (timeReg >> 8) & 0xFF;
   int minutes = timeReg & 0xFF;
-  char buf[6];
+  char buf[8];
   snprintf(buf, sizeof(buf), "%02d:%02d", hours, minutes);
   return String(buf);
 }
@@ -53,7 +53,7 @@ String formatTimeSlotInfo307(uint16_t start, uint16_t stop, uint16_t enabled) {
 // Helper function to format date/time registers to ISO string
 String formatDateTime307(uint16_t year, uint16_t month, uint16_t day,
                         uint16_t hour, uint16_t minute, uint16_t second) {
-  char buf[20];
+  char buf[64];
   // Year in register is 2-digit (e.g., 24 for 2024)
   uint16_t fullYear = year < 100 ? 2000 + year : year;
   snprintf(buf, sizeof(buf), "%04u-%02u-%02u %02u:%02u:%02u",
