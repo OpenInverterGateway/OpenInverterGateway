@@ -772,25 +772,25 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   // FRAGMENT 6: Battery First settings
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_POWER_RATE] =
       sGrowattModbusReg_t{1090, 0, SIZE_16BIT, F("BattFirstPwrRate"),
-                          1,    1, PERCENTAGE, true,
+                          1,    1, PERCENTAGE, false,
                           false};
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_STOP_SOC] =
       sGrowattModbusReg_t{1091,       0,    SIZE_16BIT, F("BattFirstSOC"), 1, 1,
-                          PERCENTAGE, true, false};
+                          PERCENTAGE, false, false};
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_AC_CHARGE] =
       sGrowattModbusReg_t{1092, 0,    SIZE_16BIT, F("BattFirstACChrg"), 1, 1,
-                          NONE, true, false};
+                          NONE, false, false};
 
   // FRAGMENT 7: Battery First time slots
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_START] =
       sGrowattModbusReg_t{1100, 0,    SIZE_16BIT, F("BattSlot1Start"), 1, 1,
-                          NONE, true, false};
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_STOP] =
       sGrowattModbusReg_t{1101, 0,    SIZE_16BIT, F("BattSlot1Stop"), 1, 1,
-                          NONE, true, false};
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT1_ENABLED] =
       sGrowattModbusReg_t{1102, 0,    SIZE_16BIT, F("BattSlot1En"), 1, 1,
-                          NONE, true, false};
+                          NONE, false, false};
   Protocol.HoldingRegisters[P307_H_BATTERY_FIRST_SLOT2_START] =
       sGrowattModbusReg_t{1103, 0,     SIZE_16BIT, F("BattSlot2Start"), 1, 1,
                           NONE, false, false};
