@@ -172,67 +172,44 @@ std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
                                             JsonDocument& res,
                                             Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
-  uint16_t limit = 1000;  // Default to unlimited (100.0%)
-  if (req.containsKey("limit")) {
-    limit = req["limit"].as<uint16_t>();
-    if (limit > 1000) limit = 1000;
+  // First check if HR122 is set to 1, if not set it
+  uint16_t currentFlag;
+  if (inverter.ReadHoldingReg(122, &currentFlag)) {
+    if (currentFlag != 1) {
+      if (!inverter.WriteHoldingReg(122, 1)) {
+        return std::make_tuple(false, "Failed to set HR122 flag");
+      }
+    }
   }
 
-  // Atomic write: HR122 (enable flag), HR123 (limit value)
-  uint16_t vals[2] = {1, limit};
-  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
-    return std::make_tuple(false, "Failed to write HR122+HR123 (enable)");
-  }
-
-  // Verify the write succeeded
-  if (!verifyRegisters307(inverter, 122, 2, vals)) {
-    return std::make_tuple(false, "Export enable verify failed (122/123)");
+  // Set HR123 to 1000 (100% export allowed)
+  if (!inverter.WriteHoldingReg(123, 1000)) {
+    return std::make_tuple(false, "Failed to enable export");
   }
 #endif
-  return std::make_tuple(true, "Export limit enabled");
+  return std::make_tuple(true, "Successfully enabled export");
 }
 
 std::tuple<bool, String> setExportDisable307(const JsonDocument& req,
                                              JsonDocument& res,
                                              Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
-  // Atomic write: Clear both flag and limit
-  uint16_t vals[2] = {0, 0};
-  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
-    return std::make_tuple(false, "Failed to write HR122+HR123 (disable)");
+  // First check if HR122 is set to 1, if not set it
+  uint16_t currentFlag;
+  if (inverter.ReadHoldingReg(122, &currentFlag)) {
+    if (currentFlag != 1) {
+      if (!inverter.WriteHoldingReg(122, 1)) {
+        return std::make_tuple(false, "Failed to set HR122 flag");
+      }
+    }
   }
 
-  // Verify the write succeeded
-  if (!verifyRegisters307(inverter, 122, 2, vals)) {
-    return std::make_tuple(false, "Export disable verify failed (122/123)");
+  // Set HR123 to 0 (0% export allowed)
+  if (!inverter.WriteHoldingReg(123, 0)) {
+    return std::make_tuple(false, "Failed to disable export");
   }
 #endif
-  return std::make_tuple(true, "Export limit disabled");
-}
-
-std::tuple<bool, String> setExportLimit307(const JsonDocument& req,
-                                           JsonDocument& res,
-                                           Growatt& inverter) {
-  if (!req.containsKey("limit")) {
-    return std::make_tuple(false, "'limit' field (0..1000) is required");
-  }
-  uint16_t limit = req["limit"].as<uint16_t>();
-  if (limit > 1000) limit = 1000;
-
-#if SIMULATE_INVERTER != 1
-  // Ensure flag=1 and write atomically
-  uint16_t vals[2] = {1, limit};
-  if (!inverter.WriteHoldingRegFrag(122, 2, vals)) {
-    return std::make_tuple(false, "Failed to write HR122+HR123 (set limit)");
-  }
-
-  // Verify the write succeeded
-  if (!verifyRegisters307(inverter, 122, 2, vals)) {
-    return std::make_tuple(false, "Export limit verify failed (122/123)");
-  }
-#endif
-  res["limit"] = limit;
-  return std::make_tuple(true, "Export limit updated");
+  return std::make_tuple(true, "Successfully disabled export");
 }
 
 std::tuple<String, String> getTimeSlot307(uint16_t start, uint16_t stop) {
@@ -851,7 +828,6 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
 
   inverter.RegisterCommand("export/enable", setExportEnable307);
   inverter.RegisterCommand("export/disable", setExportDisable307);
-  inverter.RegisterCommand("export/set/limit", setExportLimit307);
 
   Log.print(F("init_growatt307: input registers "));
   Log.print(Protocol.InputRegisterCount);
