@@ -117,6 +117,17 @@ std::tuple<bool, String> setPowerActiveRate(const JsonDocument& req,
 std::tuple<bool, String> setExportEnable(const JsonDocument& req,
                                          JsonDocument& res, Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
+  // First check if HR122 is set to 1, if not set it
+  uint16_t currentFlag;
+  if (inverter.ReadHoldingReg(122, &currentFlag)) {
+    if (currentFlag != 1) {
+      if (!inverter.WriteHoldingReg(122, 1)) {
+        return std::make_tuple(false, "Failed to set HR122 flag");
+      }
+    }
+  }
+
+  // Set HR123 to 1000 (100% export allowed)
   if (!inverter.WriteHoldingReg(123, 1000)) {
     return std::make_tuple(false, "Failed to enable export");
   }
@@ -128,6 +139,17 @@ std::tuple<bool, String> setExportDisable(const JsonDocument& req,
                                           JsonDocument& res,
                                           Growatt& inverter) {
 #if SIMULATE_INVERTER != 1
+  // First check if HR122 is set to 1, if not set it
+  uint16_t currentFlag;
+  if (inverter.ReadHoldingReg(122, &currentFlag)) {
+    if (currentFlag != 1) {
+      if (!inverter.WriteHoldingReg(122, 1)) {
+        return std::make_tuple(false, "Failed to set HR122 flag");
+      }
+    }
+  }
+
+  // Set HR123 to 0 (0% export allowed)
   if (!inverter.WriteHoldingReg(123, 0)) {
     return std::make_tuple(false, "Failed to disable export");
   }
