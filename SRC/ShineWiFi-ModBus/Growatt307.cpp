@@ -312,6 +312,24 @@ std::tuple<bool, String> setBatteryFirstStopSOC307(const JsonDocument& req,
   return std::make_tuple(true, "success");
 }
 
+std::tuple<bool, String> setLoadFirstStopSOC307(const JsonDocument& req,
+                                                JsonDocument& res,
+                                                Growatt& inverter) {
+  if (!req.containsKey("value")) {
+    return std::make_tuple(false, "'value' field is required");
+  }
+
+#if SIMULATE_INVERTER != 1
+  uint16_t value = req["value"].as<uint16_t>();
+  if (!inverter.WriteHoldingReg(608, value)) {
+    return std::make_tuple(false,
+                           "Failed to write load first stop SOC to HR608");
+  }
+#endif
+
+  return std::make_tuple(true, "Successfully updated load first stop SOC");
+}
+
 std::tuple<bool, String> setBatteryFirstACChargeEnabled307(
     const JsonDocument& req, JsonDocument& res, Growatt& inverter) {
   if (!req.containsKey("value")) {
@@ -788,7 +806,12 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
       sGrowattModbusReg_t{1108, 0,     SIZE_16BIT, F("BattSlot3En"), 1, 1,
                           NONE, false, false};
 
-  Protocol.HoldingFragmentCount = 7;
+  // FRAGMENT 8: Load First Stop SOC
+  Protocol.HoldingRegisters[P307_H_LOAD_FIRST_STOP_SOC] = sGrowattModbusReg_t{
+      608,        0,     SIZE_16BIT, F("LoadFirstStopSOC"), 1, 1,
+      PERCENTAGE, false, false};
+
+  Protocol.HoldingFragmentCount = 8;
   Protocol.HoldingReadFragments[0] =
       sGrowattReadFragment_t{3, 1};  // Active Power Rate
   Protocol.HoldingReadFragments[1] =
@@ -796,12 +819,14 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
   Protocol.HoldingReadFragments[2] =
       sGrowattReadFragment_t{122, 2};  // Export Limit (122-123)
   Protocol.HoldingReadFragments[3] =
-      sGrowattReadFragment_t{1070, 2};  // Grid First settings
+      sGrowattReadFragment_t{608, 1};  // Load First Stop SOC
   Protocol.HoldingReadFragments[4] =
-      sGrowattReadFragment_t{1080, 9};  // Grid First time slots
+      sGrowattReadFragment_t{1070, 2};  // Grid First settings
   Protocol.HoldingReadFragments[5] =
-      sGrowattReadFragment_t{1090, 3};  // Battery First settings
+      sGrowattReadFragment_t{1080, 9};  // Grid First time slots
   Protocol.HoldingReadFragments[6] =
+      sGrowattReadFragment_t{1090, 3};  // Battery First settings
+  Protocol.HoldingReadFragments[7] =
       sGrowattReadFragment_t{1100, 9};  // Battery First time slots
 
   // definition of commands
@@ -828,6 +853,8 @@ void init_growatt307(sProtocolDefinition_t& Protocol, Growatt& inverter) {
 
   inverter.RegisterCommand("export/enable", setExportEnable307);
   inverter.RegisterCommand("export/disable", setExportDisable307);
+
+  inverter.RegisterCommand("loadfirst/set/stopsoc", setLoadFirstStopSOC307);
 
   Log.print(F("init_growatt307: input registers "));
   Log.print(Protocol.InputRegisterCount);
