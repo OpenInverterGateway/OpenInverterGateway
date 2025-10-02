@@ -34,6 +34,13 @@ Growatt::Growatt() {
   _eDevice = Undef_stick;
   _PacketCnt = 0;
 
+  // Initialize write tracking arrays to prevent undefined behavior
+  for (int i = 0; i < MODBUS_MAX_WRITES_PER_SECOND; i++) {
+    _WriteTimestamps[i] = 0;
+  }
+  _WriteTimestampIndex = 0;
+  _ConsecutiveFailures = 0;
+
   handlers = std::map<String, CommandHandlerFunc>();
 
   // register default handlers
@@ -56,6 +63,11 @@ Growatt::Growatt() {
                                        JsonDocument& res, Growatt& inverter) {
     return handleModbusSet(req, res, *this);
   });
+}
+
+// Destructor
+Growatt::~Growatt() {
+  // Destructor - currently nothing to clean up
 }
 
 void Growatt::InitProtocol() {
@@ -94,6 +106,7 @@ void Growatt::begin(Stream& serial) {
   // init communication with the inverter
   Serial.begin(9600);
   Modbus.begin(1, serial);
+  Modbus.setResponseTimeout(MODBUS_RESPONSE_TIMEOUT_MS);
   res = Modbus.readInputRegisters(0, 1);
   if (res == Modbus.ku8MBSuccess) {
     _eDevice = ShineWiFi_S;  // Serial
@@ -101,7 +114,7 @@ void Growatt::begin(Stream& serial) {
     delay(1000);
     Serial.begin(115200);
     Modbus.begin(1, serial);
-    Modbus.setResponseTimeout(250);
+    Modbus.setResponseTimeout(MODBUS_RESPONSE_TIMEOUT_MS);
     res = Modbus.readInputRegisters(0, 1);
     if (res == Modbus.ku8MBSuccess) {
       _eDevice = ShineWiFi_X;  // USB
@@ -339,38 +352,152 @@ bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result) {
 
 bool Growatt::WriteHoldingReg(uint16_t adr, uint16_t value) {
 /**
- * @brief write 16b holding register
+ * @brief write 16b holding register with retry mechanism
  * @param adr address of the register
  * @param value value to write to the register
  * @returns true if successful
  */
 #if SIMULATE_INVERTER != 1
-  uint8_t res = Modbus.writeSingleRegister(adr, value);
-  if (res == Modbus.ku8MBSuccess) {
-    return true;
+  uint8_t res;
+  int retryDelay = MODBUS_WRITE_RETRY_DELAY_MS;
+
+  // Check write rate limit before proceeding
+  CheckWriteRateLimit();
+
+  // Auto-reset statistics when approaching uint32_t max to prevent overflow
+  if (_WriteAttempts > MODBUS_STATISTICS_OVERFLOW_THRESHOLD) {
+    ResetModbusStatistics();
   }
+
+  _WriteAttempts++;
+
+  for (int attempt = 0; attempt < MODBUS_WRITE_RETRY_COUNT; attempt++) {
+    res = Modbus.writeSingleRegister(adr, value);
+
+    if (res == Modbus.ku8MBSuccess) {
+      _WriteSuccesses++;
+      _ConsecutiveFailures = 0;  // Reset on success
+      return true;
+    }
+
+    // If this isn't the last attempt, add delay before retry
+    if (attempt < MODBUS_WRITE_RETRY_COUNT - 1) {
+#ifdef ENABLE_WEB_DEBUG
+      Log.printf(
+          "Modbus write to HR%d failed (attempt %d/%d), retrying in %dms...\n",
+          adr, attempt + 1, MODBUS_WRITE_RETRY_COUNT, retryDelay);
+#endif
+      delay(retryDelay);
+      // Exponential backoff with cap: double the delay for next retry
+      retryDelay = min(retryDelay * 2, (int)MODBUS_MAX_BACKOFF_MS);
+    }
+  }
+
+  // All retries failed, add recovery delay
+  _WriteFailures++;
+  _ConsecutiveFailures++;
+  _LastWriteErrorAddress = adr;
+#ifdef ENABLE_WEB_DEBUG
+  Log.printf(
+      "Modbus write to HR%d failed after %d attempts, entering recovery "
+      "delay\n",
+      adr, MODBUS_WRITE_RETRY_COUNT);
+  Log.printf(
+      "Write stats - Attempts: %d, Success: %d, Failures: %d, Success rate: "
+      "%.1f%%\n",
+      _WriteAttempts, _WriteSuccesses, _WriteFailures, GetWriteSuccessRate());
+#endif
+
+  // Try connection recovery if too many consecutive failures
+  TryConnectionRecovery();
+
+  delay(MODBUS_RECOVERY_DELAY_MS);
+
   return false;
 #else
+  _WriteAttempts++;
+  _WriteSuccesses++;
   return true;
 #endif
 }
 
 bool Growatt::WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value) {
   /**
-   * @brief write 16b holding register
-   * @param adr address of the register
-   * @param value value to write to the register
-   * @param size size of the register
+   * @brief write multiple 16b holding registers with retry mechanism
+   * @param adr address of the first register
+   * @param value array of values to write to the registers
+   * @param size number of registers to write
    * @returns true if successful
    */
-  for (int i = 0; i < size; i++) {
-    Modbus.setTransmitBuffer(i, value[i]);
+#if SIMULATE_INVERTER != 1
+  uint8_t res;
+  int retryDelay = MODBUS_WRITE_RETRY_DELAY_MS;
+
+  // Check write rate limit before proceeding
+  CheckWriteRateLimit();
+
+  // Auto-reset statistics when approaching uint32_t max to prevent overflow
+  if (_WriteAttempts > MODBUS_STATISTICS_OVERFLOW_THRESHOLD) {
+    ResetModbusStatistics();
   }
-  uint8_t res = Modbus.writeMultipleRegisters(adr, size);
-  if (res == Modbus.ku8MBSuccess) {
-    return true;
+
+  _WriteAttempts++;
+
+  for (int attempt = 0; attempt < MODBUS_WRITE_RETRY_COUNT; attempt++) {
+    // Set transmit buffer for all values
+    for (int i = 0; i < size; i++) {
+      Modbus.setTransmitBuffer(i, value[i]);
+    }
+
+    res = Modbus.writeMultipleRegisters(adr, size);
+
+    if (res == Modbus.ku8MBSuccess) {
+      _WriteSuccesses++;
+      _ConsecutiveFailures = 0;  // Reset on success
+      return true;
+    }
+
+    // If this isn't the last attempt, add delay before retry
+    if (attempt < MODBUS_WRITE_RETRY_COUNT - 1) {
+#ifdef ENABLE_WEB_DEBUG
+      Log.printf(
+          "Modbus write to HR%d-%d failed (attempt %d/%d), retrying in "
+          "%dms...\n",
+          adr, adr + size - 1, attempt + 1, MODBUS_WRITE_RETRY_COUNT,
+          retryDelay);
+#endif
+      delay(retryDelay);
+      // Exponential backoff with cap: double the delay for next retry
+      retryDelay = min(retryDelay * 2, (int)MODBUS_MAX_BACKOFF_MS);
+    }
   }
+
+  // All retries failed, add recovery delay
+  _WriteFailures++;
+  _ConsecutiveFailures++;
+  _LastWriteErrorAddress = adr;
+#ifdef ENABLE_WEB_DEBUG
+  Log.printf(
+      "Modbus write to HR%d-%d failed after %d attempts, entering recovery "
+      "delay\n",
+      adr, adr + size - 1, MODBUS_WRITE_RETRY_COUNT);
+  Log.printf(
+      "Write stats - Attempts: %d, Success: %d, Failures: %d, Success rate: "
+      "%.1f%%\n",
+      _WriteAttempts, _WriteSuccesses, _WriteFailures, GetWriteSuccessRate());
+#endif
+
+  // Try connection recovery if too many consecutive failures
+  TryConnectionRecovery();
+
+  delay(MODBUS_RECOVERY_DELAY_MS);
+
   return false;
+#else
+  _WriteAttempts++;
+  _WriteSuccesses++;
+  return true;
+#endif
 }
 
 bool Growatt::ReadInputReg(uint16_t adr, uint16_t* result) {
@@ -715,6 +842,17 @@ void Growatt::CreateMetrics(String& metrics, const String& MacAddress,
   metricsAddValue("HeapFragmentation", ESP.getHeapFragmentation(), 1, metrics,
                   labels);
 #endif
+
+  // Modbus health metrics
+  metricsAddValue("ModbusWriteAttempts", _WriteAttempts, 1, metrics, labels);
+  metricsAddValue("ModbusWriteSuccesses", _WriteSuccesses, 1, metrics, labels);
+  metricsAddValue("ModbusWriteFailures", _WriteFailures, 1, metrics, labels);
+  metricsAddValue("ModbusSuccessRate", GetWriteSuccessRate(), 0.1, metrics,
+                  labels);
+  if (_LastWriteErrorAddress > 0) {
+    metricsAddValue("ModbusLastErrorAddress", _LastWriteErrorAddress, 1,
+                    metrics, labels);
+  }
 }
 
 void Growatt::RegisterCommand(const String& command,
@@ -904,4 +1042,176 @@ std::tuple<bool, String> Growatt::handleModbusSet(const JsonDocument& req,
 #endif
 
   return std::make_tuple(true, "success");
+}
+
+bool Growatt::WriteRegisterWithVerify(uint16_t adr, uint16_t value,
+                                      const char* errorContext) {
+  /**
+   * @brief Write a register with built-in delay and optional error context
+   * @param adr Register address to write
+   * @param value Value to write
+   * @param errorContext Optional context string for error messages
+   * @returns true if successful, false otherwise
+   */
+  if (!WriteHoldingReg(adr, value)) {
+#ifdef ENABLE_WEB_DEBUG
+    if (strlen(errorContext) > 0) {
+      Log.printf("Failed to write %s to HR%d\n", errorContext, adr);
+    } else {
+      Log.printf("Failed to write to HR%d\n", adr);
+    }
+#endif
+    return false;
+  }
+
+  // Add inter-write delay to prevent bus congestion
+  delay(MODBUS_INTER_WRITE_DELAY_MS);
+  return true;
+}
+
+void Growatt::CheckWriteRateLimit() {
+  /**
+   * @brief Enforce write rate limiting to prevent bus flooding
+   * Uses a sliding window approach with millis() overflow protection
+   */
+  uint32_t now = millis();
+  uint32_t minInterWriteDelay = 1000 / MODBUS_MAX_WRITES_PER_SECOND;
+
+  // Count writes in the last second using overflow-safe arithmetic
+  uint8_t writesInLastSecond = 0;
+  for (int i = 0; i < MODBUS_MAX_WRITES_PER_SECOND; i++) {
+    // Overflow-safe check: elapsed time since timestamp
+    uint32_t elapsed = now - _WriteTimestamps[i];
+    if (elapsed < 1000) {  // Within last second (handles millis() overflow)
+      writesInLastSecond++;
+    }
+  }
+
+  // If we're at the limit, delay until oldest write expires
+  if (writesInLastSecond >= MODBUS_MAX_WRITES_PER_SECOND) {
+    uint32_t oldestElapsed = 0;
+    uint32_t oldestIdx = 0;
+
+    // Find the oldest write within the last second
+    for (int i = 0; i < MODBUS_MAX_WRITES_PER_SECOND; i++) {
+      uint32_t elapsed = now - _WriteTimestamps[i];
+      if (elapsed < 1000 && elapsed > oldestElapsed) {
+        oldestElapsed = elapsed;
+        oldestIdx = i;
+      }
+    }
+
+    // Calculate delay needed (1 second - elapsed time of oldest write)
+    if (oldestElapsed < 1000) {
+      uint32_t delayNeeded = 1000 - oldestElapsed + 1;  // +1ms for safety
+#ifdef ENABLE_WEB_DEBUG
+      Log.printf("Write rate limit reached (%d writes/sec), delaying %dms\n",
+                 MODBUS_MAX_WRITES_PER_SECOND, delayNeeded);
+#endif
+      delay(delayNeeded);
+    }
+  }
+
+  // Update last write time after any delay
+  now = millis();  // Re-read after potential delay
+
+  // Record this write in our circular buffer for statistics
+  _WriteTimestamps[_WriteTimestampIndex] = now;
+  _WriteTimestampIndex =
+      (_WriteTimestampIndex + 1) % MODBUS_MAX_WRITES_PER_SECOND;
+}
+
+void Growatt::TryConnectionRecovery() {
+/**
+ * @brief Attempt to recover Modbus connection after consecutive failures
+ * Uses exponential backoff and state tracking to avoid leaving connection
+ * inconsistent
+ */
+#if MODBUS_AUTO_RECOVERY_ENABLED && SIMULATE_INVERTER != 1
+  static uint32_t lastRecoveryAttempt = 0;
+  static uint8_t recoveryAttemptCount = 0;
+
+  // Only attempt recovery after reaching threshold and with exponential backoff
+  if (_ConsecutiveFailures >= MODBUS_CONSECUTIVE_FAILURE_THRESHOLD) {
+    uint32_t now = millis();
+    uint32_t backoffDelay = 5000 * (1 << min((int)recoveryAttemptCount,
+                                             4));  // Max 80 second backoff
+
+    // Check if enough time has passed since last recovery attempt
+    if (now - lastRecoveryAttempt < backoffDelay) {
+      return;
+    }
+
+    lastRecoveryAttempt = now;
+    recoveryAttemptCount++;
+
+#ifdef ENABLE_WEB_DEBUG
+    Log.printf(
+        "Attempting Modbus recovery (attempt #%d) after %d consecutive "
+        "failures\n",
+        recoveryAttemptCount, _ConsecutiveFailures);
+#endif
+
+    // Store original state for rollback
+    eDevice_t originalDevice = _eDevice;
+    uint32_t originalBaud = (_eDevice == ShineWiFi_S) ? 9600 : 115200;
+
+    // Give inverter time to recover from potential bus issues
+    delay(MODBUS_RECOVERY_STABILIZATION_DELAY_MS);
+
+    // Test 1: Try current configuration first with a simple read
+    uint8_t res = Modbus.readInputRegisters(0, 1);
+    if (res == Modbus.ku8MBSuccess) {
+#ifdef ENABLE_WEB_DEBUG
+      Log.println("Connection recovered at current settings");
+#endif
+      _ConsecutiveFailures = 0;  // Reset only on successful recovery
+      recoveryAttemptCount = 0;
+      return;
+    }
+
+#ifdef ENABLE_WEB_DEBUG
+    Log.println("Current settings failed, trying alternate baud rate");
+#endif
+
+    // Test 2: Try alternate baud rate
+    uint32_t alternateBaud = (originalBaud == 9600) ? 115200 : 9600;
+    eDevice_t alternateDevice =
+        (originalBaud == 9600) ? ShineWiFi_X : ShineWiFi_S;
+
+    Serial.begin(alternateBaud);
+    delay(MODBUS_SERIAL_STABILIZATION_DELAY_MS);  // Allow serial to stabilize
+    Modbus.begin(1, Serial);
+    Modbus.setResponseTimeout(MODBUS_RESPONSE_TIMEOUT_MS);
+    delay(100);
+
+    res = Modbus.readInputRegisters(0, 1);
+    if (res == Modbus.ku8MBSuccess) {
+      _eDevice = alternateDevice;
+#ifdef ENABLE_WEB_DEBUG
+      Log.printf("Connection recovered at %d baud\n", alternateBaud);
+#endif
+      _ConsecutiveFailures = 0;  // Reset only on successful recovery
+      recoveryAttemptCount = 0;
+      return;
+    }
+
+    // Recovery failed - revert to original settings to maintain consistency
+    Serial.begin(originalBaud);
+    delay(MODBUS_SERIAL_STABILIZATION_DELAY_MS);
+    Modbus.begin(1, Serial);
+    Modbus.setResponseTimeout(MODBUS_RESPONSE_TIMEOUT_MS);
+    _eDevice = originalDevice;
+
+#ifdef ENABLE_WEB_DEBUG
+    Log.printf(
+        "Recovery failed, reverted to original %d baud. Will retry with "
+        "backoff.\n",
+        originalBaud);
+#endif
+
+    // Don't reset _ConsecutiveFailures on failure - let it continue to
+    // accumulate
+  }
+#endif
 }
