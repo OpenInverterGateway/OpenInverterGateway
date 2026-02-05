@@ -1,0 +1,36 @@
+{
+	"name": "OpenInverterGateway PlatformIO",
+	"image": "mcr.microsoft.com/devcontainers/python:3.11",
+	
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"platformio.platformio-ide",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack"
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
+		}
+	},
+
+	"postCreateCommand": "bash .devcontainer/post-create.sh",
+
+	"mounts": [
+		"source=platformio-cache,target=/root/.platformio,type=volume"
+	],
+
+	"remoteUser": "root",
+	
+	"forwardPorts": [],
+
+	"runArgs": [
+		"--privileged"
+	]
+}
