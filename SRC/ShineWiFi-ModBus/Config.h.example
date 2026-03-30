@@ -76,10 +76,6 @@
 #define DEFAULT_HOSTNAME  "Growatt"
 #define APPassword        "growsolar"
 
-// Username and password for firmware update
-#define UPDATE_USER       "admin"
-#define UPDATE_PASSWORD   "admin"
-
 // For boards without any button you can detect double resets with the Double reset detector by setting this to 1
 #define ENABLE_DOUBLE_RESET 0
 
