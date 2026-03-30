@@ -332,7 +332,7 @@ void handleWdtReset(boolean mqttSuccess) {
 
 void resetWdt() {
 #ifdef ESP32
-  Log.println("WDT reset ...");
+  Log.println(F("WDT timer restart ..."));
   esp_task_wdt_reset();
 #endif
 }
