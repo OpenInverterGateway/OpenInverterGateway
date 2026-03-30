@@ -1,0 +1,94 @@
+// ============================================================================
+// MODIFICATIONS TO MAIN FILE (ShineWiFi-ModBus.txt)
+// ============================================================================
+
+Added: ModbusTCP.h
+Added: ModbusTCP.cpp
+
+// 1. Add near the top with other includes:
+/*
+#if MODBUS_TCP_SUPPORTED == 1
+#include "ModbusTCP.h"
+#endif
+*/
+
+// 2. Add to Config.h:
+/*
+#define MODBUS_TCP_SUPPORTED 1
+#define MODBUS_TCP_PORT 502
+*/
+
+// 3. Add global instance after other globals (around line 60):
+/*
+#if MODBUS_TCP_SUPPORTED == 1
+ModbusTCP modbusTCP(MODBUS_TCP_PORT);
+#endif
+*/
+
+// 4. Add callback functions before setup():
+/*
+#if MODBUS_TCP_SUPPORTED == 1
+bool modbusReadHoldingRegister(uint16_t address, uint16_t* value) {
+  return Inverter.ReadHoldingReg(address, value);
+}
+
+bool modbusReadInputRegister(uint16_t address, uint16_t* value) {
+  return Inverter.ReadInputReg(address, value);
+}
+
+bool modbusWriteHoldingRegister(uint16_t address, uint16_t value) {
+  return Inverter.WriteHoldingReg(address, value);
+}
+#endif
+*/
+
+// 5. Add to setup() function, after httpServer.begin():
+/*
+#if MODBUS_TCP_SUPPORTED == 1
+  modbusTCP.readHoldingRegister = modbusReadHoldingRegister;
+  modbusTCP.readInputRegister = modbusReadInputRegister;
+  modbusTCP.writeHoldingRegister = modbusWriteHoldingRegister;
+  modbusTCP.begin();
+#endif
+*/
+
+// 6. Add to loop() function, after httpServer.handleClient():
+/*
+#if MODBUS_TCP_SUPPORTED == 1
+  if (modbusTCP.isEnabled()) {
+    modbusTCP.loop();
+  }
+#endif
+*/
+
+// ============================================================================
+// USAGE EXAMPLE
+// ============================================================================
+/*
+Once implemented, you can connect to the ESP using any Modbus TCP client:
+
+Example using pymodbus (Python):
+```python
+from pymodbus.client import ModbusTcpClient
+
+client = ModbusTcpClient('192.168.1.100', port=502)
+client.connect()
+
+# Read 10 input registers starting at address 0
+result = client.read_input_registers(0, 10, unit=1)
+if not result.isError():
+    print(result.registers)
+
+# Read holding registers
+result = client.read_holding_registers(0, 10, unit=1)
+if not result.isError():
+    print(result.registers)
+
+# Write single holding register
+client.write_register(0, 100, unit=1)
+
+client.close()
+```
+
+Register mapping will match your Growatt inverter's Modbus map.
+*/

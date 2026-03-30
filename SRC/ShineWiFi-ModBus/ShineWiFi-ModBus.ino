@@ -11,6 +11,11 @@
 #include <WiFiManager.h>
 #include <StreamUtils.h>
 
+// added for Modbus TCP
+#if MODBUS_TCP_SUPPORTED == 1
+#include "ModbusTCP.h"
+#endif
+
 #ifdef ESP32
 #include <esp_task_wdt.h>
 #endif
@@ -58,6 +63,12 @@ WiFiClient espClient;
 #endif
 ShineMqtt shineMqtt(espClient, Inverter);
 #endif
+
+// new
+#if MODBUS_TCP_SUPPORTED == 1
+ModbusTCP modbusTCP(MODBUS_TCP_PORT);
+#endif
+
 
 #ifdef AP_BUTTON_PRESSED
 byte btnPressed = 0;
@@ -285,12 +296,13 @@ void configureLogging() {
     syslogStream.setDestination(Config.syslog_ip.c_str());
     // syslogStream.setRaw(true);
     const std::shared_ptr<LOGBase> syslogStreamPtr =
-        std::make_shared<SyslogStream>(syslogStream);
+      std::make_shared<SyslogStream>(syslogStream);
     Log.addPrintStream(syslogStreamPtr);
     Log.print(F("syslog server ip: "));
     Log.println(Config.syslog_ip);
   }
 }
+
 
 void setupGPIO() {
   pinMode(LED_GN, OUTPUT);
@@ -336,6 +348,22 @@ void resetWdt() {
   esp_task_wdt_reset();
 #endif
 }
+
+//new
+#if MODBUS_TCP_SUPPORTED == 1
+bool modbusReadHoldingRegister(uint16_t address, uint16_t* value) {
+  return Inverter.ReadHoldingReg(address, value);
+}
+
+bool modbusReadInputRegister(uint16_t address, uint16_t* value) {
+  return Inverter.ReadInputReg(address, value);
+}
+
+bool modbusWriteHoldingRegister(uint16_t address, uint16_t value) {
+  return Inverter.WriteHoldingReg(address, value);
+}
+#endif
+// new end
 
 void setup() {
   WiFiManager wm;
@@ -478,39 +506,47 @@ void setup() {
   configTime(DEFAULT_TZ_INFO, DEFAULT_NTP_SERVER);
 #endif
 #endif
+
+// new
+#if MODBUS_TCP_SUPPORTED == 1
+  modbusTCP.readHoldingRegister = modbusReadHoldingRegister;
+  modbusTCP.readInputRegister = modbusReadInputRegister;
+  modbusTCP.writeHoldingRegister = modbusWriteHoldingRegister;
+  modbusTCP.begin();
+#endif
 }
 
 void setupWifiManagerConfigMenu(WiFiManager& wm) {
   customWMParams.hostname = new WiFiManagerParameter(
-      "hostname", "hostname (no spaces or special chars)",
-      Config.hostname.c_str(), 30);
+    "hostname", "hostname (no spaces or special chars)",
+    Config.hostname.c_str(), 30);
   customWMParams.static_ip =
-      new WiFiManagerParameter("staticip", "ip", Config.static_ip.c_str(), 15);
+    new WiFiManagerParameter("staticip", "ip", Config.static_ip.c_str(), 15);
   customWMParams.static_netmask = new WiFiManagerParameter(
-      "staticnetmask", "netmask", Config.static_netmask.c_str(), 15);
+    "staticnetmask", "netmask", Config.static_netmask.c_str(), 15);
   customWMParams.static_gateway = new WiFiManagerParameter(
-      "staticgateway", "gateway", Config.static_gateway.c_str(), 15);
+    "staticgateway", "gateway", Config.static_gateway.c_str(), 15);
   customWMParams.static_dns = new WiFiManagerParameter(
-      "staticdns", "dns", Config.static_dns.c_str(), 15);
+    "staticdns", "dns", Config.static_dns.c_str(), 15);
 #if MQTT_SUPPORTED == 1
   customWMParams.mqtt_server = new WiFiManagerParameter(
-      "mqttserver", "server", Config.mqtt.server.c_str(), 40);
+    "mqttserver", "server", Config.mqtt.server.c_str(), 40);
   customWMParams.mqtt_port =
-      new WiFiManagerParameter("mqttport", "port", Config.mqtt.port.c_str(), 6);
+    new WiFiManagerParameter("mqttport", "port", Config.mqtt.port.c_str(), 6);
   customWMParams.mqtt_topic = new WiFiManagerParameter(
-      "mqtttopic", "topic", Config.mqtt.topic.c_str(), 64);
+    "mqtttopic", "topic", Config.mqtt.topic.c_str(), 64);
   customWMParams.mqtt_user = new WiFiManagerParameter(
-      "mqttusername", "username", Config.mqtt.user.c_str(), 40);
+    "mqttusername", "username", Config.mqtt.user.c_str(), 40);
   customWMParams.mqtt_pwd = new WiFiManagerParameter(
-      "mqttpassword", "password", Config.mqtt.pwd.c_str(), 64);
+    "mqttpassword", "password", Config.mqtt.pwd.c_str(), 64);
 #endif
   customWMParams.syslog_ip = new WiFiManagerParameter(
-      "syslogip", "syslog server IP (leave blank for none)",
-      Config.syslog_ip.c_str(), 15);
+    "syslogip", "syslog server IP (leave blank for none)",
+    Config.syslog_ip.c_str(), 15);
   wm.addParameter(customWMParams.hostname);
 #if MQTT_SUPPORTED == 1
   wm.addParameter(new WiFiManagerParameter(
-      "<p><b>MQTT Settings</b> (leave server blank to disable)</p>"));
+    "<p><b>MQTT Settings</b> (leave server blank to disable)</p>"));
   wm.addParameter(customWMParams.mqtt_server);
   wm.addParameter(customWMParams.mqtt_port);
   wm.addParameter(customWMParams.mqtt_topic);
@@ -518,7 +554,7 @@ void setupWifiManagerConfigMenu(WiFiManager& wm) {
   wm.addParameter(customWMParams.mqtt_pwd);
 #endif
   wm.addParameter(new WiFiManagerParameter(
-      "<p><b>Static IP</b> (leave blank for DHCP)</p>"));
+    "<p><b>Static IP</b> (leave blank for DHCP)</p>"));
   wm.addParameter(customWMParams.static_ip);
   wm.addParameter(customWMParams.static_netmask);
   wm.addParameter(customWMParams.static_gateway);
@@ -538,7 +574,7 @@ void setupWifiManagerConfigMenu(WiFiManager& wm) {
  */
 void setupMenu(WiFiManager& wm, bool enableCustomParams) {
   Log.println(F("Setting up WiFiManager menu"));
-  std::vector<const char*> menu = {"wifi", "wifinoscan", "update"};
+  std::vector<const char*> menu = { "wifi", "wifinoscan", "update" };
   if (enableCustomParams) {
     menu.push_back("param");
   }
@@ -553,7 +589,7 @@ void sendJson(JsonDocument& doc) {
   httpServer.setContentLength(measureJson(doc));
   httpServer.send(200, "application/json", "");
   WiFiClient client = httpServer.client();
-  WriteBufferingStream bufferedWifiClient{client, BUFFER_SIZE};
+  WriteBufferingStream bufferedWifiClient{ client, BUFFER_SIZE };
   serializeJson(doc, bufferedWifiClient);
 }
 
@@ -639,7 +675,9 @@ void sendDebug(void) {
 }
 #endif
 
-void sendMainPage(void) { httpServer.send(200, "text/html", MAIN_page); }
+void sendMainPage(void) {
+  httpServer.send(200, "text/html", MAIN_page);
+}
 
 void sendPostSite(void) {
   httpServer.send(200, "text/html", SendPostSite_page);
@@ -667,9 +705,9 @@ void handlePostData() {
                        httpServer.arg("reg").toInt(), u16Tmp);
           } else {
             snprintf_P(
-                msg, sizeof(msg),
-                PSTR("Read 16b input register %ld impossible - not connected?"),
-                httpServer.arg("reg").toInt());
+              msg, sizeof(msg),
+              PSTR("Read 16b input register %ld impossible - not connected?"),
+              httpServer.arg("reg").toInt());
           }
         } else {
           if (Inverter.ReadInputReg(httpServer.arg(F("reg")).toInt(),
@@ -679,9 +717,9 @@ void handlePostData() {
                        httpServer.arg("reg").toInt(), u32Tmp);
           } else {
             snprintf_P(
-                msg, sizeof(msg),
-                PSTR("Read 32b input register %ld impossible - not connected?"),
-                httpServer.arg("reg").toInt());
+              msg, sizeof(msg),
+              PSTR("Read 32b input register %ld impossible - not connected?"),
+              httpServer.arg("reg").toInt());
           }
         }
       } else {
@@ -722,9 +760,9 @@ void handlePostData() {
                        httpServer.arg("val").toInt());
           } else {
             snprintf_P(
-                msg, sizeof(msg),
-                PSTR("Writing holding register %ld to a value of %ld failed"),
-                httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
+              msg, sizeof(msg),
+              PSTR("Writing holding register %ld to a value of %ld failed"),
+              httpServer.arg("reg").toInt(), httpServer.arg("val").toInt());
           }
         } else {
           snprintf_P(msg, sizeof(msg),
@@ -755,8 +793,7 @@ bool sendSingleValue(void) {
 }
 
 void handleNotFound() {
-  if (httpServer.uri().startsWith(F("/value/")) &&
-      httpServer.uri().length() > 7) {
+  if (httpServer.uri().startsWith(F("/value/")) && httpServer.uri().length() > 7) {
     if (sendSingleValue()) {
       return;
     }
@@ -856,6 +893,14 @@ void loop() {
 
     LEDTimer = now;
   }
+
+// new
+#if MODBUS_TCP_SUPPORTED == 1
+  if (modbusTCP.isEnabled()) {
+    modbusTCP.loop();
+  }
+#endif
+  //
 
   // InverterReconnect() takes a long time --> wifi will crash
   // Do it only every two minutes
