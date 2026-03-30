@@ -90,6 +90,34 @@
 #define BUTTON_TIMER 500 //  0.5s default
 #define WDT_TIMEOUT 300 // 5 min default
 
+// Modbus Write Reliability Settings
+// Number of retry attempts for failed writes
+#define MODBUS_WRITE_RETRY_COUNT 3
+// Initial delay between retry attempts (exponential backoff)
+#define MODBUS_WRITE_RETRY_DELAY_MS 100
+// Maximum backoff delay to prevent excessive waits (2 seconds)
+#define MODBUS_MAX_BACKOFF_MS 2000
+// Delay between sequential register writes
+#define MODBUS_INTER_WRITE_DELAY_MS 100
+// Recovery delay after write failure
+#define MODBUS_RECOVERY_DELAY_MS 500
+// Timeout for modbus responses
+#define MODBUS_RESPONSE_TIMEOUT_MS 250
+// Maximum writes per second to prevent bus flooding
+#define MODBUS_MAX_WRITES_PER_SECOND 10
+// Enable automatic connection recovery after failures
+#define MODBUS_AUTO_RECOVERY_ENABLED 1
+// Auto-reset stats before uint32_t overflow
+#define MODBUS_STATISTICS_OVERFLOW_THRESHOLD 4000000000UL
+
+// Modbus Connection Recovery Settings
+// Failures before attempting recovery
+#define MODBUS_CONSECUTIVE_FAILURE_THRESHOLD 10
+// Time to wait for inverter recovery
+#define MODBUS_RECOVERY_STABILIZATION_DELAY_MS 2000
+// Time to wait after serial init
+#define MODBUS_SERIAL_STABILIZATION_DELAY_MS 100
+
 #if PINGER_SUPPORTED == 1
     #define GATEWAY_IP IPAddress(192, 168, 178, 1)
 #endif

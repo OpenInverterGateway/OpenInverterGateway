@@ -11,10 +11,15 @@ static bool verifyRegisters307(Growatt& inverter, uint16_t addr, uint16_t count,
                                const uint16_t* expected) {
   const int MAX_RETRIES = 3;
   const int RETRY_DELAY_MS = 50;
+  const int MAX_VERIFY_REGISTERS = 10;
+
+  // Safety check: ensure we don't exceed buffer capacity
+  if (count > MAX_VERIFY_REGISTERS || count == 0 || expected == nullptr) {
+    return false;
+  }
 
   for (int i = 0; i < MAX_RETRIES; ++i) {
-    uint16_t readback[10] = {0};   // Sufficient for our use cases
-    if (count > 10) return false;  // Safety check
+    uint16_t readback[MAX_VERIFY_REGISTERS] = {0};
 
     if (inverter.ReadHoldingRegFrag(addr, count, readback)) {
       bool match = true;
@@ -116,17 +121,18 @@ std::tuple<bool, String> updateDateTime307(const JsonDocument& req,
 
   year = year > 2000 ? year - 2000 : 0;
 
-  uint16_t values[] = {year, month, day, hour, minute, second};
-
-  bool success = inverter.WriteHoldingRegFrag(45, 6, values);
-#else
-  bool success = true;
-#endif
-  if (success) {
-    return std::make_tuple(true, "Successfully updated date/time");
-  } else {
-    return std::make_tuple(false, "Failed to write date/time");
+  // Write date/time registers individually with delays to prevent bus
+  // congestion
+  if (!inverter.WriteRegisterWithVerify(45, year, "year") ||
+      !inverter.WriteRegisterWithVerify(46, month, "month") ||
+      !inverter.WriteRegisterWithVerify(47, day, "day") ||
+      !inverter.WriteRegisterWithVerify(48, hour, "hour") ||
+      !inverter.WriteRegisterWithVerify(49, minute, "minute") ||
+      !inverter.WriteRegisterWithVerify(50, second, "second")) {
+    return std::make_tuple(false, "Failed to write date/time registers");
   }
+#endif
+  return std::make_tuple(true, "Successfully updated date/time");
 };
 
 std::tuple<bool, String> getPowerActiveRate307(const JsonDocument& req,
@@ -176,14 +182,14 @@ std::tuple<bool, String> setExportEnable307(const JsonDocument& req,
   uint16_t currentFlag;
   if (inverter.ReadHoldingReg(122, &currentFlag)) {
     if (currentFlag != 1) {
-      if (!inverter.WriteHoldingReg(122, 1)) {
+      if (!inverter.WriteRegisterWithVerify(122, 1, "HR122 export flag")) {
         return std::make_tuple(false, "Failed to set HR122 flag");
       }
     }
   }
 
   // Set HR123 to 1000 (100% export allowed)
-  if (!inverter.WriteHoldingReg(123, 1000)) {
+  if (!inverter.WriteRegisterWithVerify(123, 1000, "export limit value")) {
     return std::make_tuple(false, "Failed to enable export");
   }
 #endif
@@ -198,14 +204,14 @@ std::tuple<bool, String> setExportDisable307(const JsonDocument& req,
   uint16_t currentFlag;
   if (inverter.ReadHoldingReg(122, &currentFlag)) {
     if (currentFlag != 1) {
-      if (!inverter.WriteHoldingReg(122, 1)) {
+      if (!inverter.WriteRegisterWithVerify(122, 1, "HR122 export flag")) {
         return std::make_tuple(false, "Failed to set HR122 flag");
       }
     }
   }
 
   // Set HR123 to 0 (0% export allowed)
-  if (!inverter.WriteHoldingReg(123, 0)) {
+  if (!inverter.WriteRegisterWithVerify(123, 0, "export limit value")) {
     return std::make_tuple(false, "Failed to disable export");
   }
 #endif
@@ -398,17 +404,21 @@ std::tuple<bool, String> setTimeSlot307(const JsonDocument& req,
   uint16_t time_start = (start_hours << 8) | start_minutes;
   uint16_t time_stop = (stop_hours << 8) | stop_minutes;
 
-  uint16_t timeslot_raw[3];
-  timeslot_raw[0] = time_start;
-  timeslot_raw[1] = time_stop;
-  timeslot_raw[2] = enabled ? 1 : 0;
-
   uint16_t timeslot_start_addr = startReg + ((slot - 1) * 3);
-  if (!inverter.WriteHoldingRegFrag(timeslot_start_addr, 3, timeslot_raw)) {
-    return std::make_tuple(false, "Failed to write timeslot");
+
+  // Write timeslot registers individually with delays to prevent bus congestion
+  if (!inverter.WriteRegisterWithVerify(timeslot_start_addr, time_start,
+                                        "timeslot start time") ||
+      !inverter.WriteRegisterWithVerify(timeslot_start_addr + 1, time_stop,
+                                        "timeslot stop time") ||
+      !inverter.WriteRegisterWithVerify(
+          timeslot_start_addr + 2, enabled ? 1 : 0, "timeslot enabled flag")) {
+    return std::make_tuple(false, "Failed to write timeslot registers");
   }
 
   // Verify the write succeeded
+  uint16_t timeslot_raw[3] = {time_start, time_stop,
+                              enabled ? (uint16_t)1 : (uint16_t)0};
   if (!verifyRegisters307(inverter, timeslot_start_addr, 3, timeslot_raw)) {
     return std::make_tuple(false, "Timeslot verify failed");
   }
