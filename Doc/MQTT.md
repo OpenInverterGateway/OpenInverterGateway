@@ -100,6 +100,29 @@ data:
     }
 ```
 
+```yaml
+alias: Set Growatt power limit by input slider 0-100
+description: "Create a input_number as a slider and use this automation to modify growatt values"
+triggers:
+  - trigger: state
+    entity_id:
+      - input_number.growatt_ac_power_limit_2
+conditions: []
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: true
+      qos: "1"
+      topic: energy/solar/command/power/set/activerate
+      payload: |2-
+            {
+              "correlationId": "ha-activerate-set",
+              "value": "{{ states('input_number.growatt_ac_power_limit_2') | int(100) }}"
+            }
+mode: single
+```
+
 To receive responses to commands you can use templates.
 
 ```yaml
