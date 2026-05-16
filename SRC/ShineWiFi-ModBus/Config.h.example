@@ -5,6 +5,10 @@
 // Build configuration area start
 // ---------------------------------------------------------------
 
+// added for ModbusTCP support
+#define MODBUS_TCP_SUPPORTED 1
+#define MODBUS_TCP_PORT 502
+
 // Define used modbus version used by your invertor here. Currently
 // only 120 (v1.20), 124 (v1.24) and 305 (v3.05) versions are supported.
 // Growatt TL-X(H) inverters use v1.24, but use different registers (3000 and above).
