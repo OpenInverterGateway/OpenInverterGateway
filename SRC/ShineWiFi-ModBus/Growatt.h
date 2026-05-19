@@ -6,6 +6,7 @@
 class Growatt {
  public:
   Growatt();
+  ~Growatt();
   sProtocolDefinition_t _Protocol;
   using CommandHandlerFunc = std::function<std::tuple<bool, String>(
       const JsonDocument& req, JsonDocument& res, Growatt& inverter)>;
@@ -30,6 +31,8 @@ class Growatt {
   bool ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint32_t* result);
   bool WriteHoldingReg(uint16_t adr, uint16_t value);
   bool WriteHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* value);
+  bool WriteRegisterWithVerify(uint16_t adr, uint16_t value,
+                               const char* errorContext = "");
   bool GetSingleValueByName(const String& name, double& value);
   void CreateJson(JsonDocument& doc, const String& MacAddress,
                   const String& Hostname);
@@ -37,11 +40,39 @@ class Growatt {
   void CreateMetrics(String& metrics, const String& MacAddress,
                      const String& Hostname);
 
+  // Modbus health monitoring functions
+  uint32_t GetWriteAttempts() { return _WriteAttempts; }
+  uint32_t GetWriteSuccesses() { return _WriteSuccesses; }
+  uint32_t GetWriteFailures() { return _WriteFailures; }
+  uint32_t GetLastWriteErrorAddress() { return _LastWriteErrorAddress; }
+  float GetWriteSuccessRate() {
+    return _WriteAttempts > 0 ? (float)_WriteSuccesses / _WriteAttempts * 100.0
+                              : 0.0;
+  }
+
+  void ResetModbusStatistics() {
+    _WriteAttempts = 0;
+    _WriteSuccesses = 0;
+    _WriteFailures = 0;
+    _LastWriteErrorAddress = 0;
+  }
+
  private:
   eDevice_t _eDevice;
   bool _GotData;
   uint32_t _PacketCnt;
   std::map<String, CommandHandlerFunc> handlers;
+
+  // Modbus health monitoring
+  uint32_t _WriteAttempts = 0;
+  uint32_t _WriteSuccesses = 0;
+  uint32_t _WriteFailures = 0;
+  uint32_t _LastWriteErrorAddress = 0;
+
+  // Write burst protection
+  uint32_t _WriteTimestamps[MODBUS_MAX_WRITES_PER_SECOND] = {0};
+  uint8_t _WriteTimestampIndex = 0;
+  uint32_t _ConsecutiveFailures = 0;
 
   eDevice_t _InitModbusCommunication();
   double roundByResolution(const double& value, const float& resolution);
@@ -61,4 +92,8 @@ class Growatt {
   std::tuple<bool, String> handleModbusSet(const JsonDocument& req,
                                            JsonDocument& res,
                                            Growatt& inverter);
+
+  // Write burst protection and auto-recovery
+  void CheckWriteRateLimit();
+  void TryConnectionRecovery();
 };
