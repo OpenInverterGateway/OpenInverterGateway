@@ -92,19 +92,49 @@ void Growatt::begin(Stream& serial) {
 #else
   uint8_t res;
   // init communication with the inverter
+  // Stock firmware scans Modbus addresses, not just address 1
+  // Also needs startup delay for RS232 transceiver to stabilize
+
+  // Try ShineWiFi-S (Serial, 9600 baud) - scan addresses 1-5
   Serial.begin(9600);
-  Modbus.begin(1, serial);
-  res = Modbus.readInputRegisters(0, 1);
-  if (res == Modbus.ku8MBSuccess) {
-    _eDevice = ShineWiFi_S;  // Serial
-  } else {
-    delay(1000);
-    Serial.begin(115200);
-    Modbus.begin(1, serial);
-    Modbus.setResponseTimeout(250);
+  delay(2000);  // Wait for RS232 transceiver + inverter boot
+  for (uint8_t addr = 1; addr <= 5 && _eDevice == Undef_stick; addr++) {
+    Modbus.begin(addr, serial);
+    // Try FC04 (input registers) first
     res = Modbus.readInputRegisters(0, 1);
     if (res == Modbus.ku8MBSuccess) {
-      _eDevice = ShineWiFi_X;  // USB
+      _eDevice = ShineWiFi_S;
+      Log.printf("ShineWiFi-S found at Modbus address %d (9600 baud, FC04)\n",
+                 addr);
+      break;
+    }
+    // Try FC03 (holding registers) as fallback
+    res = Modbus.readHoldingRegisters(0, 1);
+    if (res == Modbus.ku8MBSuccess) {
+      _eDevice = ShineWiFi_S;
+      Log.printf("ShineWiFi-S found at Modbus address %d (9600 baud, FC03)\n",
+                 addr);
+      break;
+    }
+    delay(200);
+  }
+
+  // Try ShineWiFi-X (USB, 115200 baud) - scan addresses 1-5
+  if (_eDevice == Undef_stick) {
+    delay(1000);
+    Serial.begin(115200);
+    delay(500);
+    for (uint8_t addr = 1; addr <= 5 && _eDevice == Undef_stick; addr++) {
+      Modbus.begin(addr, serial);
+      Modbus.setResponseTimeout(250);
+      res = Modbus.readInputRegisters(0, 1);
+      if (res == Modbus.ku8MBSuccess) {
+        _eDevice = ShineWiFi_X;
+        Log.printf("ShineWiFi-X found at Modbus address %d (115200 baud)\n",
+                   addr);
+        break;
+      }
+      delay(200);
     }
     delay(1000);
   }
