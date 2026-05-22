@@ -24,6 +24,7 @@ class Growatt {
   sGrowattModbusReg_t GetHoldingRegister(uint16_t reg);
   bool ReadInputReg(uint16_t adr, uint32_t* result);
   bool ReadInputReg(uint16_t adr, uint16_t* result);
+  bool ReadInputRegFrag(uint16_t adr, uint8_t size, uint16_t* result);
   bool ReadHoldingReg(uint16_t adr, uint32_t* result);
   bool ReadHoldingReg(uint16_t adr, uint16_t* result);
   bool ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* result);

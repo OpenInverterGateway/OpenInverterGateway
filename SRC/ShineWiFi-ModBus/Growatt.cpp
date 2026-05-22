@@ -300,6 +300,24 @@ bool Growatt::ReadHoldingReg(uint16_t adr, uint32_t* result) {
 #endif
 }
 
+bool Growatt::ReadInputRegFrag(uint16_t adr, uint8_t size, uint16_t* result) {
+  /**
+   * @brief read 16b input register fragment via FC04
+   * @param adr Modbus wire start address
+   * @param size number of registers to read
+   * @param result pointer to buffer (must hold `size` uint16 values)
+   * @returns true if successful
+   */
+  uint8_t res = Modbus.readInputRegisters(adr, size);
+  if (res == Modbus.ku8MBSuccess) {
+    for (int i = 0; i < size; i++) {
+      result[i] = Modbus.getResponseBuffer(i);
+    }
+    return true;
+  }
+  return false;
+}
+
 bool Growatt::ReadHoldingRegFrag(uint16_t adr, uint8_t size, uint16_t* result) {
   /**
    * @brief read 16b holding register fragment
