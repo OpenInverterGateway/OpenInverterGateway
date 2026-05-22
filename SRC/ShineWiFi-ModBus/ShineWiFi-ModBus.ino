@@ -657,11 +657,12 @@ void handlePostData() {
   uint16_t u16Tmp;
   uint32_t u32Tmp;
 
-  if (!httpServer.hasArg(F("reg")) || !httpServer.hasArg(F("val"))) {
-    // If the POST request doesn't have data
-    httpServer.send(400, F("text/plain"),
-                    F("400: Invalid Request"));  // The request is invalid, so
-                                                 // send HTTP status 400
+  // `reg` is always required. `val` is only required for write operations;
+  // reads ignore it. This lets clients omit val (or pass a dummy 0) for reads.
+  const bool isWrite = httpServer.arg(F("operation")) == "W";
+  if (!httpServer.hasArg(F("reg")) ||
+      (isWrite && !httpServer.hasArg(F("val")))) {
+    httpServer.send(400, F("text/plain"), F("400: Invalid Request"));
     return;
   } else {
     if (httpServer.arg(F("operation")) == "R") {
