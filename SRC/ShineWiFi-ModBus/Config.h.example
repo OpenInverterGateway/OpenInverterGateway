@@ -22,6 +22,22 @@
 // Setting this define to 0 will disable the MQTT functionality
 #define MQTT_SUPPORTED 1
 
+// Setting this define to 1 enables Growatt Cloud forwarding.
+// Sends inverter data to server.growatt.com:5279 so ShinePhone app
+// and Growatt web portal continue working alongside local MQTT.
+// The datalogger serial is auto-detected from the stock firmware's
+// flash area, or can be entered in the GrowattConfig portal.
+//
+// NOTE: enabling this requires GrowattCloud.{h,cpp} to be present.
+// Those files are introduced in a separate PR; until that PR is merged,
+// keep this flag at 0 to build the rest of the changes standalone.
+#define GROWATT_CLOUD_SUPPORTED 0
+
+// Setting this define to 1 enables HTTP Basic Auth for the web UI.
+// Auth credentials are configured via the GrowattConfig portal or web UI.
+// If no credentials are set, the UI is open (backward compatible).
+#define ENABLE_WEB_AUTH 1
+
 // Enable OTA update via espota. This is mainly for development purposes and enables updates
 // of the device without physical access. Use at our own risk!
 #define OTA_SUPPORTED 0

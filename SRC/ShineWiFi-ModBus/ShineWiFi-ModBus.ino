@@ -11,6 +11,12 @@
 #include <WiFiManager.h>
 #include <StreamUtils.h>
 
+#ifdef ESP8266
+#include <Updater.h>
+#elif defined(ESP32)
+#include <Update.h>
+#endif
+
 #ifdef ESP32
 #include <esp_task_wdt.h>
 #endif
@@ -37,6 +43,10 @@ DoubleResetDetector* drd;
 #include "ShineMqtt.h"
 #endif
 
+#if GROWATT_CLOUD_SUPPORTED == 1
+#include "GrowattCloud.h"
+#endif
+
 #if OTA_SUPPORTED == 1
 #include <ArduinoOTA.h>
 #endif
@@ -57,6 +67,11 @@ WiFiClientSecure espClient;
 WiFiClient espClient;
 #endif
 ShineMqtt shineMqtt(espClient, Inverter);
+#endif
+
+#if GROWATT_CLOUD_SUPPORTED == 1
+GrowattCloud growattCloud;
+WiFiClient growattCloudClient;
 #endif
 
 #ifdef AP_BUTTON_PRESSED
@@ -92,7 +107,15 @@ struct {
   WiFiManagerParameter* mqtt_user = NULL;
   WiFiManagerParameter* mqtt_pwd = NULL;
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  WiFiManagerParameter* cloud_serial = NULL;
+  WiFiManagerParameter* cloud_server = NULL;
+#endif
   WiFiManagerParameter* syslog_ip = NULL;
+#if ENABLE_WEB_AUTH == 1
+  WiFiManagerParameter* auth_user = NULL;
+  WiFiManagerParameter* auth_pass = NULL;
+#endif
 } customWMParams;
 
 static const struct {
@@ -108,7 +131,15 @@ static const struct {
   const char* mqtt_user = "/mqttu";
   const char* mqtt_pwd = "/mqttw";
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  const char* cloud_serial = "/cloudsn";
+  const char* cloud_server = "/cloudsrv";
+#endif
   const char* syslog_ip = "/syslogip";
+#if ENABLE_WEB_AUTH == 1
+  const char* auth_user = "/authuser";
+  const char* auth_pass = "/authpass";
+#endif
   const char* force_ap = "/forceap";
 } ConfigFiles;
 
@@ -121,7 +152,15 @@ struct {
 #if MQTT_SUPPORTED == 1
   MqttConfig mqtt;
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  String cloud_serial;
+  String cloud_server;
+#endif
   String syslog_ip;
+#if ENABLE_WEB_AUTH == 1
+  String auth_user;
+  String auth_pass;
+#endif
   bool force_ap;
 } Config;
 
@@ -210,7 +249,15 @@ void loadConfig() {
   Config.mqtt.user = prefs.getString(ConfigFiles.mqtt_user, "");
   Config.mqtt.pwd = prefs.getString(ConfigFiles.mqtt_pwd, "");
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  Config.cloud_serial = prefs.getString(ConfigFiles.cloud_serial, "");
+  Config.cloud_server = prefs.getString(ConfigFiles.cloud_server, "server.growatt.com");
+#endif
   Config.syslog_ip = prefs.getString(ConfigFiles.syslog_ip, "");
+#if ENABLE_WEB_AUTH == 1
+  Config.auth_user = prefs.getString(ConfigFiles.auth_user, "");
+  Config.auth_pass = prefs.getString(ConfigFiles.auth_pass, "");
+#endif
   Config.force_ap = prefs.getBool(ConfigFiles.force_ap, false);
 }
 
@@ -227,7 +274,15 @@ void saveConfig() {
   prefs.putString(ConfigFiles.mqtt_user, Config.mqtt.user);
   prefs.putString(ConfigFiles.mqtt_pwd, Config.mqtt.pwd);
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  prefs.putString(ConfigFiles.cloud_serial, Config.cloud_serial);
+  prefs.putString(ConfigFiles.cloud_server, Config.cloud_server);
+#endif
   prefs.putString(ConfigFiles.syslog_ip, Config.syslog_ip);
+#if ENABLE_WEB_AUTH == 1
+  prefs.putString(ConfigFiles.auth_user, Config.auth_user);
+  prefs.putString(ConfigFiles.auth_pass, Config.auth_pass);
+#endif
 }
 
 void saveParamCallback() {
@@ -248,7 +303,21 @@ void saveParamCallback() {
   Config.mqtt.user = customWMParams.mqtt_user->getValue();
   Config.mqtt.pwd = customWMParams.mqtt_pwd->getValue();
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  Config.cloud_serial = customWMParams.cloud_serial->getValue();
+  Config.cloud_server = customWMParams.cloud_server->getValue();
+  if (Config.cloud_server.isEmpty()) {
+    Config.cloud_server = "server.growatt.com";
+  }
+#endif
   Config.syslog_ip = customWMParams.syslog_ip->getValue();
+#if ENABLE_WEB_AUTH == 1
+  Config.auth_user = customWMParams.auth_user->getValue();
+  {
+    String val = customWMParams.auth_pass->getValue();
+    if (!val.isEmpty()) Config.auth_pass = val;
+  }
+#endif
 
   saveConfig();
 
@@ -471,11 +540,72 @@ void setup() {
 #ifdef ENABLE_WEB_DEBUG
   httpServer.on("/debug", sendDebug);
 #endif
+  httpServer.on("/config", HTTP_GET, sendConfigJson);
+  httpServer.on("/saveConfig", HTTP_POST, handleSaveConfig);
+  httpServer.on("/setParam", HTTP_POST, handleSetParam);
+  httpServer.on("/cloudStatus", sendCloudStatus);
+  httpServer.on("/systemStatus", sendSystemStatus);
+  httpServer.on("/update", HTTP_GET, sendUpdatePage);
+  httpServer.on("/doUpdate", HTTP_POST, handleUpdateDone, handleUpdateUpload);
   httpServer.onNotFound(handleNotFound);
 
   Inverter.InitProtocol();
   InverterReconnect();
+  // Collect Origin and Referer so checkSameOrigin() can inspect them.
+  const char* csrfHeaders[] = {"Origin", "Referer"};
+  httpServer.collectHeaders(csrfHeaders,
+                            sizeof(csrfHeaders) / sizeof(csrfHeaders[0]));
   httpServer.begin();
+
+#if GROWATT_CLOUD_SUPPORTED == 1
+  // Try to auto-read serial from stock firmware's flash area (0x3FD0B4)
+  // This survives OIG flashing since we only write the first ~500KB
+  if (Config.cloud_serial.isEmpty()) {
+    uint8_t flashBuf[12] = {0};
+    char flashSerial[11] = {0};
+    bool found = false;
+#ifdef ESP8266
+    if (ESP.flashRead(0x3FD0B4, (uint32_t*)flashBuf, 12)) {
+      memcpy(flashSerial, flashBuf, 10);
+      flashSerial[10] = '\0';
+      found = true;
+      for (int i = 0; i < 10 && found; i++) {
+        if (flashSerial[i] < 0x20 || flashSerial[i] > 0x7E) {
+          if (i == 0) found = false;
+          else flashSerial[i] = '\0';
+        }
+      }
+    }
+#endif
+    if (found && strlen(flashSerial) >= 6) {
+      Config.cloud_serial = String(flashSerial);
+      saveConfig();
+      Log.print(F("[GrowattCloud] Auto-detected serial from flash: "));
+      Log.println(Config.cloud_serial);
+    }
+  }
+
+  if (!Config.cloud_serial.isEmpty()) {
+    GrowattCloudConfig cloudCfg = {};
+    strncpy(cloudCfg.serverHost, Config.cloud_server.c_str(), sizeof(cloudCfg.serverHost) - 1);
+    cloudCfg.serverHost[sizeof(cloudCfg.serverHost) - 1] = '\0';
+    cloudCfg.serverPort = GROWATT_PORT_DEFAULT;
+    cloudCfg.protocolId = GROWATT_PROTO_ENC_V2;
+    strncpy(cloudCfg.dataloggerSerial, Config.cloud_serial.c_str(),
+            sizeof(cloudCfg.dataloggerSerial) - 1);
+    cloudCfg.dataloggerSerial[sizeof(cloudCfg.dataloggerSerial) - 1] = '\0';
+    // inverterSerial already zeroed by the {} initializer above
+    strncpy(cloudCfg.fwVersion, "1.7.7.7", sizeof(cloudCfg.fwVersion) - 1);
+    cloudCfg.fwVersion[sizeof(cloudCfg.fwVersion) - 1] = '\0';
+    cloudCfg.logIntervalMin = 5;
+    cloudCfg.enabled = true;
+    growattCloud.begin(cloudCfg);
+    Log.println(F("[GrowattCloud] Enabled, serial: "));
+    Log.println(Config.cloud_serial);
+  } else {
+    Log.println(F("[GrowattCloud] Disabled (no serial configured)"));
+  }
+#endif
 
 #if defined(DEFAULT_NTP_SERVER) && defined(DEFAULT_TZ_INFO)
 #ifdef ESP32
@@ -524,6 +654,18 @@ void setupWifiManagerConfigMenu(WiFiManager& wm) {
   wm.addParameter(customWMParams.mqtt_user);
   wm.addParameter(customWMParams.mqtt_pwd);
 #endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  customWMParams.cloud_serial = new WiFiManagerParameter(
+      "cloudsn", "Datalogger Serial (from stick label/AP SSID)",
+      Config.cloud_serial.c_str(), 30);
+  customWMParams.cloud_server = new WiFiManagerParameter(
+      "cloudsrv", "Cloud Server (default: server.growatt.com)",
+      Config.cloud_server.c_str(), 60);
+  wm.addParameter(new WiFiManagerParameter(
+      "<p><b>Growatt Cloud</b> (enter serial to enable, leave blank to disable)</p>"));
+  wm.addParameter(customWMParams.cloud_serial);
+  wm.addParameter(customWMParams.cloud_server);
+#endif
   wm.addParameter(new WiFiManagerParameter(
       "<p><b>Static IP</b> (leave blank for DHCP)</p>"));
   wm.addParameter(customWMParams.static_ip);
@@ -532,6 +674,18 @@ void setupWifiManagerConfigMenu(WiFiManager& wm) {
   wm.addParameter(customWMParams.static_dns);
   wm.addParameter(new WiFiManagerParameter("<p><b>Advanced Settings</b></p>"));
   wm.addParameter(customWMParams.syslog_ip);
+#if ENABLE_WEB_AUTH == 1
+  customWMParams.auth_user = new WiFiManagerParameter(
+      "authuser", "Web UI Username (blank=no auth)",
+      Config.auth_user.c_str(), 30);
+  customWMParams.auth_pass = new WiFiManagerParameter(
+      "authpass", "Web UI Password",
+      "", 30);  // Don't show current password
+  wm.addParameter(new WiFiManagerParameter(
+      "<p><b>Web Authentication</b> (leave blank for open access)</p>"));
+  wm.addParameter(customWMParams.auth_user);
+  wm.addParameter(customWMParams.auth_pass);
+#endif
 
   wm.setSaveParamsCallback(saveParamCallback);
 
@@ -556,6 +710,44 @@ void setupMenu(WiFiManager& wm, bool enableCustomParams) {
   wm.setMenu(menu);  // custom menu, pass vector
 }
 
+bool checkAuth() {
+#if ENABLE_WEB_AUTH == 1
+  if (Config.auth_user.isEmpty() || Config.auth_pass.isEmpty()) {
+    return true;
+  }
+  if (!httpServer.authenticate(Config.auth_user.c_str(), Config.auth_pass.c_str())) {
+    httpServer.requestAuthentication(BASIC_AUTH, "Growatt Inverter");
+    return false;
+  }
+#endif
+  return true;
+}
+
+// CSRF mitigation for state-changing endpoints. Browsers send Basic Auth
+// credentials automatically, so a cross-site POST could otherwise reconfigure
+// the device. Require that the Origin (or Referer) header points at this
+// device. Same-origin form posts from the device's own pages always include
+// one of these; cross-site posts will not (or will point elsewhere).
+bool checkSameOrigin() {
+  String host = httpServer.hostHeader();
+  String origin = httpServer.header(F("Origin"));
+  String referer = httpServer.header(F("Referer"));
+  auto matches = [&host](const String& url) -> bool {
+    if (url.isEmpty() || host.isEmpty()) return false;
+    int schemeEnd = url.indexOf(F("://"));
+    if (schemeEnd < 0) return false;
+    int hostStart = schemeEnd + 3;
+    int hostEnd = url.indexOf('/', hostStart);
+    String urlHost = (hostEnd < 0) ? url.substring(hostStart)
+                                   : url.substring(hostStart, hostEnd);
+    return urlHost.equalsIgnoreCase(host);
+  };
+  if (!origin.isEmpty()) return matches(origin);
+  if (!referer.isEmpty()) return matches(referer);
+  // Neither header present: reject state-changing request to be safe.
+  return false;
+}
+
 void sendJson(JsonDocument& doc) {
   httpServer.setContentLength(measureJson(doc));
   httpServer.send(200, "application/json", "");
@@ -565,6 +757,7 @@ void sendJson(JsonDocument& doc) {
 }
 
 void sendJsonSite(void) {
+  if (!checkAuth()) return;
   if (!readoutSucceeded) {
     httpServer.send(503, F("text/plain"), F("Service Unavailable"));
     return;
@@ -577,6 +770,7 @@ void sendJsonSite(void) {
 }
 
 void sendUiJsonSite(void) {
+  if (!checkAuth()) return;
   DynamicJsonDocument doc(JSON_DOCUMENT_SIZE);
   Inverter.CreateUIJson(doc, Config.hostname);
 
@@ -584,6 +778,7 @@ void sendUiJsonSite(void) {
 }
 
 void sendMetrics(void) {
+  if (!checkAuth()) return;
   if (!readoutSucceeded) {
     httpServer.send(503, F("text/plain"), F("Service Unavailable"));
     return;
@@ -616,6 +811,7 @@ boolean sendMqttJson(void) {
 #endif
 
 void startConfigAccessPoint(void) {
+  if (!checkAuth()) return;
   char msg[384];
 
   snprintf_P(msg, sizeof(msg),
@@ -632,6 +828,7 @@ void startConfigAccessPoint(void) {
 }
 
 void rebootESP(void) {
+  if (!checkAuth()) return;
   httpServer.send(200, F("text/html"),
                   F("<html><body>Rebooting...</body></html>"));
   delay(2000);
@@ -640,19 +837,25 @@ void rebootESP(void) {
 
 #ifdef ENABLE_WEB_DEBUG
 void sendDebug(void) {
+  if (!checkAuth()) return;
   httpServer.sendHeader("Location",
                         "http://" + WiFi.localIP().toString() + ":8080/", true);
   httpServer.send(302, "text/plain", "");
 }
 #endif
 
-void sendMainPage(void) { httpServer.send(200, "text/html", MAIN_page); }
+void sendMainPage(void) {
+  if (!checkAuth()) return;
+  httpServer.send(200, "text/html", MAIN_page);
+}
 
 void sendPostSite(void) {
+  if (!checkAuth()) return;
   httpServer.send(200, "text/html", SendPostSite_page);
 }
 
 void handlePostData() {
+  if (!checkAuth()) return;
   char msg[256];
   uint16_t u16Tmp;
   uint32_t u32Tmp;
@@ -747,6 +950,305 @@ void handlePostData() {
   }
 }
 
+// -------------------------------------------------------
+// OTA Firmware Update via Web UI
+// -------------------------------------------------------
+void sendUpdatePage(void) {
+  if (!checkAuth()) return;
+  httpServer.send(200, F("text/html"),
+    F("<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
+      "<title>Firmware Update</title>"
+      "<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css'>"
+      "</head><body><main class='container'>"
+      "<h2>Firmware Update</h2>"
+      "<form method='POST' action='/doUpdate' enctype='multipart/form-data'>"
+      "<label>Select firmware .bin file:<input type='file' name='update' accept='.bin' required></label>"
+      "<button type='submit'>Upload and Flash</button>"
+      "</form>"
+      "<p><a href='/'>Back to Dashboard</a></p>"
+      "</main></body></html>"));
+}
+
+void handleUpdateUpload(void) {
+  if (!checkAuth()) return;
+  HTTPUpload& upload = httpServer.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    Log.printf("OTA Update: %s (%u bytes)\n", upload.filename.c_str(), upload.totalSize);
+    uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    if (!Update.begin(maxSketchSpace)) {
+      Log.println(F("OTA: Not enough space"));
+    }
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+      Log.println(F("OTA: Write failed"));
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (Update.end(true)) {
+      Log.printf("OTA: Success, %u bytes\n", upload.totalSize);
+    } else {
+      Log.println(F("OTA: Failed"));
+    }
+  }
+  yield();
+}
+
+void handleUpdateDone(void) {
+  if (!checkAuth()) return;
+  bool ok = !Update.hasError();
+  httpServer.send(200, F("text/html"),
+    ok ? F("<!DOCTYPE html><html><body><h2>Update Successful!</h2><p>Rebooting...</p></body></html>")
+       : F("<!DOCTYPE html><html><body><h2>Update Failed!</h2><p><a href='/update'>Try again</a></p></body></html>"));
+  if (ok) {
+    delay(1000);
+    ESP.restart();
+  }
+}
+
+void sendConfigJson(void) {
+  if (!checkAuth()) return;
+  StaticJsonDocument<512> doc;
+  doc["hostname"] = Config.hostname;
+  doc["static_ip"] = Config.static_ip;
+  doc["static_netmask"] = Config.static_netmask;
+  doc["static_gateway"] = Config.static_gateway;
+  doc["static_dns"] = Config.static_dns;
+#if MQTT_SUPPORTED == 1
+  doc["mqtt_server"] = Config.mqtt.server;
+  doc["mqtt_port"] = Config.mqtt.port;
+  doc["mqtt_topic"] = Config.mqtt.topic;
+  doc["mqtt_user"] = Config.mqtt.user;
+  doc["mqtt_pwd_set"] = !Config.mqtt.pwd.isEmpty();
+#endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  doc["cloud_serial"] = Config.cloud_serial;
+  doc["cloud_server"] = Config.cloud_server;
+#endif
+  doc["syslog_ip"] = Config.syslog_ip;
+#if ENABLE_WEB_AUTH == 1
+  doc["auth_user"] = Config.auth_user;
+  doc["auth_pwd_set"] = !Config.auth_pass.isEmpty();
+#endif
+  sendJson(doc);
+}
+
+void handleSaveConfig(void) {
+  if (!checkAuth()) return;
+  if (!checkSameOrigin()) {
+    httpServer.send(403, F("text/plain"),
+                    F("Forbidden: cross-origin request rejected"));
+    return;
+  }
+  if (httpServer.hasArg(F("hostname"))) Config.hostname = httpServer.arg(F("hostname"));
+  if (httpServer.hasArg(F("static_ip"))) Config.static_ip = httpServer.arg(F("static_ip"));
+  if (httpServer.hasArg(F("static_netmask"))) Config.static_netmask = httpServer.arg(F("static_netmask"));
+  if (httpServer.hasArg(F("static_gateway"))) Config.static_gateway = httpServer.arg(F("static_gateway"));
+  if (httpServer.hasArg(F("static_dns"))) Config.static_dns = httpServer.arg(F("static_dns"));
+#if MQTT_SUPPORTED == 1
+  if (httpServer.hasArg(F("mqtt_server"))) Config.mqtt.server = httpServer.arg(F("mqtt_server"));
+  if (httpServer.hasArg(F("mqtt_port"))) Config.mqtt.port = httpServer.arg(F("mqtt_port"));
+  if (httpServer.hasArg(F("mqtt_topic"))) Config.mqtt.topic = httpServer.arg(F("mqtt_topic"));
+  if (httpServer.hasArg(F("mqtt_user"))) Config.mqtt.user = httpServer.arg(F("mqtt_user"));
+  if (httpServer.hasArg(F("mqtt_pwd"))) {
+    String val = httpServer.arg(F("mqtt_pwd"));
+    if (!val.isEmpty()) Config.mqtt.pwd = val;
+  }
+#endif
+#if GROWATT_CLOUD_SUPPORTED == 1
+  if (httpServer.hasArg(F("cloud_serial"))) Config.cloud_serial = httpServer.arg(F("cloud_serial"));
+  if (httpServer.hasArg(F("cloud_server"))) {
+    String val = httpServer.arg(F("cloud_server"));
+    Config.cloud_server = val.isEmpty() ? "server.growatt.com" : val;
+  }
+#endif
+  if (httpServer.hasArg(F("syslog_ip"))) Config.syslog_ip = httpServer.arg(F("syslog_ip"));
+#if ENABLE_WEB_AUTH == 1
+  if (httpServer.hasArg(F("auth_user"))) Config.auth_user = httpServer.arg(F("auth_user"));
+  if (httpServer.hasArg(F("auth_pass"))) {
+    String val = httpServer.arg(F("auth_pass"));
+    if (!val.isEmpty()) Config.auth_pass = val;
+  }
+#endif
+  saveConfig();
+  bool needRestart = httpServer.hasArg(F("restart"));
+  httpServer.send(200, F("application/json"),
+    needRestart ? F("{\"ok\":true,\"restart\":true}") : F("{\"ok\":true}"));
+  if (needRestart) {
+    delay(1000);
+    ESP.restart();
+  }
+}
+
+// Local Set Inverter Param — mirrors the Shine portal Set commands, but
+// applies the writes directly via Modbus instead of routing through Growatt
+// cloud. Each paramId maps to one or two holding-register writes that the
+// reverse-engineered cloud protocol uses for the same action.
+void handleSetParam(void) {
+  if (!checkAuth()) return;
+  if (!httpServer.hasArg(F("type"))) {
+    httpServer.send(400, F("text/plain"), F("missing type"));
+    return;
+  }
+  String type = httpServer.arg(F("type"));
+  String v1 = httpServer.hasArg(F("val1")) ? httpServer.arg(F("val1")) : String();
+  String v2 = httpServer.hasArg(F("val2")) ? httpServer.arg(F("val2")) : String();
+
+  auto write1 = [](uint16_t reg, uint16_t val, char* out, size_t outlen) -> bool {
+    bool ok = Inverter.WriteHoldingReg(reg, val);
+    snprintf(out, outlen, "HR %u = %u : %s", (unsigned)reg, (unsigned)val,
+             ok ? "OK" : "Modbus write failed");
+    return ok;
+  };
+
+  char msg[128];
+  bool ok = false;
+
+  if (type == "pv_on_off") {
+    ok = write1(0, (uint16_t)v1.toInt() ? 1 : 0, msg, sizeof(msg));
+  } else if (type == "pv_pf_cmd_memory_state") {
+    ok = write1(2, (uint16_t)v1.toInt() ? 1 : 0, msg, sizeof(msg));
+  } else if (type == "pv_active_p_rate") {
+    int pct = v1.toInt();
+    if (pct < 0 || pct > 100) {
+      httpServer.send(400, F("text/plain"), F("rate must be 0..100"));
+      return;
+    }
+    ok = write1(3, (uint16_t)pct, msg, sizeof(msg));
+  } else if (type == "pv_reactive_p_rate") {
+    int pct = v1.toInt();
+    if (pct < 0 || pct > 100) {
+      httpServer.send(400, F("text/plain"), F("rate must be 0..100"));
+      return;
+    }
+    bool wroteRate = Inverter.WriteHoldingReg(4, (uint16_t)pct);
+    // dir: cloud uses reg 99 = 4 for Inductive ("over"), 5 for Capacitive ("under")
+    uint16_t dirVal = (v2 == "under") ? 5 : 4;
+    bool wroteDir = Inverter.WriteHoldingReg(99, dirVal);
+    ok = wroteRate && wroteDir;
+    snprintf(msg, sizeof(msg), "HR 4 = %d, HR 99 = %u : %s", pct, dirVal,
+             ok ? "OK" : "Modbus write failed");
+  } else if (type == "pv_power_factor") {
+    float pf = v1.toFloat();
+    if (pf < -1.0f || pf > 1.0f || (pf > -0.8f && pf < 0.8f)) {
+      httpServer.send(400, F("text/plain"), F("PF must be -1..-0.8 or 0.8..1"));
+      return;
+    }
+    bool wroteMode = Inverter.WriteHoldingReg(99, 1);
+    uint16_t scaled = (uint16_t)(pf * 20000.0f);
+    bool wrotePf = Inverter.WriteHoldingReg(5, scaled);
+    ok = wroteMode && wrotePf;
+    snprintf(msg, sizeof(msg), "HR 99 = 1, HR 5 = %u (PF=%.2f) : %s",
+             scaled, pf, ok ? "OK" : "Modbus write failed");
+  } else if (type == "pv_grid_voltage_low") {
+    // Both Vac limit registers on this 3-phase inverter store LINE-TO-LINE
+    // volts × 10, not L-N. The inverter measures pvgridvoltage/2/3 as L-L
+    // (~420 V each phase pair on nominal 400 V grid).
+    // EN50438 -15%: 195.5 V L-N × √3 ≈ 338 V L-L.
+    // The Shine portal's "Set Grid Voltage Low" prompt sends the user input
+    // unchanged — entering 195 there gives 1950 raw which is effectively
+    // "trip never" (L-L would have to fall to half-nominal). Always enter L-L.
+    if (v1.length() == 0) { httpServer.send(400, F("text/plain"), F("voltage required")); return; }
+    float vf = v1.toFloat();
+    if (vf < 280.0f || vf > 400.0f) {
+      httpServer.send(400, F("text/plain"),
+                      F("low limit must be 280..400 V (line-to-line)"));
+      return;
+    }
+    ok = write1(19, (uint16_t)(vf * 10.0f), msg, sizeof(msg));
+  } else if (type == "pv_grid_voltage_high") {
+    // HR 20 stores Vac HIGH limit in LINE-TO-LINE volts × 10 (the inverter is
+    // 3-phase, nominal L-L = 400 V = 230 V × √3). The Shine cloud's
+    // "Set Grid Voltage High" passes its input through unchanged, so the
+    // user must enter the L-L value (e.g. 440 V = EN50438 +10%, not 253 V L-N).
+    // Verified scaling 2026-05-29: read HR 20 = 4382 ≈ 438 V L-L = factory
+    // setting roughly matching EN50438. Writing a value below ~400 V L-L is
+    // rejected at the Modbus layer.
+    if (v1.length() == 0) { httpServer.send(400, F("text/plain"), F("voltage required")); return; }
+    float vf = v1.toFloat();
+    if (vf < 380.0f || vf > 500.0f) {
+      httpServer.send(400, F("text/plain"),
+                      F("high limit must be 380..500 V (line-to-line)"));
+      return;
+    }
+    ok = write1(20, (uint16_t)(vf * 10.0f), msg, sizeof(msg));
+  } else if (type == "pf_sys_year") {
+    time_t now = time(nullptr);
+    struct tm* lt = localtime(&now);
+    if (!lt || lt->tm_year < 120) {  // sanity: 2020 or later
+      httpServer.send(503, F("text/plain"), F("system time not synced"));
+      return;
+    }
+    bool a = Inverter.WriteHoldingReg(45, (uint16_t)(lt->tm_year - 100));  // year-2000
+    bool b = Inverter.WriteHoldingReg(46, (uint16_t)(lt->tm_mon + 1));
+    bool c = Inverter.WriteHoldingReg(47, (uint16_t)lt->tm_mday);
+    bool d = Inverter.WriteHoldingReg(48, (uint16_t)lt->tm_hour);
+    bool e = Inverter.WriteHoldingReg(49, (uint16_t)lt->tm_min);
+    bool f = Inverter.WriteHoldingReg(50, (uint16_t)lt->tm_sec);
+    ok = a && b && c && d && e && f;
+    snprintf(msg, sizeof(msg), "HR 45-50 = %04d-%02d-%02d %02d:%02d:%02d : %s",
+             lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday,
+             lt->tm_hour, lt->tm_min, lt->tm_sec, ok ? "OK" : "partial fail");
+  } else {
+    httpServer.send(400, F("text/plain"), F("unknown type"));
+    return;
+  }
+
+  Log.printf("[setParam] %s -> %s\n", type.c_str(), msg);
+  httpServer.send(ok ? 200 : 500, F("text/plain"), msg);
+}
+
+void sendCloudStatus(void) {
+  if (!checkAuth()) return;
+  StaticJsonDocument<256> doc;
+#if GROWATT_CLOUD_SUPPORTED == 1
+  if (!Config.cloud_serial.isEmpty()) {
+    doc["enabled"] = true;
+    static const char* const stateNames[] = {"Disconnected", "Connecting",
+                                             "Connected",    "Announced",
+                                             "Active",       "Error"};
+    int sIdx = (int)growattCloud.getState();
+    doc["state"] =
+        (sIdx >= 0 && sIdx < (int)(sizeof(stateNames) / sizeof(stateNames[0])))
+            ? stateNames[sIdx]
+            : "Unknown";
+    doc["stateCode"] = sIdx;
+    doc["packetsSent"] = growattCloud.getPacketsSent();
+    doc["packetsRecv"] = growattCloud.getPacketsRecv();
+    doc["reconnects"] = growattCloud.getReconnects();
+    uint32_t lastSend = growattCloud.getLastSendTime();
+    doc["lastSendAgo"] = lastSend > 0 ? (int)((millis() - lastSend) / 1000) : -1;
+    doc["serial"] = Config.cloud_serial;
+    doc["server"] = Config.cloud_server;
+  } else {
+    doc["enabled"] = false;
+  }
+#else
+  doc["supported"] = false;
+#endif
+  sendJson(doc);
+}
+
+void sendSystemStatus(void) {
+  if (!checkAuth()) return;
+  StaticJsonDocument<384> doc;
+  doc["hostname"] = Config.hostname;
+  doc["ip"] = WiFi.localIP().toString();
+  doc["gateway"] = WiFi.gatewayIP().toString();
+  doc["netmask"] = WiFi.subnetMask().toString();
+  doc["dns"] = WiFi.dnsIP().toString();
+  doc["ssid"] = WiFi.SSID();
+  doc["rssi"] = WiFi.RSSI();
+  doc["heap"] = ESP.getFreeHeap();
+  doc["uptime"] = millis() / 1000;
+  doc["mac"] = WiFi.macAddress();
+  doc["stickType"] = Inverter.GetWiFiStickType() == ShineWiFi_S ? "ShineWiFi-S" :
+                     Inverter.GetWiFiStickType() == ShineWiFi_X ? "ShineWiFi-X" : "Unknown";
+#if GROWATT_CLOUD_SUPPORTED == 1
+  doc["cloudSerial"] = Config.cloud_serial;
+  doc["cloudState"] = growattCloud.isConnected() ? "Active" : "Disconnected";
+#endif
+  sendJson(doc);
+}
+
 bool sendSingleValue(void) {
   if (!readoutSucceeded) {
     httpServer.send(503, F("text/plain"), F("Service Unavailable"));
@@ -762,6 +1264,7 @@ bool sendSingleValue(void) {
 }
 
 void handleNotFound() {
+  if (!checkAuth()) return;
   if (httpServer.uri().startsWith(F("/value/")) &&
       httpServer.uri().length() > 7) {
     if (sendSingleValue()) {
@@ -896,6 +1399,72 @@ void loop() {
 #endif
           handleWdtReset(mqttSuccess);
 
+#if GROWATT_CLOUD_SUPPORTED == 1
+          // Inverter serial lives in HR 23-27 as packed ASCII; set it on the
+          // cloud module once so ANNOUNCE carries the real device identifier.
+          // Without this the cloud accepts the datalogger but can't link the
+          // device to the user's account → app shows no data.
+          static bool inverterSerialSet = false;
+          if (!inverterSerialSet && !Config.cloud_serial.isEmpty()) {
+            char invSerial[11] = {0};
+            bool gotSerial = true;
+            for (int r = 0; r < 5; r++) {
+              uint16_t regVal;
+              if (Inverter.ReadHoldingReg(23 + r, &regVal)) {
+                invSerial[r * 2]     = (regVal >> 8) & 0xFF;
+                invSerial[r * 2 + 1] = regVal & 0xFF;
+              } else {
+                gotSerial = false;
+                break;
+              }
+            }
+            if (gotSerial && invSerial[0] > 0x20) {
+              invSerial[10] = '\0';
+              growattCloud.setInverterSerial(invSerial);
+              inverterSerialSet = true;
+              Log.print(F("[GrowattCloud] Inverter serial: "));
+              Log.println(invSerial);
+            }
+          }
+
+          // Feed register data to Growatt Cloud sender.
+          // The cloud DATA frame indexes registers by Modbus *address*, but
+          // Inverter._Protocol.InputRegisters[i] is indexed by an arbitrary
+          // table position (e.g. v3.05 reads only 12 sparse addresses).
+          // Placing values at the wrong array slot makes the cloud parse
+          // every field at the wrong byte offset → server discards the payload
+          // silently (status=-1, pac=0). Build address-indexed arrays here.
+          if (!Config.cloud_serial.isEmpty()) {
+            uint16_t inputRegs[90] = {0};
+            uint16_t holdingRegs[90] = {0};
+            uint16_t numInput = Inverter._Protocol.InputRegisterCount;
+            uint16_t numHolding = Inverter._Protocol.HoldingRegisterCount;
+            for (uint16_t i = 0; i < numInput; i++) {
+              const sGrowattModbusReg_t& r = Inverter._Protocol.InputRegisters[i];
+              if (r.address >= 90) continue;
+              if (r.size == SIZE_32BIT || r.size == SIZE_32BIT_S) {
+                inputRegs[r.address] = (uint16_t)(r.value >> 16);
+                if (r.address + 1 < 90)
+                  inputRegs[r.address + 1] = (uint16_t)(r.value & 0xFFFF);
+              } else {
+                inputRegs[r.address] = (uint16_t)r.value;
+              }
+            }
+            for (uint16_t i = 0; i < numHolding; i++) {
+              const sGrowattModbusReg_t& r = Inverter._Protocol.HoldingRegisters[i];
+              if (r.address >= 90) continue;
+              if (r.size == SIZE_32BIT || r.size == SIZE_32BIT_S) {
+                holdingRegs[r.address] = (uint16_t)(r.value >> 16);
+                if (r.address + 1 < 90)
+                  holdingRegs[r.address + 1] = (uint16_t)(r.value & 0xFFFF);
+              } else {
+                holdingRegs[r.address] = (uint16_t)r.value;
+              }
+            }
+            growattCloud.loop(inputRegs, 90, holdingRegs, 90);
+          }
+#endif
+
           // leave while-loop
           readoutSucceeded = true;
         } else {
@@ -943,6 +1512,13 @@ void loop() {
 
     RefreshTimer = now;
   }
+
+#if GROWATT_CLOUD_SUPPORTED == 1
+  // Keep Growatt Cloud connection alive (pings, server responses)
+  if (!Config.cloud_serial.isEmpty()) {
+    growattCloud.loop(nullptr, 0);
+  }
+#endif
 
 #if OTA_SUPPORTED == 1
   // check for OTA updates
