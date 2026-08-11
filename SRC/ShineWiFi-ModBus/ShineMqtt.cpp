@@ -2,7 +2,6 @@
 #include "Growatt.h"
 #if MQTT_SUPPORTED == 1
 #include <TLog.h>
-#include <StreamUtils.h>
 #include "PubSubClient.h"
 
 ShineMqtt::ShineMqtt(WiFiClient& wc, Growatt& inverter)
@@ -118,16 +117,34 @@ boolean ShineMqtt::mqttPublish(JsonDocument& doc, String topic) {
   }
 
   if (this->mqttclient.connected()) {
-    bool res =
-        this->mqttclient.beginPublish(topic.c_str(), measureJson(doc), true);
-    BufferingPrint bufferedClient(this->mqttclient, BUFFER_SIZE);
-    serializeJson(doc, this->mqttclient);
-    bufferedClient.flush();
+    const size_t payloadSize = measureJson(doc);
+    bool res = this->mqttclient.beginPublish(topic.c_str(), payloadSize, true);
+    if (!res) {
+      Log.println(F("failed (beginPublish)"));
+      return false;
+    }
+
+    const size_t written = serializeJson(doc, this->mqttclient);
+
+    if (written != payloadSize) {
+      Log.print(F("failed (JSON write mismatch: expected "));
+      Log.print(payloadSize);
+      Log.print(F(", written "));
+      Log.print(written);
+      Log.println(F(")"));
+
+      // Short write: the broker is still waiting on the rest of this
+      // PUBLISH's declared length. Close the socket so it drops the
+      // incomplete packet instead of treating the next PUBLISH as
+      // continuation of this one's payload.
+      this->wifiClient.stop();
+      return false;
+    }
+
     this->mqttclient.endPublish();
 
-    Log.println(res ? "succeed" : "failed");
-
-    return res;
+    Log.println("succeed");
+    return true;
   } else {
     Log.println(F("not connected"));
 
