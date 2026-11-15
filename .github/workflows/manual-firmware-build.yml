@@ -26,6 +26,12 @@ on:
           - "3000"
           - "5000"
 
+      modbus_communication:
+        description: "Enable Modbus read/write via web endpoint (trusted network only)"
+        required: true
+        type: boolean
+        default: false
+
 permissions:
   contents: read
 
@@ -47,6 +53,7 @@ jobs:
       - name: Create build configuration
         env:
           GROWATT_PROTOCOL: ${{ inputs.protocol }}
+          MODBUS_COMMUNICATION: ${{ inputs.modbus_communication }}
         run: |
           python - <<'PY'
           import os
@@ -63,6 +70,14 @@ jobs:
           )
           if count != 1:
               raise SystemExit("Could not set Growatt protocol in Config.h.example")
+          configuration, count = re.subn(
+              r"(?m)^#define ENABLE_MODBUS_COMMUNICATION\s+\d+\s*$",
+              "#define ENABLE_MODBUS_COMMUNICATION "
+              + ("1" if os.environ["MODBUS_COMMUNICATION"] == "true" else "0"),
+              configuration,
+          )
+          if count != 1:
+              raise SystemExit("Could not set Modbus communication in Config.h.example")
           target.write_text(configuration, encoding="utf-8")
 
           # The upstream project references this optional local configuration.
